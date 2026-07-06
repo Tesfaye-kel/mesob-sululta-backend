@@ -5,14 +5,18 @@ const { requireAdmin } = require('../middleware/roleMiddleware');
 const {
   createWindow,
   getAllWindows,
+  getGroupedWindows,
   getWindowById,
+  getServicesByWindow,
   updateWindow,
   deleteWindow,
 } = require('../controllers/windowController');
 
 const router = express.Router();
 
+router.get('/grouped', getGroupedWindows);
 router.get('/', getAllWindows);
+router.get('/:id/services', getServicesByWindow);
 router.get('/:id', getWindowById);
 
 router.post('/', authenticateJWT, requireAdmin, createWindow);

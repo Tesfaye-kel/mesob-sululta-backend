@@ -1,4 +1,5 @@
 const Window = require('../models/Window');
+const Service = require('../models/Service');
 
 // POST /api/windows
 const createWindow = async (req, res, next) => {
@@ -21,11 +22,56 @@ const getAllWindows = async (req, res, next) => {
     if (organization) filter.organization = organization;
 
     const windows = await Window.find(filter)
-      .populate('organization', 'name')
-      .populate('services', 'name')
+      .populate('organization', 'name logoUrl')
+      .populate('services', 'name description fee processingTime workingHours contactPhone requiredDocuments')
       .sort({ number: 1 });
 
-    return res.json(windows);
+    // Aggregate: group by window number and sum serviceCount
+    const grouped = new Map();
+    for (const win of windows) {
+      const key = win.number;
+      if (!grouped.has(key)) {
+        grouped.set(key, {
+          _id: win._id,
+          number: win.number,
+          serviceCount: 0,
+          organizations: [],
+        });
+      }
+      const entry = grouped.get(key);
+      entry.serviceCount += win.services.length;
+      entry.organizations.push(win.organization);
+    }
+
+    return res.json(Array.from(grouped.values()).sort((a, b) => a.number - b.number));
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/windows/grouped
+// Returns windows grouped by number for accordion UI
+const getGroupedWindows = async (req, res, next) => {
+  try {
+    const windows = await Window.find()
+      .populate('organization', 'name logoUrl description')
+      .populate('services', 'name description fee processingTime workingHours contactPhone requiredDocuments')
+      .sort({ number: 1 });
+
+    const groupedMap = new Map();
+
+    for (const win of windows) {
+      if (!groupedMap.has(win.number)) {
+        groupedMap.set(win.number, { number: win.number, organizations: [] });
+      }
+      groupedMap.get(win.number).organizations.push({
+        organization: win.organization,
+        services: win.services,
+      });
+    }
+
+    const grouped = Array.from(groupedMap.values()).sort((a, b) => a.number - b.number);
+    return res.json(grouped);
   } catch (err) {
     next(err);
   }
@@ -40,6 +86,54 @@ const getWindowById = async (req, res, next) => {
 
     if (!win) return res.status(404).json({ message: 'Window not found' });
     return res.json(win);
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/windows/:id/services
+const getServicesByWindow = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // id is the window NUMBER (1–11) sent from the frontend
+    const num = Number(id);
+    let windowDocs = [];
+
+    if (!isNaN(num)) {
+      // Primary path: lookup by window number — merges all org-split docs
+      windowDocs = await Window.find({ number: num }).populate({
+        path: 'services',
+        populate: { path: 'organization', select: 'name' },
+      });
+    }
+
+    // Fallback: try by _id in case someone calls the old way
+    if (!windowDocs.length && id.match(/^[a-f\d]{24}$/i)) {
+      windowDocs = await Window.find({ _id: id }).populate({
+        path: 'services',
+        populate: { path: 'organization', select: 'name' },
+      });
+    }
+
+    if (!windowDocs.length) {
+      return res.status(404).json({ message: 'Window not found' });
+    }
+
+    // Merge services from all Window docs for this number (de-duplicate)
+    const seen = new Set();
+    const services = [];
+    for (const win of windowDocs) {
+      for (const svc of win.services) {
+        const key = String(svc._id);
+        if (!seen.has(key)) {
+          seen.add(key);
+          services.push(svc);
+        }
+      }
+    }
+
+    return res.json(services);
   } catch (err) {
     next(err);
   }
@@ -77,7 +171,9 @@ const deleteWindow = async (req, res, next) => {
 module.exports = {
   createWindow,
   getAllWindows,
+  getGroupedWindows,
   getWindowById,
+  getServicesByWindow,
   updateWindow,
   deleteWindow,
 };

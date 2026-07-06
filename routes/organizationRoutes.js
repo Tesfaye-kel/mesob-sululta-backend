@@ -8,11 +8,13 @@ const {
   getOrganizationById,
   updateOrganization,
   deleteOrganization,
+  getServicesByOrganization,
 } = require('../controllers/organizationController');
 
 const router = express.Router();
 
 router.get('/', getAllOrganizations);
+router.get('/:id/services', getServicesByOrganization);
 router.get('/:id', getOrganizationById);
 
 router.post('/', authenticateJWT, requireAdmin, createOrganization);
