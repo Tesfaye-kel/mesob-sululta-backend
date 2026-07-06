@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 const apiRoutes = require('./routes');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 const { seedOrganizations} = require('./seed');
+const { seedSiteContent } = require('./seedContent');
 
 const app = express();
 
@@ -56,6 +57,7 @@ mongoose
 
     // Seed data on startup (keeps backend testable immediately)
      await seedOrganizations();
+     await seedSiteContent();
 
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);

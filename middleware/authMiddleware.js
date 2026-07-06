@@ -1,21 +1,22 @@
 const jwt = require('jsonwebtoken');
 
+// Verifies the Authorization header (Bearer token) and attaches req.user
 const authenticateJWT = (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Missing Authorization header' });
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Not authorized, no token provided' });
   }
 
-  const token = header.slice('Bearer '.length);
+  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { userId, role }
-    return next();
+    req.user = decoded; // { id, role }
+    next();
   } catch (err) {
-    return res.status(401).json({ message: 'Invalid/expired token' });
+    return res.status(401).json({ message: 'Not authorized, invalid or expired token' });
   }
 };
 
 module.exports = { authenticateJWT };
-
