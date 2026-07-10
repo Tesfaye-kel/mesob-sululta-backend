@@ -1,0 +1,84 @@
+.header {
+  background-color: #0B2E4E;
+  border-top: 4px solid #C08A2E;
+  border-right: 0 none;
+  border-bottom: 0 none;
+  border-left: 0 none;
+  outline: none;
+  box-shadow: none;
+  isolation: isolate;
+  position: relative;
+  padding: 64px 32px 56px;
+  --tw-ring-shadow: none;
+  --tw-shadow: none;
+}
+
+@media (max-width: 639px) {
+  .header {
+    padding: 40px 20px 32px;
+  }
+}
+
+/* Centers the content block horizontally,
+   but keeps text left-aligned inside it
+   so all lines start from the same edge   */
+.inner {
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 13px;
+  color: #9FB6CC;
+  margin-bottom: 16px;
+  list-style: none;
+  padding: 0;
+  margin-top: 0;
+}
+
+.breadcrumbLink {
+  color: #C08A2E;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.breadcrumbLink:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbSeparator {
+  color: #54708C;
+  margin: 0 8px;
+}
+
+.breadcrumbCurrent {
+  color: #9FB6CC;
+}
+
+.title {
+  font-family: 'Lora', serif;
+  font-size: 44px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+  margin: 0;
+  line-height: 1.15;
+}
+
+@media (max-width: 639px) {
+  .title {
+    font-size: 28px;
+  }
+}
+
+.subtitle {
+  margin-top: 12px;
+  font-size: 16px;
+  color: #B9CBDB;
+  margin-bottom: 0;
+}
