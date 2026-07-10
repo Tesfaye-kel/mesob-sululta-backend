@@ -38,7 +38,7 @@ export const translations = {
       title: 'About MESOB Center', subtitle: 'Transforming Government Service Delivery',
       history: 'History', mission: 'Mission', vision: 'Vision', values: 'Core Values',
       objectives: 'Objectives', managerMessage: 'Message from Branch Manager',
-      ourStory: 'Our Story', keyMilestones: 'Key Milestones',
+      ourStory: 'our story', keyMilestones: 'Key Milestones',
       futureExpansion: 'Future Expansion',
       futureExpansionDesc: 'MESOB Sululta Branch is expanding to include additional departments by 2026.',
       orgHierarchy: 'Organizational Hierarchy',
