@@ -40,8 +40,8 @@ export default {
         border: '#E5E7EB',
         input: '#E5E7EB',
         ring: '#1A6B3C',
-        background: '#F8FAFC',
-        foreground: '#111827',
+        background: '#FFFFFF',
+        foreground: '#0F172A',
         popover: {
           DEFAULT: '#FFFFFF',
           foreground: '#111827',
