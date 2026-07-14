@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const xlsx = require('xlsx');
 const About = require('./models/About');
@@ -132,6 +133,12 @@ const seedWindowsFromExcel = async () => {
   }
 
   const excelPath = path.resolve(__dirname, '../Excel/Humna Namaa Wirtuu Damee Sulultaa.xlsx');
+
+  if (!fs.existsSync(excelPath)) {
+    console.warn('Window seed skipped: Excel file not found on this server.');
+    return;
+  }
+
   const workbook = xlsx.readFile(excelPath);
   const sheet = workbook.Sheets['Foddaadhaan'];
   if (!sheet) {
