@@ -7,6 +7,10 @@ const windowRoutes = require('./windowRoutes');
 const aboutRoutes = require('./aboutRoutes');
 const contactRoutes = require('./contactRoutes');
 const requirementRoutes = require('./requirementRoutes');
+const announcementRoutes = require('./announcementRoutes');
+const faqRoutes = require('./faqRoutes');
+const testimonialRoutes = require('./testimonialRoutes');
+const adminRoutes = require('./adminRoutes');
 
 const router = express.Router();
 
@@ -17,5 +21,9 @@ router.use('/windows', windowRoutes);
 router.use('/about', aboutRoutes);
 router.use('/contact', contactRoutes);
 router.use('/requirements', requirementRoutes);
+router.use('/announcements', announcementRoutes);
+router.use('/faqs', faqRoutes);
+router.use('/testimonials', testimonialRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = router;
