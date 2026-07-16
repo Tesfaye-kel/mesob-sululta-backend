@@ -28,10 +28,10 @@ export default function Layout() {
         Skip to main content
       </a>
 
-      {/* Navbar with regular routing */}
+      {/* Floating capsule navbar */}
       <Navbar onSearchOpen={() => setSearchOpen(true)} />
 
-      <main id="main-content" className="flex-1 pt-20" tabIndex={-1}>
+      <main id="main-content" className="flex-1" tabIndex={-1}>
         <Outlet />
       </main>
 
