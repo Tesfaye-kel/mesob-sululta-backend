@@ -17,7 +17,6 @@ import ServicesSection from '@/components/sections/ServicesSection'
 import OrganizationSection from '@/components/sections/OrganizationSection'
 import AnnouncementsSection from '@/components/sections/AnnouncementsSection'
 import GallerySection from '@/components/sections/GallerySection'
-import DownloadsSection from '@/components/sections/DownloadsSection'
 import FAQSection from '@/components/sections/FAQSection'
 import ContactSection from '@/components/sections/ContactSection'
 import Footer from '@/components/layout/Footer'
@@ -64,11 +63,6 @@ export default function SinglePageHome() {
       {/* Gallery Section */}
       <section id="gallery">
         <GallerySection />
-      </section>
-
-      {/* Downloads Section */}
-      <section id="downloads">
-        <DownloadsSection />
       </section>
 
       {/* FAQ Section */}

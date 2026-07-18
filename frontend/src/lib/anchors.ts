@@ -7,7 +7,6 @@ export const HOME_ANCHORS = [
   'organization',
   'announcements',
   'gallery',
-  'downloads',
   'faq',
   'contact',
   'feedback',

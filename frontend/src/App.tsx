@@ -12,7 +12,6 @@ import AboutPage from '@/pages/AboutPage'
 import OrganizationPage from '@/pages/OrganizationPage'
 import AnnouncementsPage from '@/pages/AnnouncementsPage'
 import GalleryPage from '@/pages/GalleryPage'
-import DownloadsPage from '@/pages/DownloadsPage'
 import FAQPage from '@/pages/FAQPage'
 import ContactPage from '@/pages/ContactPage'
 import FeedbackPage from '@/pages/FeedbackPage'
@@ -26,10 +25,14 @@ import BarbaachisaaPage from '@/pages/BarbaachisaaPage'
 import AdminLogin from '@/pages/admin/AdminLogin'
 import AdminLayout from '@/pages/admin/AdminLayout'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
+import AdminAbout from '@/pages/admin/AdminAbout'
 import AdminAnnouncements from '@/pages/admin/AdminAnnouncements'
+import AdminServices from '@/pages/admin/AdminServices'
 import AdminFAQs from '@/pages/admin/AdminFAQs'
 import AdminTestimonials from '@/pages/admin/AdminTestimonials'
 import AdminOrganizations from '@/pages/admin/AdminOrganizations'
+import AdminGallery from '@/pages/admin/AdminGallery'
+import AdminContact from '@/pages/admin/AdminContact'
 import AdminUsers from '@/pages/admin/AdminUsers'
 import AdminProfile from '@/pages/admin/AdminProfile'
 import AdminSettings from '@/pages/admin/AdminSettings'
@@ -71,7 +74,6 @@ export default function App() {
                     <Route path="organization" element={<PageWrapper><OrganizationPage /></PageWrapper>} />
                     <Route path="announcements" element={<PageWrapper><AnnouncementsPage /></PageWrapper>} />
                     <Route path="gallery" element={<PageWrapper><GalleryPage /></PageWrapper>} />
-                    <Route path="downloads" element={<PageWrapper><DownloadsPage /></PageWrapper>} />
                     <Route path="faq" element={<PageWrapper><FAQPage /></PageWrapper>} />
                     <Route path="contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
                     <Route path="feedback" element={<PageWrapper><FeedbackPage /></PageWrapper>} />
@@ -83,10 +85,14 @@ export default function App() {
                   <Route path="/Admin" element={<AdminRoute />}>
                     <Route element={<AdminLayout />}>
                       <Route path="dashboard" element={<AdminDashboard />} />
+                      <Route path="about" element={<AdminAbout />} />
                       <Route path="announcements" element={<AdminAnnouncements />} />
+                      <Route path="services" element={<AdminServices />} />
                       <Route path="faqs" element={<AdminFAQs />} />
                       <Route path="testimonials" element={<AdminTestimonials />} />
                       <Route path="organizations" element={<AdminOrganizations />} />
+                      <Route path="gallery" element={<AdminGallery />} />
+                      <Route path="contact" element={<AdminContact />} />
                       <Route path="users" element={<AdminUsers />} />
                       <Route path="profile" element={<AdminProfile />} />
                       <Route path="settings" element={<AdminSettings />} />

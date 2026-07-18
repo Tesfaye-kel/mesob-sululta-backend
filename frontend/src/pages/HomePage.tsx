@@ -13,7 +13,6 @@ import Partners from '@/components/home/Partners'
 import AboutSection from '@/components/sections/AboutSection'
 import OrganizationSection from '@/components/sections/OrganizationSection'
 import GallerySection from '@/components/sections/GallerySection'
-import DownloadsSection from '@/components/sections/DownloadsSection'
 import FeedbackSection from '@/components/sections/FeedbackSection'
 import AnnouncementsSection from '@/components/sections/AnnouncementsSection'
 import FAQSection from '@/components/sections/FAQSection'
@@ -219,19 +218,6 @@ export default function HomePage() {
       </HomeSection>
 
       <Testimonials />
-
-      {/* Downloads */}
-      <HomeSection
-        id="downloads"
-        title={t.downloads.title}
-        subtitle={t.downloads.subtitle}
-        linkTo="/downloads"
-        linkLabel={t.common.viewMore}
-      >
-        <div className="section-padding pt-0">
-          <DownloadsSection />
-        </div>
-      </HomeSection>
 
       {/* FAQ */}
       <HomeSection

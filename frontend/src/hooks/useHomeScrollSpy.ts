@@ -14,7 +14,6 @@ export type HomeSectionId =
   | 'organization'
   | 'announcements'
   | 'gallery'
-  | 'downloads'
   | 'faq'
   | 'contact'
   | 'feedback'

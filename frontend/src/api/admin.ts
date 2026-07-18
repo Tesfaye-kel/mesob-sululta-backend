@@ -170,6 +170,102 @@ export const createOrganization = (data: Partial<OrganizationSummary>) => authFe
 export const updateOrganization = (id: string, data: Partial<OrganizationSummary>) => authFetch<OrganizationSummary>(`/organizations/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteOrganization = (id: string) => authFetch<{ message: string }>(`/organizations/${id}`, { method: 'DELETE' })
 
+// ─── About ──────────────────────────────────────────────────────
+export interface AboutContent {
+  _id: string
+  mission: MultiLang
+  vision: MultiLang
+  objectives: MultiLang
+  branchIntroduction: MultiLang
+  history: MultiLang
+  createdAt: string
+  updatedAt: string
+}
+
+export const getAbout = () => authFetch<AboutContent>('/about')
+export const updateAbout = (data: Partial<AboutContent>) => authFetch<AboutContent>('/about', { method: 'PUT', body: JSON.stringify(data) })
+
+// ─── Contact ────────────────────────────────────────────────────
+export interface ContactContent {
+  _id: string
+  address: MultiLang
+  phone: string
+  email: string
+  workingHours: MultiLang
+  mapEmbedUrl: string
+  createdAt: string
+  updatedAt: string
+}
+
+export const getContact = () => authFetch<ContactContent>('/contact')
+export const updateContact = (data: Partial<ContactContent>) => authFetch<ContactContent>('/contact', { method: 'PUT', body: JSON.stringify(data) })
+
+// ─── Gallery ────────────────────────────────────────────────────
+export interface GalleryItem {
+  _id: string
+  title: MultiLang
+  description: MultiLang
+  imageUrl: string
+  category: string
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
+export const getGalleryItemsList = () => authFetch<GalleryItem[]>('/gallery')
+export const createGalleryItem = (data: Partial<GalleryItem>) => authFetch<GalleryItem>('/gallery', { method: 'POST', body: JSON.stringify(data) })
+export const updateGalleryItem = (id: string, data: Partial<GalleryItem>) => authFetch<GalleryItem>(`/gallery/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteGalleryItem = (id: string) => authFetch<{ message: string }>(`/gallery/${id}`, { method: 'DELETE' })
+
+// ─── Windows (admin) ────────────────────────────────────────────
+export interface WindowAdmin {
+  _id: string
+  number: number
+  organization: { _id: string; name: MultiLang }
+  services: Array<{ _id: string; name: MultiLang }>
+  createdAt: string
+}
+
+export const getWindowsAdmin = () => authFetch<WindowAdmin[]>('/windows')
+export const createWindow = (data: { number: number; organization: string; services?: string[] }) => authFetch<WindowAdmin>('/windows', { method: 'POST', body: JSON.stringify(data) })
+export const updateWindow = (id: string, data: { number?: number; organization?: string; services?: string[] }) => authFetch<WindowAdmin>(`/windows/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteWindow = (id: string) => authFetch<{ message: string }>(`/windows/${id}`, { method: 'DELETE' })
+
+// ─── Services (admin) ────────────────────────────────────────────
+export interface ServiceAdmin {
+  _id: string
+  name: MultiLang
+  description: MultiLang
+  organization: string | { _id: string; name: MultiLang }
+  requiredDocuments: string[]
+  fee: number
+  processingTime: string
+  workingHours: string
+  contactPhone: string
+  createdAt: string
+}
+
+export const getServicesAdmin = (orgId?: string) => authFetch<ServiceAdmin[]>(`/services${orgId ? `?organizationId=${orgId}` : ''}`)
+export const createService = (data: Partial<ServiceAdmin>) => authFetch<ServiceAdmin>('/services', { method: 'POST', body: JSON.stringify(data) })
+export const updateService = (id: string, data: Partial<ServiceAdmin>) => authFetch<ServiceAdmin>(`/services/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteService = (id: string) => authFetch<{ message: string }>(`/services/${id}`, { method: 'DELETE' })
+
+// ─── Requirements (admin) ────────────────────────────────────────
+export interface RequirementAdmin {
+  _id: string
+  service: string | { _id: string; name: MultiLang }
+  requirementText: MultiLang
+  notes: MultiLang
+  isMandatory: boolean
+  sequenceNo: number
+  createdAt: string
+}
+
+export const getRequirementsByService = (serviceId: string) => authFetch<RequirementAdmin[]>(`/requirements?serviceId=${serviceId}`)
+export const createRequirement = (data: Partial<RequirementAdmin>) => authFetch<RequirementAdmin>('/requirements', { method: 'POST', body: JSON.stringify(data) })
+export const updateRequirement = (id: string, data: Partial<RequirementAdmin>) => authFetch<RequirementAdmin>(`/requirements/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteRequirement = (id: string) => authFetch<{ message: string }>(`/requirements/${id}`, { method: 'DELETE' })
+
 // ─── Users (admin only) ─────────────────────────────────────────
 export const getUsers = () => authFetch<Array<{ _id: string; name: string; email: string; role: string }>>('/admin/users')
 export const deleteUser = (id: string) => authFetch<{ message: string }>(`/admin/users/${id}`, { method: 'DELETE' })

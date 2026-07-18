@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Megaphone, HelpCircle, MessageSquareQuote,
   Building2, Users, UserCircle, Settings, LogOut,
   ChevronLeft, Menu, X, Shield, Sun, Moon,
+  Info, Image, Phone, Wrench,
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -12,10 +13,14 @@ import { cn } from '@/lib/utils'
 
 const sidebarLinks = [
   { to: '/Admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/Admin/about', label: 'About', icon: Info },
   { to: '/Admin/announcements', label: 'Announcements', icon: Megaphone },
-  { to: '/Admin/faqs', label: 'FAQs', icon: HelpCircle },
-  { to: '/Admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
+  { to: '/Admin/services', label: 'Services', icon: Wrench },
   { to: '/Admin/organizations', label: 'Organizations', icon: Building2 },
+  { to: '/Admin/gallery', label: 'Gallery', icon: Image },
+  { to: '/Admin/faqs', label: 'FAQs', icon: HelpCircle },
+  { to: '/Admin/contact', label: 'Contact', icon: Phone },
+  { to: '/Admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
   { to: '/Admin/users', label: 'Users', icon: Users },
   { to: '/Admin/profile', label: 'Profile', icon: UserCircle },
   { to: '/Admin/settings', label: 'Settings', icon: Settings },

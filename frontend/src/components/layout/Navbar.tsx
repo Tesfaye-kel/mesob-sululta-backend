@@ -29,6 +29,54 @@ const navItems: NavItem[] = [
   { key: 'contact', path: '/contact', anchor: 'contact' },
 ]
 
+// Custom flag SVGs as React components for small inline display
+function USFlag({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size * 0.6} viewBox="0 0 16 10" aria-hidden>
+      <rect width="16" height="10" fill="#fff" />
+      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => i % 2 === 0 && (
+        <rect key={i} x="0" y={i * 1.25} width="16" height="0.625" fill="#B22234" />
+      ))}
+      <rect width="6.4" height="5" fill="#3C3B6E" />
+      {[0, 1, 2, 3, 4].map(row => 
+        [0, 1, 2, 3, 4].map(col => (
+          <circle key={`${row}-${col}`} cx={0.8 + col * 1.28} cy={0.5 + row * 1} r="0.15" fill="#fff" />
+        ))
+      )}
+    </svg>
+  )
+}
+
+function AmharaFlag({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size * 0.6} viewBox="0 0 16 10" aria-hidden>
+      <rect width="16" height="10" fill="#DA251D" />
+      <rect y="3.33" width="16" height="3.34" fill="#FFD700" />
+      <rect y="6.67" width="16" height="3.33" fill="#0055A4" />
+    </svg>
+  )
+}
+
+function OromoFlag({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size * 0.6} viewBox="0 0 16 10" aria-hidden>
+      <rect width="16" height="10" fill="#DA251D" />
+      <rect y="3.33" width="16" height="3.34" fill="#FFD700" />
+      <rect y="6.67" width="16" height="3.33" fill="#1EB53A" />
+      <circle cx="8" cy="5" r="2.2" fill="#0055A4" />
+      <circle cx="8" cy="5" r="1.5" fill="#FFD700" />
+      <polygon points="8,3.5 8.8,4.8 10.2,4.8 9.1,5.8 9.5,7.2 8,6.5 6.5,7.2 6.9,5.8 5.8,4.8 7.2,4.8" fill="#1EB53A" />
+    </svg>
+  )
+}
+
+const FlagIcon = ({ code, size = 16 }: { code: string; size?: number }) => {
+  if (code === 'en') return <USFlag size={size} />
+  if (code === 'am') return <AmharaFlag size={size} />
+  if (code === 'or') return <OromoFlag size={size} />
+  return null
+}
+
 const languages: { code: Language; label: string; short: string }[] = [
   { code: 'en', label: 'English', short: 'EN' },
   { code: 'am', label: 'አማርኛ', short: 'አማ' },
@@ -41,7 +89,7 @@ interface NavbarProps {
 
 const scrollableOnHomeKeys: NavItem['key'][] = [
   'about', 'services', 'organization', 'announcements',
-  'gallery', 'downloads', 'feedback', 'faq', 'contact',
+  'gallery', 'feedback', 'faq', 'contact',
 ]
 
 // Animation variants for premium micro-interactions
@@ -139,7 +187,7 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
 
   return (
     <>
-      {/* Floating Navbar Container */}
+      {/* Single-row fixed navbar - logo, nav, actions all in one line */}
       <motion.header
         initial={{ y: -100 }}
         animate={{
@@ -149,50 +197,139 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className={cn(
           'fixed top-0 left-0 right-0 z-50 w-full',
-          'pointer-events-none', // Allow clicks to pass through to the nav capsule
+          'pointer-events-none'
         )}
       >
-        {/* Top bar with logo - shown on scroll */}
         <motion.div
-          animate={{
-            opacity: scrolled ? 1 : 0,
-            height: scrolled ? 'auto' : 0,
-          }}
-          transition={{ duration: 0.25, ease: 'easeInOut' }}
           className={cn(
-            'overflow-hidden pointer-events-auto',
-            'bg-[#3C58A5]/95 dark:bg-[#1e2d5a]/95',
+            'pointer-events-auto',
+            'bg-[#1a3a6b]/95 dark:bg-[#0f1f3d]/95',
             'backdrop-blur-md border-b border-white/10'
           )}
+          animate={{
+            opacity: scrolled ? 1 : 0.92,
+          }}
+          transition={{ duration: 0.25, ease: 'easeInOut' }}
         >
-          <div className="container-gov flex items-center justify-between h-16">
+          <div className="container-gov flex items-center justify-between h-14 lg:h-16">
+            {/* Logo */}
             <NavLink
               to="/"
-              className="flex items-center gap-3 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg"
+              className="flex items-center gap-2 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg"
               aria-label="MESOB Center Home"
             >
-              <MesobLogo size={36} />
+              <MesobLogo size={32} />
               <div className="hidden sm:block">
-                <p className="font-bold text-white text-sm leading-tight tracking-wide">{t.siteName}</p>
-                <p className="text-[10px] text-white/60 leading-tight">{t.siteTagline}</p>
+                <p className="font-bold text-white text-xs leading-tight tracking-wide">{t.siteName}</p>
+                <p className="text-[9px] text-white/60 leading-tight">{t.siteTagline}</p>
               </div>
             </NavLink>
 
+            {/* Nav items - centered */}
+            <nav className="hidden lg:flex items-center gap-0.5" aria-label="Main navigation">
+              {navItems.map((item) => {
+                const isActive = isHome
+                  ? activeHomeSection === item.anchor
+                  : location.pathname === item.path
+
+                return (
+                  <motion.div
+                    key={item.path}
+                    variants={navItemVariants}
+                    initial="idle"
+                    whileHover="hover"
+                    whileTap="tap"
+                    className="relative"
+                  >
+                    {isHome ? (
+                      <button
+                        type="button"
+                        onClick={() => handleNavClick(item)}
+                        className="relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50 rounded-lg"
+                        aria-current={isActive ? 'true' : undefined}
+                      >
+                        <span
+                          className={cn(
+                            'relative inline-flex items-center px-2.5 py-1.5',
+                            'text-xs font-semibold whitespace-nowrap cursor-pointer select-none',
+                            'transition-colors duration-200',
+                            'rounded-lg',
+                            isActive
+                              ? 'text-white'
+                              : 'text-white/75 hover:text-white'
+                          )}
+                        >
+                          {isActive && (
+                            <motion.span
+                              layoutId="nav-capsule"
+                              className="absolute inset-0 rounded-lg bg-white/15"
+                              transition={{
+                                type: 'spring',
+                                stiffness: 380,
+                                damping: 30,
+                                mass: 0.8,
+                              }}
+                              aria-hidden
+                            />
+                          )}
+                          <span className="relative z-10">{t.nav[item.key]}</span>
+                        </span>
+                      </button>
+                    ) : (
+                      <NavLink
+                        to={item.path}
+                        end={item.path === '/'}
+                        className="relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50 rounded-lg"
+                        aria-current={isActive ? 'page' : undefined}
+                      >
+                        <span
+                          className={cn(
+                            'relative inline-flex items-center px-2.5 py-1.5',
+                            'text-xs font-semibold whitespace-nowrap cursor-pointer select-none',
+                            'transition-colors duration-200',
+                            'rounded-lg',
+                            isActive
+                              ? 'text-white'
+                              : 'text-white/75 hover:text-white'
+                          )}
+                        >
+                          {isActive && (
+                            <motion.span
+                              layoutId="nav-capsule"
+                              className="absolute inset-0 rounded-lg bg-white/15"
+                              transition={{
+                                type: 'spring',
+                                stiffness: 380,
+                                damping: 30,
+                                mass: 0.8,
+                              }}
+                              aria-hidden
+                            />
+                          )}
+                          <span className="relative z-10">{t.nav[item.key]}</span>
+                        </span>
+                      </NavLink>
+                    )}
+                  </motion.div>
+                )
+              })}
+            </nav>
+
             {/* Right side actions */}
             <div className="flex items-center gap-0.5">
-              {/* Language dropdown */}
+              {/* Language dropdown with flag on the button */}
               <div className="relative" ref={langRef}>
                 <button
                   onClick={() => setLangOpen(o => !o)}
-                  className={cn(iconBtn, 'flex items-center gap-1.5 px-3')}
+                  className={cn(iconBtn, 'flex items-center gap-1.5 px-2.5')}
                   aria-label="Select language"
                   aria-expanded={langOpen}
                   aria-haspopup="listbox"
                 >
-                  <Globe className="h-4 w-4 shrink-0" aria-hidden />
-                  <span className="hidden sm:inline text-sm font-medium">{currentLang.short}</span>
+                  <FlagIcon code={currentLang.code} size={18} />
+                  <span className="hidden sm:inline text-sm font-medium">{currentLang.label}</span>
                   <ChevronDown
-                    className={cn('h-3.5 w-3.5 transition-transform duration-200', langOpen && 'rotate-180')}
+                    className={cn('h-3 w-3 transition-transform duration-200', langOpen && 'rotate-180')}
                     aria-hidden
                   />
                 </button>
@@ -207,7 +344,7 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                       exit={{ opacity: 0, y: -8, scale: 0.96 }}
                       transition={{ duration: 0.15, ease: 'easeOut' }}
                       className={cn(
-                        'absolute right-0 top-full mt-2 w-44 rounded-xl py-1.5 z-[9999] overflow-hidden',
+                        'absolute right-0 top-full mt-2 w-48 rounded-xl py-1.5 z-[9999] overflow-hidden',
                         'bg-white dark:bg-gray-800',
                         'border border-gray-200 dark:border-gray-600',
                         'shadow-xl dark:shadow-black/50'
@@ -223,15 +360,18 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                             onClick={() => {
                               setLanguage(lang.code)
                               setLangOpen(false)
+                              // Navigate to same page to reload with new language
+                              window.location.reload()
                             }}
                             className={cn(
-                              'w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors duration-150',
+                              'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150',
                               language === lang.code
                                 ? 'bg-brand-gold/10 dark:bg-brand-gold/20 text-brand-gold dark:text-yellow-400 font-semibold'
                                 : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/70'
                             )}
                           >
-                            <span>{lang.label}</span>
+                            <FlagIcon code={lang.code} size={16} />
+                            <span className="flex-1 text-left">{lang.label}</span>
                             <span className="text-xs font-mono text-gray-400 dark:text-gray-500">{lang.short}</span>
                           </motion.button>
                         </li>
@@ -267,6 +407,13 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                 <Search className="h-[18px] w-[18px]" aria-hidden />
               </button>
 
+              {/* Ethiopian flag colors accent - rightmost */}
+              <div className="hidden sm:flex items-center gap-1 pl-2 ml-1 border-l border-white/15">
+                <span className="w-2 h-2 rounded-full bg-[#1A6B3C]" aria-hidden />
+                <span className="w-2 h-2 rounded-full bg-[#C8961E]" aria-hidden />
+                <span className="w-2 h-2 rounded-full bg-[#B91C1C]" aria-hidden />
+              </div>
+
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileOpen(o => !o)}
@@ -288,122 +435,6 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
               </button>
             </div>
           </div>
-        </motion.div>
-
-        {/* Floating Capsule Navigation */}
-        <motion.div
-          className={cn(
-            'pointer-events-auto',
-            'flex justify-center',
-            'px-4 pt-2'
-          )}
-          animate={{
-            y: scrolled ? 0 : 8,
-          }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-        >
-          <nav
-            className={cn(
-              'inline-flex items-center gap-1',
-              'px-2 py-1.5',
-              'rounded-2xl',
-              'bg-white/90 dark:bg-gray-900/90',
-              'backdrop-blur-xl',
-              'shadow-lg shadow-black/5 dark:shadow-black/20',
-              'border border-gray-200/50 dark:border-gray-700/50',
-              'ring-1 ring-black/5 dark:ring-white/5',
-            )}
-            aria-label="Main navigation"
-          >
-            {navItems.map((item) => {
-              const isActive = isHome
-                ? activeHomeSection === item.anchor
-                : location.pathname === item.path
-
-              return (
-                <motion.div
-                  key={item.path}
-                  variants={navItemVariants}
-                  initial="idle"
-                  whileHover="hover"
-                  whileTap="tap"
-                  className="relative"
-                >
-                  {isHome ? (
-                    <button
-                      type="button"
-                      onClick={() => handleNavClick(item)}
-                      className="relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50 rounded-lg"
-                      aria-current={isActive ? 'true' : undefined}
-                    >
-                      <span
-                        className={cn(
-                          'relative inline-flex items-center px-3.5 py-2',
-                          'text-xs font-semibold whitespace-nowrap cursor-pointer select-none',
-                          'transition-colors duration-200',
-                          'rounded-xl',
-                          isActive
-                            ? 'text-white'
-                            : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                        )}
-                      >
-                        {isActive && (
-                          <motion.span
-                            layoutId="nav-capsule"
-                            className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-green to-brand-green-dark shadow-md shadow-brand-green/20"
-                            transition={{
-                              type: 'spring',
-                              stiffness: 380,
-                              damping: 30,
-                              mass: 0.8,
-                            }}
-                            style={{ boxShadow: '0 2px 12px rgba(26, 107, 60, 0.3)' }}
-                            aria-hidden
-                          />
-                        )}
-                        <span className="relative z-10">{t.nav[item.key]}</span>
-                      </span>
-                    </button>
-                  ) : (
-                    <NavLink
-                      to={item.path}
-                      end={item.path === '/'}
-                      className="relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50 rounded-lg"
-                      aria-current={isActive ? 'page' : undefined}
-                    >
-                      <span
-                        className={cn(
-                          'relative inline-flex items-center px-3.5 py-2',
-                          'text-xs font-semibold whitespace-nowrap cursor-pointer select-none',
-                          'transition-colors duration-200',
-                          'rounded-xl',
-                          isActive
-                            ? 'text-white'
-                            : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-                        )}
-                      >
-                        {isActive && (
-                          <motion.span
-                            layoutId="nav-capsule"
-                            className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-green to-brand-green-dark shadow-md shadow-brand-green/20"
-                            transition={{
-                              type: 'spring',
-                              stiffness: 380,
-                              damping: 30,
-                              mass: 0.8,
-                            }}
-                            style={{ boxShadow: '0 2px 12px rgba(26, 107, 60, 0.3)' }}
-                            aria-hidden
-                          />
-                        )}
-                        <span className="relative z-10">{t.nav[item.key]}</span>
-                      </span>
-                    </NavLink>
-                  )}
-                </motion.div>
-              )
-            })}
-          </nav>
         </motion.div>
       </motion.header>
 

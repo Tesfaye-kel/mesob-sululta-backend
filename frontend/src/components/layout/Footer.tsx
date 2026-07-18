@@ -12,7 +12,8 @@ export default function Footer() {
     { labelEn: 'Organization',  labelAm: 'ድርጅት',          labelOr: 'Dhaabbata',       path: '/organization' },
     { labelEn: 'Announcements', labelAm: 'ማስታወቂያዎች',     labelOr: 'Beeksisaalee',    path: '/announcements' },
     { labelEn: 'Gallery',       labelAm: 'ጋለሪ',           labelOr: 'Galerii',         path: '/gallery' },
-    { labelEn: 'Downloads',     labelAm: 'ማውረጃ',          labelOr: 'Buufannaa',       path: '/downloads' },
+    { labelEn: 'FAQ',           labelAm: 'ጥያቄዎች',        labelOr: 'Gaaffilee',       path: '/faq' },
+    { labelEn: 'Contact',       labelAm: 'ያናግሩን',         labelOr: 'Nu Qunnamaa',     path: '/contact' },
   ]
 
   const serviceLinks = [

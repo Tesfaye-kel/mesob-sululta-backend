@@ -10,6 +10,7 @@ const requirementRoutes = require('./requirementRoutes');
 const announcementRoutes = require('./announcementRoutes');
 const faqRoutes = require('./faqRoutes');
 const testimonialRoutes = require('./testimonialRoutes');
+const galleryRoutes = require('./galleryRoutes');
 const adminRoutes = require('./adminRoutes');
 
 const router = express.Router();
@@ -24,6 +25,7 @@ router.use('/requirements', requirementRoutes);
 router.use('/announcements', announcementRoutes);
 router.use('/faqs', faqRoutes);
 router.use('/testimonials', testimonialRoutes);
+router.use('/gallery', galleryRoutes);
 router.use('/admin', adminRoutes);
 
 module.exports = router;

@@ -26,7 +26,7 @@ export default function MesobLogo({ size = 48, className = '', animate = true }:
     <motion.div
       animate={{ rotate: 360 }}
       transition={{
-        duration: 20,       // slow gentle spin
+        duration: 30,       // very slow gentle spin — subtle and professional
         repeat: Infinity,
         ease: 'linear',
       }}
