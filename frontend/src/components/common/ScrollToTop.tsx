@@ -16,5 +16,5 @@ export default function ScrollToTop() {
     return () => window.clearTimeout(t)
   }, [pathname])
 
-  return null
+  return null   
 }
