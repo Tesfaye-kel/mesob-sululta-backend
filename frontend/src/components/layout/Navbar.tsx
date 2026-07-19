@@ -211,7 +211,7 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
           }}
           transition={{ duration: 0.25, ease: 'easeInOut' }}
         >
-          <div className="container-gov flex items-center justify-between h-14 lg:h-16">
+          <div className="container-gov flex items-center justify-between h-20 lg:h-16">
             {/* Logo */}
             <NavLink
               to="/"

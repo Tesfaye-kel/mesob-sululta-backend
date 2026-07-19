@@ -12,6 +12,11 @@ const gallerySchema = new mongoose.Schema(
       am: { type: String, default: '' },
       or: { type: String, default: '' },
     },
+    caption: {
+      en: { type: String, default: '' },
+      am: { type: String, default: '' },
+      or: { type: String, default: '' },
+    },
     imageUrl: { type: String, default: '' },
     category: {
       type: String,

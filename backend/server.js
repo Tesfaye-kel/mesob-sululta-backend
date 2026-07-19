@@ -7,6 +7,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+const path = require('path');
 const apiRoutes = require('./routes');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 const { seedOrganizations} = require('./seed');
@@ -16,6 +17,9 @@ const app = express();
 
 // Security headers
 app.use(helmet());
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Rate limiting (simple protection against brute-force / abuse)
 app.use(

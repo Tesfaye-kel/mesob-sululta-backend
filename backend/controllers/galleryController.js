@@ -1,4 +1,6 @@
 const Gallery = require('../models/Gallery');
+const path = require('path');
+const fs = require('fs');
 
 const getGalleryItems = async (req, res, next) => {
   try {
@@ -55,10 +57,23 @@ const deleteGalleryItem = async (req, res, next) => {
   }
 };
 
+const uploadGalleryImage = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+    const imageUrl = `/uploads/gallery/${req.file.filename}`;
+    res.json({ imageUrl, filename: req.file.filename });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getGalleryItems,
   getGalleryItem,
   createGalleryItem,
   updateGalleryItem,
   deleteGalleryItem,
+  uploadGalleryImage,
 };
