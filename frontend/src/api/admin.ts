@@ -171,6 +171,27 @@ export const updateOrganization = (id: string, data: Partial<OrganizationSummary
 export const deleteOrganization = (id: string) => authFetch<{ message: string }>(`/organizations/${id}`, { method: 'DELETE' })
 
 // ─── About ──────────────────────────────────────────────────────
+export interface AboutValue {
+  _id?: string
+  icon: string
+  title: MultiLang
+  description: MultiLang
+  order: number
+}
+
+export interface AboutStat {
+  _id?: string
+  value: string
+  label: MultiLang
+  order: number
+}
+
+export interface AboutStory {
+  _id?: string
+  paragraph: MultiLang
+  order: number
+}
+
 export interface AboutContent {
   _id: string
   mission: MultiLang
@@ -178,12 +199,31 @@ export interface AboutContent {
   objectives: MultiLang
   branchIntroduction: MultiLang
   history: MultiLang
+  story: AboutStory[]
+  values: AboutValue[]
+  stats: AboutStat[]
+  managerMessage: MultiLang
+  managerName: string
+  managerTitle: MultiLang
   createdAt: string
   updatedAt: string
 }
 
 export const getAbout = () => authFetch<AboutContent>('/about')
 export const updateAbout = (data: Partial<AboutContent>) => authFetch<AboutContent>('/about', { method: 'PUT', body: JSON.stringify(data) })
+
+// About sub-document CRUD
+export const addAboutStory = (data: Partial<AboutStory>) => authFetch<AboutContent>('/about/stories', { method: 'POST', body: JSON.stringify(data) })
+export const updateAboutStory = (id: string, data: Partial<AboutStory>) => authFetch<AboutContent>(`/about/stories/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteAboutStory = (id: string) => authFetch<{ message: string }>(`/about/stories/${id}`, { method: 'DELETE' })
+
+export const addAboutValue = (data: Partial<AboutValue>) => authFetch<AboutContent>('/about/values', { method: 'POST', body: JSON.stringify(data) })
+export const updateAboutValue = (id: string, data: Partial<AboutValue>) => authFetch<AboutContent>(`/about/values/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteAboutValue = (id: string) => authFetch<{ message: string }>(`/about/values/${id}`, { method: 'DELETE' })
+
+export const addAboutStat = (data: Partial<AboutStat>) => authFetch<AboutContent>('/about/stats', { method: 'POST', body: JSON.stringify(data) })
+export const updateAboutStat = (id: string, data: Partial<AboutStat>) => authFetch<AboutContent>(`/about/stats/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteAboutStat = (id: string) => authFetch<{ message: string }>(`/about/stats/${id}`, { method: 'DELETE' })
 
 // ─── Contact ────────────────────────────────────────────────────
 export interface ContactContent {
@@ -205,6 +245,7 @@ export interface GalleryItem {
   _id: string
   title: MultiLang
   description: MultiLang
+  caption: MultiLang
   imageUrl: string
   category: string
   order: number
@@ -265,6 +306,26 @@ export const getRequirementsByService = (serviceId: string) => authFetch<Require
 export const createRequirement = (data: Partial<RequirementAdmin>) => authFetch<RequirementAdmin>('/requirements', { method: 'POST', body: JSON.stringify(data) })
 export const updateRequirement = (id: string, data: Partial<RequirementAdmin>) => authFetch<RequirementAdmin>(`/requirements/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteRequirement = (id: string) => authFetch<{ message: string }>(`/requirements/${id}`, { method: 'DELETE' })
+
+// ─── Contact Messages ────────────────────────────────────────────
+export interface ContactMessage {
+  _id: string
+  name: string
+  email: string
+  subject: string
+  message: string
+  type: 'contact' | 'feedback'
+  isRead: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export const getContactMessages = (params?: string) => authFetch<ContactMessage[]>(`/contact-messages${params ? `?${params}` : ''}`)
+export const getContactMessage = (id: string) => authFetch<ContactMessage>(`/contact-messages/${id}`)
+export const createContactMessage = (data: Partial<ContactMessage>) => authFetch<ContactMessage>('/contact-messages', { method: 'POST', body: JSON.stringify(data) })
+export const updateContactMessage = (id: string, data: Partial<ContactMessage>) => authFetch<ContactMessage>(`/contact-messages/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const markContactMessageRead = (id: string) => authFetch<ContactMessage>(`/contact-messages/${id}/read`, { method: 'PUT' })
+export const deleteContactMessage = (id: string) => authFetch<{ message: string }>(`/contact-messages/${id}`, { method: 'DELETE' })
 
 // ─── Users (admin only) ─────────────────────────────────────────
 export const getUsers = () => authFetch<Array<{ _id: string; name: string; email: string; role: string }>>('/admin/users')

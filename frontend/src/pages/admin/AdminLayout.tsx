@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Megaphone, HelpCircle, MessageSquareQuote,
   Building2, Users, UserCircle, Settings, LogOut,
   ChevronLeft, Menu, X, Shield, Sun, Moon,
-  Info, Image, Phone, Wrench,
+  Info, Image, Phone, Wrench, MessageSquare,
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -20,6 +20,7 @@ const sidebarLinks = [
   { to: '/Admin/gallery', label: 'Gallery', icon: Image },
   { to: '/Admin/faqs', label: 'FAQs', icon: HelpCircle },
   { to: '/Admin/contact', label: 'Contact', icon: Phone },
+  { to: '/Admin/contact-messages', label: 'Messages', icon: MessageSquare },
   { to: '/Admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
   { to: '/Admin/users', label: 'Users', icon: Users },
   { to: '/Admin/profile', label: 'Profile', icon: UserCircle },

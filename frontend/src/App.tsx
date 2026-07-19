@@ -33,6 +33,7 @@ import AdminTestimonials from '@/pages/admin/AdminTestimonials'
 import AdminOrganizations from '@/pages/admin/AdminOrganizations'
 import AdminGallery from '@/pages/admin/AdminGallery'
 import AdminContact from '@/pages/admin/AdminContact'
+import AdminContactMessages from '@/pages/admin/AdminContactMessages'
 import AdminUsers from '@/pages/admin/AdminUsers'
 import AdminProfile from '@/pages/admin/AdminProfile'
 import AdminSettings from '@/pages/admin/AdminSettings'
@@ -93,6 +94,7 @@ export default function App() {
                       <Route path="organizations" element={<AdminOrganizations />} />
                       <Route path="gallery" element={<AdminGallery />} />
                       <Route path="contact" element={<AdminContact />} />
+                      <Route path="contact-messages" element={<AdminContactMessages />} />
                       <Route path="users" element={<AdminUsers />} />
                       <Route path="profile" element={<AdminProfile />} />
                       <Route path="settings" element={<AdminSettings />} />
