@@ -27,15 +27,28 @@ export default function ContactSection({ compact = false, showHeader = true }: C
   const { t } = useLanguage()
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({ resolver: zodResolver(schema) })
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: FormData) => {
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1500))
-    setLoading(false)
-    setSubmitted(true)
-    reset()
+    setError('')
+    try {
+      const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+      const res = await fetch(`${BASE}/contact-messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, type: 'contact' }),
+      })
+      if (!res.ok) throw new Error('Failed to send message')
+      setSubmitted(true)
+      reset()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const content = (
