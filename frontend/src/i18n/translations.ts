@@ -225,16 +225,16 @@ export const translations = {
     govName: 'Rippaabliika Dimookiraatawaa Federaalaa Itiyoophiyaa',
     oneStopShop: 'Giddu-gala Tajaajila Mootummaa Bakka Tokkotti',
     nav: {
-      home: 'Mana', about: "Waa'ee Keenya", services: 'Tajaajilaalee', organization: 'Dhaabbata',
-      departments: 'Kutaalee', announcements: 'Beeksisaalee', gallery: 'Galerii',
-      downloads: 'Buufannaa', faq: 'Gaaffilee', contact: 'Nu Qunnamaa', feedback: 'Yaada',
+      home: 'Mana', about: "Waa'ee Keenya", services: 'Tajaajiloota', organization: 'Dhaabbata',
+       announcements: 'Beeksisaalee', gallery: 'Galerii',
+       faq: 'Gaaffilee', contact: 'Nu Qunnamaa', feedback: 'Yaada',
     },
     topBar: { emergency: 'Hatattama: 911', search: 'Barbaadi', darkMode: 'Haala Gurraacha', language: 'Afaan' },
     hero: {
       badge: 'Poortaala Mootummaa Rasmaa', title: 'Giddaa MESOB Baga Nagaan Dhuftan', titleHighlight: 'Damee Sululta',
       subtitle: 'Giddu-gala tajaajila mootummaa bakka tokkotti amansiisaa. Tajaajila federaalaa 50+ ol salphatti argadhaa.',
-      cta1: 'Tajaajilaalee Ilaali', cta2: 'Beellama Qabadhu',
-      stat1Label: 'Lammiilee Tajaajilaman', stat2Label: 'Tajaajilaalee Jiran', stat3Label: 'Kutaalee', stat4Label: 'Sadarkaa Quufinsa',
+      cta1: 'Tajaajiloota Ilaali', cta2: 'Beellama Qabadhu',
+      stat1Label: 'Lammiilee Tajaajilaman', stat2Label: 'Tajaajiloota Jiran', stat3Label: 'Kutaalee', stat4Label: 'Sadarkaa Quufinsa',
     },
     stats: { citizensServed: 'Lammiilee Tajaajilaman', servicesAvailable: 'Tajaajilaalee Jiran', departments: 'Kutaalee', satisfaction: 'Sadarkaa Quufinsa', yearsOfService: 'Waggaa Tajaajilaa' },
     services: {
