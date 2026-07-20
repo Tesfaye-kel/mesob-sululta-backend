@@ -395,13 +395,13 @@
     @apply py-16 md:py-24;
   }
 
-  .section-title {
-    @apply text-3xl md:text-4xl font-bold text-gray-900 dark:text-white;
-  }
+ .section-title {
+  @apply text-3xl md:text-4xl font-bold text-gray-900 dark:text-white text-center;
+}
 
-  .section-subtitle {
-    @apply text-lg text-gray-600 dark:text-gray-400 mt-3 max-w-2xl;
-  }
+.section-subtitle {
+  @apply text-lg text-gray-600 dark:text-gray-400 mt-3 max-w-2xl text-center mx-auto;
+}
 
   .gov-badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase;

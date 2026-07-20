@@ -467,9 +467,9 @@ export default function Hero() {
 
       {/* Bottom wave */}
       <div className="absolute bottom-0 left-0 right-0" aria-hidden>
-        <svg viewBox="0 0 1440 80" className="w-full h-20 fill-current text-background dark:text-gray-900">
-          <path d="M0,80 L0,40 Q180,0 360,30 Q540,60 720,35 Q900,10 1080,40 Q1260,70 1440,30 L1440,80 Z" />
-        </svg>
+ <svg viewBox="0 0 1440 80" className="w-full h-20 fill-current text-background dark:text-gray-900">
+  <path d="M0,80 L0,30 H240 V50 H520 V25 H880 V60 H1200 V35 H1440 V80 Z" />
+</svg>
       </div>
     </section>
   )

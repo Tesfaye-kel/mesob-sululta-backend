@@ -16,7 +16,7 @@ export default function TajaajilaaPage() {
   const [error, setError] = useState<string | null>(null)
 
   // ── Localized strings ──────────────────────────────────────────────────────
-  const pageTitle    = language === 'am' ? 'አገልግሎቶች'      : language === 'or' ? 'Tajaajilaalee'      : 'Services'
+  const pageTitle    = language === 'am' ? 'አገልግሎቶች'      : language === 'or' ? 'Tajaajiloota'      : 'Services'
   const pageSubtitle = language === 'am' ? 'ፎዳ ወይም ቢሮ በማንኛቸውም ይፈልጉ' : language === 'or' ? 'Foddaadhaan ykn waajjirraan barbaadi' : 'Browse by service window or office'
   const foddaaHeading = language === 'am' ? 'አገልግሎቶች በፎዳ' : language === 'or' ? 'Tajaajiloota Foddaadhaan Bahe' : 'Services by Window'
   const officeHeading = language === 'am' ? 'አገልግሎቶች በቢሮ' : language === 'or' ? 'Tajaajiloota Waajjiraa'       : 'Services by Office'

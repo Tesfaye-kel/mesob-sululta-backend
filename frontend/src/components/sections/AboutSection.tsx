@@ -99,10 +99,10 @@ export default function AboutSection() {
             {t.about.history}
           </span>
           {/* Explicit dark text — visible on both light and dark backgrounds */}
-          <h2 className="">
+          <h2 className=" text-brand-blue">
             {t.about.ourStory}
           </h2>
-          <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed text-base">
+          <div className="space-y-4 text-gray-200 dark:text-gray-300 leading-relaxed text-base">
             <p>{get(storyText.p1)}</p>
             <p>{get(storyText.p2)}</p>
           </div>
@@ -169,7 +169,7 @@ export default function AboutSection() {
             {t.about.values}
             <span className="h-px w-8 bg-brand-green dark:bg-brand-green-light" />
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-brown">{t.about.values}</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-300 dark:text-brown">{t.about.values}</h2>
           <p className="mt-3 text-gray-600 dark:text-gray-400 max-w-xl mx-auto italic">{valuesSubtitle}</p>
         </Reveal>
 

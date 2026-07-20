@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
-import { Menu, X, Sun, Moon, Search, Globe, ChevronDown } from 'lucide-react'
+import { Menu, X, Sun, Moon, Search, ChevronDown } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useActiveRoute } from '@/contexts/ActiveRouteContext'
@@ -31,28 +31,87 @@ const navItems: NavItem[] = [
 
 // Custom flag SVGs as React components for small inline display
 function USFlag({ size = 16 }: { size?: number }) {
+  const flagWidth = 16
+  const flagHeight = 10
+  const stripeHeight = flagHeight / 13
+
+  const cantonWidth = flagWidth * 0.4
+  const cantonHeight = stripeHeight * 7
+
   return (
-    <svg width={size} height={size * 0.6} viewBox="0 0 16 10" aria-hidden>
-      <rect width="16" height="10" fill="#fff" />
-      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => i % 2 === 0 && (
-        <rect key={i} x="0" y={i * 1.25} width="16" height="0.625" fill="#B22234" />
+    <svg width={size} height={size * (flagHeight / flagWidth)} viewBox="0 0 16 10" aria-hidden>
+      <rect width={flagWidth} height={flagHeight} fill="#FFFFFF" />
+
+      {[0, 2, 4, 6, 8, 10, 12].map(i => (
+        <rect
+          key={`stripe-${i}`}
+          y={i * stripeHeight}
+          width={flagWidth}
+          height={stripeHeight}
+          fill="#B22234"
+        />
       ))}
-      <rect width="6.4" height="5" fill="#3C3B6E" />
-      {[0, 1, 2, 3, 4].map(row => 
-        [0, 1, 2, 3, 4].map(col => (
-          <circle key={`${row}-${col}`} cx={0.8 + col * 1.28} cy={0.5 + row * 1} r="0.15" fill="#fff" />
-        ))
-      )}
+
+      <rect width={cantonWidth} height={cantonHeight} fill="#3C3B6E" />
+
+      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(row => {
+        const isEvenRow = row % 2 === 0
+        const starsInRow = isEvenRow ? 6 : 5
+        
+        const ySpace = cantonHeight / 10
+        const cy = ySpace + row * ySpace
+
+        return Array.from({ length: starsInRow }).map((_, col) => {
+          const xSpace = cantonWidth / 12
+          const cx = isEvenRow 
+            ? xSpace + col * (xSpace * 2)
+            : (xSpace * 2) + col * (xSpace * 2)
+
+          return (
+            <circle
+              key={`star-${row}-${col}`}
+              cx={cx}
+              cy={cy}
+              r="0.14"
+              fill="#FFFFFF"
+            />
+          )
+        })
+      })}
     </svg>
   )
 }
 
 function AmharaFlag({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size * 0.6} viewBox="0 0 16 10" aria-hidden>
-      <rect width="16" height="10" fill="#DA251D" />
-      <rect y="3.33" width="16" height="3.34" fill="#FFD700" />
-      <rect y="6.67" width="16" height="3.33" fill="#0055A4" />
+    <svg width={size} height={size * 0.5} viewBox="0 0 16 8" aria-hidden>
+      <rect width="16" height="8" fill="#FCD116" />
+      <polygon 
+        points="
+          5.5,0 
+          16,0 
+          16,2.5 
+          10.5,8 
+          0,8 
+          0,5.5
+        " 
+        fill="#DA251D" 
+      />
+      <polygon
+        points="
+          8,2.7
+          8.35,3.7
+          9.4,3.7
+          8.55,4.3
+          8.85,5.3
+          8,4.7
+          7.15,5.3
+          7.45,4.3
+          6.6,3.7
+          7.65,3.7
+        "
+        fill="#FCD116"
+      />
     </svg>
   )
 }
@@ -60,12 +119,19 @@ function AmharaFlag({ size = 16 }: { size?: number }) {
 function OromoFlag({ size = 16 }: { size?: number }) {
   return (
     <svg width={size} height={size * 0.6} viewBox="0 0 16 10" aria-hidden>
-      <rect width="16" height="10" fill="#DA251D" />
-      <rect y="3.33" width="16" height="3.34" fill="#FFD700" />
-      <rect y="6.67" width="16" height="3.33" fill="#1EB53A" />
-      <circle cx="8" cy="5" r="2.2" fill="#0055A4" />
-      <circle cx="8" cy="5" r="1.5" fill="#FFD700" />
-      <polygon points="8,3.5 8.8,4.8 10.2,4.8 9.1,5.8 9.5,7.2 8,6.5 6.5,7.2 6.9,5.8 5.8,4.8 7.2,4.8" fill="#1EB53A" />
+      <rect width="16" height="3.33" fill="#E30613" />
+      <rect y="3.33" width="16" height="3.33" fill="#FFFFFF" />
+      <rect y="6.67" width="16" height="3.34" fill="#000000" />
+      <path
+        d="
+          M 7.2,4.8 
+          C 6.2,4.0 6.5,2.5 8.0,2.5 
+          C 9.5,2.5 9.8,4.0 8.8,4.8 
+          Z
+        "
+        fill="#087F23"
+      />
+      <path d="M 7.8,4.6 L 8.2,4.6 L 8.4,5.8 L 7.6,5.8 Z" fill="#654321" />
     </svg>
   )
 }
@@ -89,10 +155,9 @@ interface NavbarProps {
 
 const scrollableOnHomeKeys: NavItem['key'][] = [
   'about', 'services', 'organization', 'announcements',
-  'gallery', 'feedback', 'faq', 'contact',
+  'gallery', 'faq', 'contact',
 ]
 
-// Animation variants for premium micro-interactions
 const navItemVariants = {
   idle: { scale: 1 },
   hover: { scale: 1.05, transition: { type: 'spring', stiffness: 400, damping: 10 } },
@@ -125,19 +190,13 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [isVisible, setIsVisible] = useState(true)
   const langRef = useRef<HTMLDivElement>(null)
-  const lastScrollY = useRef(0)
 
-  // Track scroll for hide/show and background opacity
+  // Track scroll only for styling metrics (e.g. background changes)
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY
-      setIsVisible(currentScrollY < lastScrollY.current || currentScrollY < 80)
-      setScrolled(currentScrollY > 40)
-      lastScrollY.current = currentScrollY
+      setScrolled(window.scrollY > 40)
     }
-
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -187,12 +246,12 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
 
   return (
     <>
-      {/* Single-row fixed navbar - logo, nav, actions all in one line */}
+      {/* 100% Permanently Pinned Fixed Navbar */}
       <motion.header
-        initial={{ y: -100 }}
+        initial={{ y: 0 }}
         animate={{
-          y: isVisible ? 0 : -100,
-          opacity: isVisible ? 1 : 0,
+          y: 0,       // Pinned tightly to the view layout top boundary
+          opacity: 1, // Explicitly active and visible at all times
         }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className={cn(
@@ -317,7 +376,7 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
 
             {/* Right side actions */}
             <div className="flex items-center gap-0.5">
-              {/* Language dropdown with flag on the button */}
+              {/* Language dropdown */}
               <div className="relative" ref={langRef}>
                 <button
                   onClick={() => setLangOpen(o => !o)}
@@ -360,7 +419,6 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                             onClick={() => {
                               setLanguage(lang.code)
                               setLangOpen(false)
-                              // Navigate to same page to reload with new language
                               window.location.reload()
                             }}
                             className={cn(
@@ -407,11 +465,11 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                 <Search className="h-[18px] w-[18px]" aria-hidden />
               </button>
 
-              {/* Ethiopian flag colors accent - rightmost */}
+              {/* Cleaned Black, Red, and White Accent Dots */}
               <div className="hidden sm:flex items-center gap-1 pl-2 ml-1 border-l border-white/15">
-                <span className="w-2 h-2 rounded-full bg-[#1A6B3C]" aria-hidden />
-                <span className="w-2 h-2 rounded-full bg-[#C8961E]" aria-hidden />
-                <span className="w-2 h-2 rounded-full bg-[#B91C1C]" aria-hidden />
+                <span className="w-2 h-2 rounded-full bg-black" aria-hidden />
+                <span className="w-2 h-2 rounded-full bg-red-600" aria-hidden />
+                <span className="w-2 h-2 rounded-full bg-white" aria-hidden />
               </div>
 
               {/* Mobile hamburger */}
@@ -530,7 +588,6 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                 ))}
               </nav>
 
-              {/* Mobile language options */}
               <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-2">
                   {languages.map(lang => (
