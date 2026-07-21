@@ -8,13 +8,14 @@ import { formatDate } from '@/lib/utils'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-interface AnnouncementData {
+interface NewsData {
   _id: string
   title: { en: string; am: string; or: string }
   content: { en: string; am: string; or: string }
   category: string
   isFeatured: boolean
   publishedAt: string
+  coverImageUrl?: string
 }
 
 interface AnnouncementsSectionProps {
@@ -24,11 +25,11 @@ interface AnnouncementsSectionProps {
 
 export default function AnnouncementsSection({ compact = false, showHeader = true }: AnnouncementsSectionProps) {
   const { t, language } = useLanguage()
-  const [items, setItems] = useState<AnnouncementData[]>([])
+  const [items, setItems] = useState<NewsData[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`${BASE}/announcements?featured=true`)
+    fetch(`${BASE}/news?featured=true&published=true`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -46,8 +47,8 @@ export default function AnnouncementsSection({ compact = false, showHeader = tru
           <span className="gov-badge bg-brand-gold/10 text-brand-gold dark:bg-brand-gold/20 mb-3">
             Latest Updates
           </span>
-          <h2 className="section-title">{t.announcements.title}</h2>
-          <p className="section-subtitle mx-auto">{t.announcements.subtitle}</p>
+          <h2 className="section-title text-center">{t.announcements.title}</h2>
+          <p className="section-subtitle mx-auto text-center">{t.announcements.subtitle}</p>
         </AnimatedSection>
       )}
 

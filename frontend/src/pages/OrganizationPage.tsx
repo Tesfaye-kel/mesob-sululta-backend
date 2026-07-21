@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import PageHeader from '@/components/common/PageHeader'
 import OrganizationSection from '@/components/sections/OrganizationSection'
+import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function OrganizationPage() {
@@ -11,17 +11,11 @@ export default function OrganizationPage() {
   }, [])
 
   return (
-    <>
-      <PageHeader
-        title={t.organization.title}
-        subtitle={t.organization.subtitle}
-        breadcrumbs={[{ label: t.common.home, href: "/" }, { label: t.nav.organization }]}
-      />
-      <div className="section-padding">
+    <div className="section-padding">
+      <div className="container-gov">
+        <AnimatedHeading as="h1" className="text-center mb-8">{t.organization.title}</AnimatedHeading>
         <OrganizationSection />
       </div>
-    </>
+    </div>
   )
 }
-
-

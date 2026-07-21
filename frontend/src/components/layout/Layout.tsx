@@ -17,7 +17,7 @@ export default function Layout() {
 
   return (
     <div
-      className={`flex flex-col min-h-screen overflow-x-hidden ${isHomeRoute ? '' : 'bg-background'}`}
+      className={`flex flex-col min-h-screen overflow-x-hidden ${isHomeRoute ? '' : 'bg-gray-50/70 dark:bg-gray-900/40'}`}
       id="app-root"
     >
       {/* Skip to main content – accessibility */}

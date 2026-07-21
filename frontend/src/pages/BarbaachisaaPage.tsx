@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useLocation } from 'react-router-dom'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
-import PageHeader from '@/components/common/PageHeader'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import Breadcrumb from '@/components/tajaajila/Breadcrumb'
 import RequirementList from '@/components/tajaajila/RequirementList'
@@ -57,57 +56,45 @@ export default function BarbaachisaaPage() {
   }, [serviceId, language])
 
   return (
-    <>
-      <PageHeader
-        title={pageTitle}
-        breadcrumbs={[
-          { label: t.common.home, href: '/' },
-          { label: servicesNav, href: '/tajaajila' },
-          { label: backLabel, href: fromPath },
+    <div className="section-padding">
+      <div className="container-gov max-w-3xl">
+        <Breadcrumb crumbs={[
+          { label: servicesNav, to: '/tajaajila' },
+          { label: backLabel, to: fromPath },
           { label: pageTitle },
-        ]}
-      />
+        ]} />
 
-      <div className="section-padding">
-        <div className="container-gov max-w-3xl">
-          <Breadcrumb crumbs={[
-            { label: servicesNav, to: '/tajaajila' },
-            { label: backLabel, to: fromPath },
-            { label: pageTitle },
-          ]} />
+        <AnimatedHeading as="h2" className="mb-1 mt-4">{pageTitle}</AnimatedHeading>
 
-          <AnimatedHeading as="h2" className="mb-1">{pageTitle}</AnimatedHeading>
+        {service && (
+          <motion.p
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, delay: 0.1 }}
+            className="text-gray-600 dark:text-gray-400 text-sm mb-8 leading-relaxed"
+          >
+            {serviceName}
+          </motion.p>
+        )}
 
-          {service && (
-            <motion.p
-              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.1 }}
-              className="text-gray-600 dark:text-gray-400 text-sm mb-8 leading-relaxed"
-            >
-              {serviceName}
-            </motion.p>
-          )}
+        {loading && (
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-brand-green" aria-label={t.common.loading} />
+          </div>
+        )}
 
-          {loading && (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-brand-green" aria-label={t.common.loading} />
-            </div>
-          )}
+        {error && (
+          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 py-6">
+            <AlertCircle className="h-5 w-5 shrink-0" aria-hidden />
+            <span className="text-sm">{serverErr}</span>
+          </div>
+        )}
 
-          {error && (
-            <div className="flex items-center gap-2 text-red-600 dark:text-red-400 py-6">
-              <AlertCircle className="h-5 w-5 shrink-0" aria-hidden />
-              <span className="text-sm">{serverErr}</span>
-            </div>
-          )}
-
-          {!loading && !error && (
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
-              <RequirementList requirements={requirements} />
-            </motion.div>
-          )}
-        </div>
+        {!loading && !error && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
+            <RequirementList requirements={requirements} />
+          </motion.div>
+        )}
       </div>
-    </>
+    </div>
   )
 }

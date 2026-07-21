@@ -4,28 +4,54 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, Megaphone, HelpCircle, MessageSquareQuote,
   Building2, Users, UserCircle, Settings, LogOut,
-  ChevronLeft, Menu, X, Shield, Sun, Moon,
+  ChevronLeft, Menu, X, Shield, Sun, Moon, Globe,
   Info, Image, Phone, Wrench, MessageSquare,
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useLanguage } from '@/contexts/LanguageContext'
+import type { Language } from '@/i18n/translations'
 import { cn } from '@/lib/utils'
 
 const sidebarLinks = [
-  { to: '/Admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/Admin/about', label: 'About', icon: Info },
-  { to: '/Admin/announcements', label: 'News', icon: Megaphone },
-  { to: '/Admin/services', label: 'Services', icon: Wrench },
-  { to: '/Admin/organizations', label: 'Organizations', icon: Building2 },
-  { to: '/Admin/gallery', label: 'Gallery', icon: Image },
-  { to: '/Admin/faqs', label: 'FAQs', icon: HelpCircle },
-  { to: '/Admin/contact', label: 'Contact', icon: Phone },
-  { to: '/Admin/contact-messages', label: 'Messages', icon: MessageSquare },
-  { to: '/Admin/testimonials', label: 'Testimonials', icon: MessageSquareQuote },
-  { to: '/Admin/users', label: 'Users', icon: Users },
-  { to: '/Admin/profile', label: 'Profile', icon: UserCircle },
-  { to: '/Admin/settings', label: 'Settings', icon: Settings },
+  { to: '/Admin/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
+  { to: '/Admin/about', labelKey: 'about', icon: Info },
+  { to: '/Admin/announcements', labelKey: 'news', icon: Megaphone },
+  { to: '/Admin/services', labelKey: 'services', icon: Wrench },
+  { to: '/Admin/organizations', labelKey: 'organizations', icon: Building2 },
+  { to: '/Admin/gallery', labelKey: 'gallery', icon: Image },
+  { to: '/Admin/faqs', labelKey: 'faqs', icon: HelpCircle },
+  { to: '/Admin/contact', labelKey: 'contact', icon: Phone },
+  { to: '/Admin/contact-messages', labelKey: 'messages', icon: MessageSquare },
+  { to: '/Admin/testimonials', labelKey: 'testimonials', icon: MessageSquareQuote },
+  { to: '/Admin/users', labelKey: 'users', icon: Users },
+  { to: '/Admin/profile', labelKey: 'profile', icon: UserCircle },
+  { to: '/Admin/settings', labelKey: 'settings', icon: Settings },
 ]
+
+const adminLabels: Record<string, Record<string, string>> = {
+  en: {
+    dashboard: 'Dashboard', about: 'About', news: 'News', services: 'Services',
+    organizations: 'Organizations', gallery: 'Gallery', faqs: 'FAQs',
+    contact: 'Contact', messages: 'Messages', testimonials: 'Testimonials',
+    users: 'Users', profile: 'Profile', settings: 'Settings',
+    adminPanel: 'Admin Panel', theme: 'Theme', logout: 'Logout', admin: 'Admin',
+  },
+  am: {
+    dashboard: 'ዳሽቦርድ', about: 'ስለ እኛ', news: 'ዜና', services: 'አገልግሎቶች',
+    organizations: 'ድርጅቶች', gallery: 'ጋለሪ', faqs: 'ጥያቄዎች',
+    contact: 'ያናግሩን', messages: 'መልዕክቶች', testimonials: 'ምስክርነቶች',
+    users: 'ተጠቃሚዎች', profile: 'ፕሮፋይል', settings: 'ቅንብሮች',
+    adminPanel: 'አስተዳደር ፓነል', theme: 'ጭብጥ', logout: 'ውጣ', admin: 'አስተዳዳሪ',
+  },
+  or: {
+    dashboard: 'Daashboordii', about: "Waa'ee", news: 'Oduu', services: 'Tajaajiloota',
+    organizations: 'Dhaabbatoolee', gallery: 'Galerii', faqs: 'Gaaffilee',
+    contact: 'Qunnamii', messages: 'Ergaalee', testimonials: 'Ragaalee',
+    users: 'Fayyadamtoota', profile: 'Profaayilii', settings: 'Sajoo',
+    adminPanel: 'Paanelii Bulchiinsaa', theme: 'Bifa', logout: 'Ba\'i', admin: 'Bulchiinsaa',
+  },
+}
 
 const sidebarVariants = {
   open: { width: 240, transition: { type: 'spring', stiffness: 300, damping: 30 } },
@@ -43,6 +69,11 @@ export default function AdminLayout() {
   const { toggleTheme, isDark } = useTheme()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebar, setMobileSidebar] = useState(false)
+
+  const { language, setLanguage } = useLanguage()
+
+  const langLabels: Record<string, string> = { en: 'EN', am: 'አማ', or: 'AF' }
+  const nav = adminLabels[language]
 
   const handleLogout = () => {
     logout()
@@ -76,7 +107,7 @@ export default function AdminLayout() {
               className="flex items-center gap-2"
             >
               <Shield className="h-5 w-5 text-brand-green" />
-              <span className="font-bold text-sm text-gray-900 dark:text-white whitespace-nowrap">Admin Panel</span>
+              <span className="font-bold text-sm text-gray-900 dark:text-white whitespace-nowrap">{nav.adminPanel}</span>
             </motion.div>
           )}
           <button
@@ -110,7 +141,7 @@ export default function AdminLayout() {
                       exit={{ opacity: 0 }}
                       className="whitespace-nowrap"
                     >
-                      {link.label}
+                      {nav[link.labelKey] || link.labelKey}
                     </motion.span>
                   )}
                 </NavLink>
@@ -129,7 +160,7 @@ export default function AdminLayout() {
             )}
           >
             {isDark ? <Sun className="h-5 w-5 shrink-0" /> : <Moon className="h-5 w-5 shrink-0" />}
-            {sidebarOpen && <span>Theme</span>}
+            {sidebarOpen && <span>{nav.theme}</span>}
           </button>
           <button
             onClick={handleLogout}
@@ -139,7 +170,7 @@ export default function AdminLayout() {
             )}
           >
             <LogOut className="h-5 w-5 shrink-0" />
-            {sidebarOpen && <span>Logout</span>}
+            {sidebarOpen && <span>{nav.logout}</span>}
           </button>
         </div>
       </motion.aside>
@@ -155,7 +186,7 @@ export default function AdminLayout() {
               <Menu className="h-5 w-5 text-gray-700 dark:text-gray-300" />
             </button>
             <Shield className="h-5 w-5 text-brand-green" />
-            <span className="font-bold text-sm text-gray-900 dark:text-white">Admin</span>
+            <span className="font-bold text-sm text-gray-900 dark:text-white">{nav.admin}</span>
           </div>
           <div className="flex items-center gap-1">
             <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
@@ -186,7 +217,7 @@ export default function AdminLayout() {
               <div className="flex items-center justify-between h-14 px-4 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-brand-green" />
-                  <span className="font-bold text-sm text-gray-900 dark:text-white">Admin Panel</span>
+                  <span className="font-bold text-sm text-gray-900 dark:text-white">{nav.adminPanel}</span>
                 </div>
                 <button
                   onClick={() => setMobileSidebar(false)}
@@ -212,7 +243,7 @@ export default function AdminLayout() {
                       )}
                     >
                       <link.icon className="h-5 w-5 shrink-0" />
-                      {link.label}
+                      {nav[link.labelKey] || link.labelKey}
                     </NavLink>
                   )
                 })}
@@ -224,7 +255,7 @@ export default function AdminLayout() {
                   className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
                 >
                   <LogOut className="h-5 w-5 shrink-0" />
-                  Logout
+                  {nav.logout}
                 </button>
               </div>
             </motion.aside>
@@ -235,12 +266,29 @@ export default function AdminLayout() {
       {/* Main content */}
       <div className={cn(
         'flex-1 flex flex-col min-h-screen',
-        'lg:ml-16', // sidebar width when closed
-        sidebarOpen && 'lg:ml-60', // sidebar width when open
-        'pt-14 lg:pt-0' // mobile header offset
+        'lg:ml-16',
+        sidebarOpen && 'lg:ml-60',
+        'pt-14 lg:pt-0'
       )}>
         {/* Top bar (desktop) */}
-        <div className="hidden lg:flex items-center justify-end h-14 px-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="hidden lg:flex items-center justify-end h-14 px-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 gap-3">
+          {/* Language Switcher */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+            {(['en', 'am', 'or'] as const).map(lang => (
+              <button
+                key={lang}
+                onClick={() => setLanguage(lang as Language)}
+                className={cn(
+                  'px-2.5 py-1 rounded-md text-xs font-semibold transition-all duration-200',
+                  language === lang
+                    ? 'bg-white dark:bg-gray-700 text-brand-green shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                )}
+              >
+                {langLabels[lang]}
+              </button>
+            ))}
+          </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name || 'Admin'}</p>

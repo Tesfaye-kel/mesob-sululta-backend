@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import PageHeader from '@/components/common/PageHeader'
 import GallerySection from '@/components/sections/GallerySection'
+import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function GalleryPage() {
@@ -11,17 +11,11 @@ export default function GalleryPage() {
   }, [])
 
   return (
-    <>
-      <PageHeader
-        title={t.gallery.title}
-        subtitle={t.gallery.subtitle}
-        breadcrumbs={[{ label: t.common.home, href: "/" }, { label: t.nav.gallery }]}
-      />
-      <div className="section-padding">
+    <div className="section-padding">
+      <div className="container-gov">
+        <AnimatedHeading as="h1" className="text-center mb-8">{t.gallery.title}</AnimatedHeading>
         <GallerySection />
       </div>
-    </>
+    </div>
   )
 }
-
-

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import PageHeader from '@/components/common/PageHeader'
 import DownloadsSection from '@/components/sections/DownloadsSection'
+import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function DownloadsPage() {
@@ -11,17 +11,11 @@ export default function DownloadsPage() {
   }, [])
 
   return (
-    <>
-      <PageHeader
-        title={t.downloads.title}
-        subtitle={t.downloads.subtitle}
-        breadcrumbs={[{ label: t.common.home, href: "/" }, { label: t.nav.downloads }]}
-      />
-      <div className="section-padding">
+    <div className="section-padding">
+      <div className="container-gov">
+        <AnimatedHeading as="h1" className="text-center mb-8">{t.downloads.title}</AnimatedHeading>
         <DownloadsSection />
       </div>
-    </>
+    </div>
   )
 }
-
-

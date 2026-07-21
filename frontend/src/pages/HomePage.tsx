@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ArrowRight, Loader2, AlertCircle } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 import Hero from '@/components/home/Hero'
@@ -17,52 +16,49 @@ import FeedbackSection from '@/components/sections/FeedbackSection'
 import AnnouncementsSection from '@/components/sections/AnnouncementsSection'
 import FAQSection from '@/components/sections/FAQSection'
 import ContactSection from '@/components/sections/ContactSection'
-import { getWindows, getOrganizations, type WindowSummary, type Organization } from '@/api/tajaajila'
+import { getOrganizations, type Organization } from '@/api/tajaajila'
 import { CardGrid, CardItem } from '@/components/tajaajila/CardGrid'
-import FoddaaCard from '@/components/tajaajila/FoddaaCard'
 import OfficeCard from '@/components/tajaajila/OfficeCard'
+
+import { motion } from 'framer-motion'
 
 /** Reusable section wrapper used throughout the homepage */
 function HomeSection({
   id,
   title,
   subtitle,
-  linkTo,
-  linkLabel,
   bg = '',
   children,
 }: {
   id: string
   title: string
   subtitle?: string
-  linkTo: string
-  linkLabel: string
   bg?: string
   children: React.ReactNode
 }) {
   return (
-    <section id={id} className={`section-padding ${bg}`} aria-label={title}>
-      <div className="container-gov mb-10 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <motion.section
+      id={id}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.5 }}
+      className={`section-padding ${bg}`}
+      aria-label={title}
+    >
+      <div className="container-gov mb-10">
         <div>
           <h2 className="section-title">{title}</h2>
           {subtitle && <p className="section-subtitle">{subtitle}</p>}
         </div>
-        <Link
-          to={linkTo}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-green dark:text-brand-green-light hover:gap-3 transition-all duration-200 shrink-0"
-        >
-          {linkLabel}
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </Link>
       </div>
       {children}
-    </section>
+    </motion.section>
   )
 }
 
 export default function HomePage() {
   const { t, language } = useLanguage()
-  const [windows, setWindows] = useState<WindowSummary[]>([])
   const [orgs, setOrgs] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -70,11 +66,8 @@ export default function HomePage() {
   const loadServicesContent = () => {
     setLoading(true)
     setError(null)
-    Promise.all([getWindows(), getOrganizations()])
-      .then(([w, o]) => {
-        setWindows(w)
-        setOrgs(o)
-      })
+    getOrganizations()
+      .then(setOrgs)
       .catch(() => setError('error'))
       .finally(() => setLoading(false))
   }
@@ -84,7 +77,6 @@ export default function HomePage() {
     loadServicesContent()
   }, [t])
 
-  const windowHeading = language === 'am' ? 'አገልግሎቶች በፎዳ' : language === 'or' ? 'Tajaajiloota Foddaadhaan Bahe' : 'Services by Window'
   const officeHeading = language === 'am' ? 'አገልግሎቶች በቢሮ' : language === 'or' ? 'Tajaajiloota Waajjiraa' : 'Services by Office'
   const loadingLabel = language === 'am' ? 'በመጫን ላይ...' : language === 'or' ? "Fe'aa jira..." : 'Loading...'
   const serverErrTitle = language === 'am' ? 'ሰርቨር ጋር ማገናኘት አልተቻለም' : language === 'or' ? 'Server waliin walqunnamuu hin dandeenye' : 'Could not connect to server'
@@ -100,8 +92,6 @@ export default function HomePage() {
         id="about"
         title={t.about.title}
         subtitle={t.about.subtitle}
-        linkTo="/about"
-        linkLabel={t.common.viewMore}
       >
         <div className="section-padding pt-0">
           <AboutSection />
@@ -113,14 +103,12 @@ export default function HomePage() {
         id="services"
         title={t.services.title}
         subtitle={t.services.subtitle}
-        linkTo="/tajaajila"
-        linkLabel={t.services.viewAll}
         bg="bg-gray-50/50 dark:bg-gray-900/50"
       >
         <div className="section-padding pt-0">
-          <div className="container-gov space-y-16">
-            <section aria-label={windowHeading}>
-              <h3 className="mb-6 text-center text-xl font-semibold text-gray-900 dark:text-white">{windowHeading}</h3>
+          <div className="container-gov">
+            <section aria-label={officeHeading}>
+              <h3 className="mb-6 text-center text-xl font-semibold text-gray-900 dark:text-white">{officeHeading}</h3>
 
               {loading && (
                 <div className="flex justify-center py-12">
@@ -146,20 +134,6 @@ export default function HomePage() {
 
               {!loading && !error && (
                 <CardGrid>
-                  {windows.map((win, idx) => (
-                    <CardItem key={win._id}>
-                      <FoddaaCard id={win._id} number={win.number} serviceCount={win.serviceCount} index={idx} />
-                    </CardItem>
-                  ))}
-                </CardGrid>
-              )}
-            </section>
-
-            <section aria-label={officeHeading}>
-              <h3 className="mb-6 text-center text-xl font-semibold text-gray-900 dark:text-white">{officeHeading}</h3>
-
-              {!loading && !error && (
-                <CardGrid>
                   {orgs.map((org, idx) => (
                     <CardItem key={org._id}>
                       <OfficeCard id={org._id} name={org.name} serviceCount={org.serviceCount} index={idx} />
@@ -180,8 +154,6 @@ export default function HomePage() {
         id="organization"
         title={t.organization.title}
         subtitle={t.organization.subtitle}
-        linkTo="/organization"
-        linkLabel={t.common.viewMore}
         bg="bg-gray-50/50 dark:bg-gray-900/30"
       >
         <div className="section-padding pt-0">
@@ -194,8 +166,6 @@ export default function HomePage() {
         id="announcements"
         title={t.announcements.title}
         subtitle={t.announcements.subtitle}
-        linkTo="/announcements"
-        linkLabel={t.common.viewMore}
         bg="bg-gray-50/50 dark:bg-gray-900/30"
       >
         <div className="section-padding pt-0">
@@ -208,8 +178,6 @@ export default function HomePage() {
         id="gallery"
         title={t.gallery.title}
         subtitle={t.gallery.subtitle}
-        linkTo="/gallery"
-        linkLabel={t.common.viewMore}
         bg="bg-gray-50/50 dark:bg-gray-900/30"
       >
         <div className="section-padding pt-0">
@@ -224,8 +192,6 @@ export default function HomePage() {
         id="faq"
         title={t.faq.title}
         subtitle={t.faq.subtitle}
-        linkTo="/faq"
-        linkLabel={t.common.viewMore}
         bg="bg-gray-50/50 dark:bg-gray-900/30"
       >
         <div className="section-padding pt-0">
@@ -238,8 +204,6 @@ export default function HomePage() {
         id="contact"
         title={t.contact.title}
         subtitle={t.contact.subtitle}
-        linkTo="/contact"
-        linkLabel={t.common.viewMore}
       >
         <div className="section-padding pt-0">
           <ContactSection compact showHeader={false} />
@@ -251,8 +215,6 @@ export default function HomePage() {
         id="feedback"
         title={t.feedback.title}
         subtitle={t.feedback.subtitle}
-        linkTo="/feedback"
-        linkLabel={t.common.viewMore}
         bg="bg-gray-50/50 dark:bg-gray-900/30"
       >
         <div className="section-padding pt-0">

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import PageHeader from '@/components/common/PageHeader'
 import FeedbackSection from '@/components/sections/FeedbackSection'
+import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function FeedbackPage() {
@@ -11,17 +11,11 @@ export default function FeedbackPage() {
   }, [])
 
   return (
-    <>
-      <PageHeader
-        title={t.feedback.title}
-        subtitle={t.feedback.subtitle}
-        breadcrumbs={[{ label: t.common.home, href: "/" }, { label: t.nav.feedback }]}
-      />
-      <div className="section-padding">
+    <div className="section-padding">
+      <div className="container-gov">
+        <AnimatedHeading as="h1" className="text-center mb-8">{t.feedback.title}</AnimatedHeading>
         <FeedbackSection />
       </div>
-    </>
+    </div>
   )
 }
-
-

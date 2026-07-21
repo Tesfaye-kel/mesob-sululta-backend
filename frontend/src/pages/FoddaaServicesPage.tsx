@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Loader2, AlertCircle } from 'lucide-react'
-import PageHeader from '@/components/common/PageHeader'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import ServiceCard from '@/components/tajaajila/ServiceCard'
 import Breadcrumb from '@/components/tajaajila/Breadcrumb'
@@ -75,68 +74,56 @@ export default function FoddaaServicesPage() {
   }, [windowId, language])
 
   return (
-    <>
-      <PageHeader
-        title={windowLabel}
-        subtitle={subtitle}
-        breadcrumbs={[
-          { label: t.common.home, href: '/' },
-          { label: language === 'am' ? 'አገልግሎቶች' : language === 'or' ? 'Tajaajilaalee' : 'Services', href: '/tajaajila' },
+    <div className="section-padding">
+      <div className="container-gov">
+        <Breadcrumb crumbs={[
+          { label: language === 'am' ? 'አገልግሎቶች' : language === 'or' ? 'Tajaajilaalee' : 'Services', to: '/tajaajila' },
           { label: windowLabel },
-        ]}
-      />
+        ]} />
 
-      <div className="section-padding">
-        <div className="container-gov">
-          <Breadcrumb crumbs={[
-            { label: language === 'am' ? 'አገልግሎቶች' : language === 'or' ? 'Tajaajilaalee' : 'Services', to: '/tajaajila' },
-            { label: windowLabel },
-          ]} />
+        <AnimatedHeading as="h2" className="mb-2 mt-4">{windowLabel}</AnimatedHeading>
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-8">{subtitle}</p>
 
-          <AnimatedHeading as="h2" className="mb-2">{windowLabel}</AnimatedHeading>
-          <p className="text-gray-600 dark:text-gray-400 text-sm mb-8">{subtitle}</p>
+        {loading && (
+          <div className="flex justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-brand-green" aria-label={t.common.loading} />
+          </div>
+        )}
 
-          {loading && (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-brand-green" aria-label={t.common.loading} />
-            </div>
-          )}
+        {error && (
+          <div className="flex flex-col items-center gap-4 py-16 text-center">
+            <AlertCircle className="h-12 w-12 text-red-400" aria-hidden />
+            <p className="text-sm text-gray-600 dark:text-gray-400">{serverErr}</p>
+            <button onClick={() => { setLoading(true); setError(null); getWindowServices(windowId!).then(setServices).catch(() => setError('error')).finally(() => setLoading(false)) }}
+              className="px-5 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green/90 transition-colors">
+              {retryLabel}
+            </button>
+          </div>
+        )}
 
-          {error && (
-            <div className="flex flex-col items-center gap-4 py-16 text-center">
-              <AlertCircle className="h-12 w-12 text-red-400" aria-hidden />
-              <p className="text-sm text-gray-600 dark:text-gray-400">{serverErr}</p>
-              <button onClick={() => { setLoading(true); setError(null); getWindowServices(windowId!).then(setServices).catch(() => setError('error')).finally(() => setLoading(false)) }}
-                className="px-5 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green/90 transition-colors">
-                {retryLabel}
-              </button>
-            </div>
-          )}
+        {!loading && !error && services.length === 0 && (
+          <EmptyState title={emptyTitle} description={emptyDesc} />
+        )}
 
-          {!loading && !error && services.length === 0 && (
-            <EmptyState title={emptyTitle} description={emptyDesc} />
-          )}
-
-          {!loading && !error && services.length > 0 && (
-            <CardGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {services.map((svc, idx) => (
-                <CardItem key={svc._id}>
-                  <ServiceCard
-                    id={svc._id}
-                    nameEn={svc.name.en}
-                    nameAm={svc.name.am}
-                    nameOr={svc.name.or}
-                    officeName={svc.organization ? (language === 'am' ? (svc.organization.name.am || svc.organization.name.or || svc.organization.name.en) : language === 'or' ? (svc.organization.name.or || svc.organization.name.en) : svc.organization.name.en) : undefined}
-                    fromPath={fromPath}
-                    index={idx}
-                    style="expanded"
-                  />
-                </CardItem>
-              ))}
-            </CardGrid>
-          )}
-        </div>
+        {!loading && !error && services.length > 0 && (
+          <CardGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map((svc, idx) => (
+              <CardItem key={svc._id}>
+                <ServiceCard
+                  id={svc._id}
+                  nameEn={svc.name.en}
+                  nameAm={svc.name.am}
+                  nameOr={svc.name.or}
+                  officeName={svc.organization ? (language === 'am' ? (svc.organization.name.am || svc.organization.name.or || svc.organization.name.en) : language === 'or' ? (svc.organization.name.or || svc.organization.name.en) : svc.organization.name.en) : undefined}
+                  fromPath={fromPath}
+                  index={idx}
+                  style="expanded"
+                />
+              </CardItem>
+            ))}
+          </CardGrid>
+        )}
       </div>
-    </>
+    </div>
   )
 }

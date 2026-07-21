@@ -9,7 +9,7 @@ export const translations = {
     nav: {
       home: 'Home', about: 'About', services: 'Services',
       organization: 'Organization', departments: 'Departments',
-      announcements: 'Announcements', gallery: 'Gallery',
+      announcements: 'News', gallery: 'Gallery',
       downloads: 'Downloads', faq: 'FAQ', contact: 'Contact', feedback: 'Feedback',
     },
     topBar: { emergency: 'Emergency: 911', search: 'Search', darkMode: 'Toggle Dark Mode', language: 'Language' },

@@ -58,7 +58,8 @@ export default function GallerySection() {
   const getImageUrl = (url: string) => {
     if (!url) return ''
     if (url.startsWith('http')) return url
-    return `${BASE.replace('/api', '')}${url}`
+    if (url.startsWith('/uploads')) return `${BASE.replace('/api', '')}${url}`
+    return `${BASE.replace('/api', '')}/uploads/gallery/${url}`
   }
 
   return (

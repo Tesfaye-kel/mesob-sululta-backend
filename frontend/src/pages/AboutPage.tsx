@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import PageHeader from '@/components/common/PageHeader'
 import AboutSection from '@/components/sections/AboutSection'
+import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function AboutPage() {
@@ -11,16 +11,11 @@ export default function AboutPage() {
   }, [])
 
   return (
-    <>
-      <PageHeader
-        title={t.about.title}
-        subtitle={t.about.subtitle}
-        breadcrumbs={[{ label: t.common.home, href: '/' }, { label: t.nav.about }]}
-      />
-      <div className="section-padding">
+    <div className="section-padding">
+      <div className="container-gov">
+        <AnimatedHeading as="h1" className="text-center mb-8">{t.about.title}</AnimatedHeading>
         <AboutSection />
       </div>
-    </>
+    </div>
   )
 }
-

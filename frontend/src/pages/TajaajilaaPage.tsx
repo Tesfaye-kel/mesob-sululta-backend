@@ -1,24 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Loader2, AlertCircle } from 'lucide-react'
-import PageHeader from '@/components/common/PageHeader'
+import { motion } from 'framer-motion'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
-import FoddaaCard from '@/components/tajaajila/FoddaaCard'
 import OfficeCard from '@/components/tajaajila/OfficeCard'
 import { CardGrid, CardItem } from '@/components/tajaajila/CardGrid'
-import { getWindows, getOrganizations, type WindowSummary, type Organization } from '@/api/tajaajila'
+import { getOrganizations, type Organization } from '@/api/tajaajila'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function TajaajilaaPage() {
   const { t, language } = useLanguage()
-  const [windows, setWindows] = useState<WindowSummary[]>([])
   const [orgs, setOrgs] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   // ── Localized strings ──────────────────────────────────────────────────────
   const pageTitle    = language === 'am' ? 'አገልግሎቶች'      : language === 'or' ? 'Tajaajiloota'      : 'Services'
-  const pageSubtitle = language === 'am' ? 'ፎዳ ወይም ቢሮ በማንኛቸውም ይፈልጉ' : language === 'or' ? 'Foddaadhaan ykn waajjirraan barbaadi' : 'Browse by service window or office'
-  const foddaaHeading = language === 'am' ? 'አገልግሎቶች በፎዳ' : language === 'or' ? 'Tajaajiloota Foddaadhaan Bahe' : 'Services by Window'
+  const pageSubtitle = language === 'am' ? 'አገልግሎቶችን በቢሮ/ድርጅት ያስሱ' : language === 'or' ? 'Tajaajiloota waajjiraan/orgaanizaashiniin barbaadi' : 'Browse services by office/organization'
   const officeHeading = language === 'am' ? 'አገልግሎቶች በቢሮ' : language === 'or' ? 'Tajaajiloota Waajjiraa'       : 'Services by Office'
   const loadingLabel  = language === 'am' ? 'በመጫን ላይ...'   : language === 'or' ? "Fe'aa jira..."                  : 'Loading...'
   const serverErrTitle = language === 'am' ? 'ሰርቨር ጋር ማገናኘት አልተቻለም' : language === 'or' ? 'Server waliin walqunnamuu hin dandeenye' : 'Could not connect to server'
@@ -28,8 +25,8 @@ export default function TajaajilaaPage() {
   const load = () => {
     setLoading(true)
     setError(null)
-    Promise.all([getWindows(), getOrganizations()])
-      .then(([w, o]) => { setWindows(w); setOrgs(o) })
+    getOrganizations()
+      .then(setOrgs)
       .catch(() => setError('error'))
       .finally(() => setLoading(false))
   }
@@ -40,78 +37,61 @@ export default function TajaajilaaPage() {
   }, [language])
 
   return (
-    <>
-      <PageHeader
-        title={pageTitle}
-        subtitle={pageSubtitle}
-        breadcrumbs={[{ label: t.common.home, href: '/' }, { label: pageTitle }]}
-      />
+    <div className="section-padding">
+      <div className="container-gov">
+        <AnimatedHeading as="h1" className="text-center mb-2">{pageTitle}</AnimatedHeading>
+        <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-8">{pageSubtitle}</p>
 
-      <div className="section-padding">
-        <div className="container-gov space-y-16">
+        {/* ── Office section ── */}
+        <section aria-label={officeHeading}>
+          <AnimatedHeading as="h2" className="mb-6 text-center" delay={0}>
+            {officeHeading}
+          </AnimatedHeading>
 
-          {/* ── Foddaa section ── */}
-          <section aria-label={foddaaHeading}>
-            <AnimatedHeading as="h2" className="mb-6 text-center" delay={0}>
-              {foddaaHeading}
-            </AnimatedHeading>
+          {loading && (
+            <div className="flex justify-center py-16">
+              <Loader2 className="h-8 w-8 animate-spin text-brand-green" aria-label={loadingLabel} />
+            </div>
+          )}
 
-            {loading && (
-              <div className="flex justify-center py-16">
-                <Loader2 className="h-8 w-8 animate-spin text-brand-green" aria-label={loadingLabel} />
+          {error && (
+            <div className="flex flex-col items-center gap-4 py-16 text-center">
+              <AlertCircle className="h-12 w-12 text-red-400" aria-hidden />
+              <div>
+                <p className="font-semibold text-gray-800 dark:text-gray-200 mb-1">{serverErrTitle}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm">{serverErrDesc}</p>
               </div>
-            )}
+              <button
+                onClick={load}
+                className="px-5 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green/90 transition-colors"
+              >
+                {retryLabel}
+              </button>
+            </div>
+          )}
 
-            {error && (
-              <div className="flex flex-col items-center gap-4 py-16 text-center">
-                <AlertCircle className="h-12 w-12 text-red-400" aria-hidden />
-                <div>
-                  <p className="font-semibold text-gray-800 dark:text-gray-200 mb-1">{serverErrTitle}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm">{serverErrDesc}</p>
-                </div>
-                <button
-                  onClick={load}
-                  className="px-5 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green/90 transition-colors"
-                >
-                  {retryLabel}
-                </button>
-              </div>
-            )}
+          {!loading && !error && (
+            <CardGrid>
+              {orgs.map(org => (
+                <CardItem key={org._id}>
+                  <OfficeCard
+                    id={org._id}
+                    name={org.name}
+                    serviceCount={org.serviceCount}
+                  />
+                </CardItem>
+              ))}
+            </CardGrid>
+          )}
 
-            {!loading && !error && (
-              <CardGrid>
-                {windows.map(win => (
-                  <CardItem key={win._id}>
-                    <FoddaaCard id={win._id} number={win.number} serviceCount={win.serviceCount} />
-                  </CardItem>
-                ))}
-              </CardGrid>
-            )}
-          </section>
+          {!loading && !error && orgs.length === 0 && (
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+              <p>{language === 'am' ? 'ምንም ድርጅቶች አልተገኙም' : language === 'or' ? 'Dhaabbattoonni hin argamne' : 'No organizations found'}</p>
+            </div>
+          )}
+        </section>
 
-          {/* ── Office section ── */}
-          <section aria-label={officeHeading}>
-            <AnimatedHeading as="h2" className="mb-6 text-center" delay={0}>
-              {officeHeading}
-            </AnimatedHeading>
-
-            {!loading && !error && (
-              <CardGrid>
-                {orgs.map(org => (
-                  <CardItem key={org._id}>
-                    <OfficeCard
-                      id={org._id}
-                      name={org.name}
-                      serviceCount={org.serviceCount}
-                    />
-                  </CardItem>
-                ))}
-              </CardGrid>
-            )}
-          </section>
-
-        </div>
       </div>
-    </>
+    </div>
   )
 }
