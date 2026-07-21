@@ -13,9 +13,16 @@ export interface OrgRef {
 
 export interface WindowSummary {
   _id: string
-  number: number
+  number: string
+  floor: number
   serviceCount: number
-  organizations: OrgRef[]
+  description: MultiLang
+  organization: OrgRef
+}
+
+export interface WindowGroupedByFloor {
+  floor: number
+  windows: WindowSummary[]
 }
 
 export interface Organization {
@@ -31,6 +38,7 @@ export interface Service {
   name: MultiLang
   description: MultiLang
   organization: OrgRef
+  window: { _id: string; number: string; floor: number } | null
   requiredDocuments: string[]
   fee: number
   processingTime: string
@@ -47,6 +55,21 @@ export interface Requirement {
   sequenceNo: number
 }
 
+export interface NewsItem {
+  _id: string
+  title: MultiLang
+  content: MultiLang
+  excerpt: MultiLang
+  category: string
+  isFeatured: boolean
+  isPublished: boolean
+  publishedAt: string
+  coverImageUrl: string
+  media: Array<{ type: string; url: string; caption: MultiLang }>
+  tags: string[]
+  createdAt: string
+}
+
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -54,6 +77,7 @@ async function get<T>(path: string): Promise<T> {
 }
 
 export const getWindows = () => get<WindowSummary[]>('/windows')
+export const getWindowsByOrganization = (orgId: string) => get<WindowGroupedByFloor[]>(`/windows/by-organization/${orgId}`)
 export const getWindowServices = (id: string) => get<Service[]>(`/windows/${id}/services`)
 
 export const getOrganizations = () => get<Organization[]>('/organizations')
@@ -62,3 +86,6 @@ export const getOrganizationById = (id: string) => get<Organization>(`/organizat
 
 export const getServiceById = (id: string) => get<Service>(`/services/${id}`)
 export const getServiceRequirements = (id: string) => get<Requirement[]>(`/services/${id}/requirements`)
+
+export const getNewsList = (params?: string) => get<NewsItem[]>(`/news${params ? `?${params}` : ''}`)
+export const getLatestNews = (since?: string) => get<{ count: number; latest: { title: MultiLang; publishedAt: string } | null }>(`/news/latest${since ? `?since=${since}` : ''}`)

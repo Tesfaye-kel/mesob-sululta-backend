@@ -17,9 +17,7 @@ import ContactPage from '@/pages/ContactPage'
 import FeedbackPage from '@/pages/FeedbackPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import TajaajilaaPage from '@/pages/TajaajilaaPage'
-import FoddaaServicesPage from '@/pages/FoddaaServicesPage'
 import OfficeServicesPage from '@/pages/OfficeServicesPage'
-import BarbaachisaaPage from '@/pages/BarbaachisaaPage'
 
 // Admin pages
 import AdminLogin from '@/pages/admin/AdminLogin'
@@ -27,6 +25,7 @@ import AdminLayout from '@/pages/admin/AdminLayout'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminAbout from '@/pages/admin/AdminAbout'
 import AdminAnnouncements from '@/pages/admin/AdminAnnouncements'
+import AdminNews from '@/pages/admin/AdminNews'
 import AdminServices from '@/pages/admin/AdminServices'
 import AdminFAQs from '@/pages/admin/AdminFAQs'
 import AdminTestimonials from '@/pages/admin/AdminTestimonials'
@@ -69,9 +68,7 @@ export default function App() {
                     <Route index element={<PageWrapper><HomePage /></PageWrapper>} />
                     <Route path="about" element={<PageWrapper><AboutPage /></PageWrapper>} />
                     <Route path="tajaajila" element={<PageWrapper><TajaajilaaPage /></PageWrapper>} />
-                    <Route path="tajaajila/foddaa/:windowId" element={<PageWrapper><FoddaaServicesPage /></PageWrapper>} />
                     <Route path="tajaajila/office/:officeId" element={<PageWrapper><OfficeServicesPage /></PageWrapper>} />
-                    <Route path="tajaajila/service/:serviceId/barbaachisa" element={<PageWrapper><BarbaachisaaPage /></PageWrapper>} />
                     <Route path="organization" element={<PageWrapper><OrganizationPage /></PageWrapper>} />
                     <Route path="announcements" element={<PageWrapper><AnnouncementsPage /></PageWrapper>} />
                     <Route path="gallery" element={<PageWrapper><GalleryPage /></PageWrapper>} />
@@ -87,7 +84,7 @@ export default function App() {
                     <Route element={<AdminLayout />}>
                       <Route path="dashboard" element={<AdminDashboard />} />
                       <Route path="about" element={<AdminAbout />} />
-                      <Route path="announcements" element={<AdminAnnouncements />} />
+                      <Route path="announcements" element={<AdminNews />} />
                       <Route path="services" element={<AdminServices />} />
                       <Route path="faqs" element={<AdminFAQs />} />
                       <Route path="testimonials" element={<AdminTestimonials />} />

@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils'
 const sidebarLinks = [
   { to: '/Admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/Admin/about', label: 'About', icon: Info },
-  { to: '/Admin/announcements', label: 'Announcements', icon: Megaphone },
+  { to: '/Admin/announcements', label: 'News', icon: Megaphone },
   { to: '/Admin/services', label: 'Services', icon: Wrench },
   { to: '/Admin/organizations', label: 'Organizations', icon: Building2 },
   { to: '/Admin/gallery', label: 'Gallery', icon: Image },

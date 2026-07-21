@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Wrench, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Building2, List } from 'lucide-react'
+import { Wrench, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Building2, Layers, DoorOpen, List, FileText } from 'lucide-react'
 import { getOrganizations, getServicesAdmin, createService, updateService, deleteService, getWindowsAdmin, createWindow, updateWindow, deleteWindow, getRequirementsByService, createRequirement, updateRequirement, deleteRequirement, type OrganizationSummary, type ServiceAdmin, type WindowAdmin, type RequirementAdmin } from '@/api/admin'
 import { cn } from '@/lib/utils'
 
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+
 const langs = ['en', 'am', 'or'] as const
+const floors = [1, 2, 3, 4, 5]
+
+const floorLabels = {
+  en: ['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Floor 5'],
+  am: ['ወለል 1', 'ወለል 2', 'ወለል 3', 'ወለል 4', 'ወለል 5'],
+  or: ['Bona 1', 'Bona 2', 'Bona 3', 'Bona 4', 'Bona 5'],
+}
 
 const emptyServiceForm = {
   name: { en: '', am: '', or: '' },
   description: { en: '', am: '', or: '' },
   organization: '',
+  window: '',
   requiredDocuments: [] as string[],
   fee: 0,
   processingTime: '',
@@ -18,8 +28,10 @@ const emptyServiceForm = {
 }
 
 const emptyWindowForm = {
-  number: 1,
+  number: '',
+  floor: 1,
   organization: '',
+  description: { en: '', am: '', or: '' },
 }
 
 const emptyRequirementForm = {
@@ -29,18 +41,16 @@ const emptyRequirementForm = {
   sequenceNo: 0,
 }
 
-type Tab = 'windows' | 'offices'
-
 export default function AdminServices() {
-  const [tab, setTab] = useState<Tab>('windows')
   const [orgs, setOrgs] = useState<OrganizationSummary[]>([])
-  const [windows, setWindows] = useState<WindowAdmin[]>([])
+  const [windows, setWindows] = useState<any[]>([])
   const [services, setServices] = useState<ServiceAdmin[]>([])
   const [requirements, setRequirements] = useState<RequirementAdmin[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [selectedOrg, setSelectedOrg] = useState('')
+  const [selectedWindow, setSelectedWindow] = useState('')
   const [selectedService, setSelectedService] = useState('')
 
   // Service form
@@ -51,7 +61,7 @@ export default function AdminServices() {
 
   // Window form
   const [showWindowForm, setShowWindowForm] = useState(false)
-  const [editingWindow, setEditingWindow] = useState<WindowAdmin | null>(null)
+  const [editingWindow, setEditingWindow] = useState<any | null>(null)
   const [windowForm, setWindowForm] = useState(emptyWindowForm)
   const [savingWindow, setSavingWindow] = useState(false)
 
@@ -67,14 +77,23 @@ export default function AdminServices() {
     setLoading(true)
     setError('')
     try {
-      const [orgData, winData, svcData] = await Promise.all([
+      const [orgData, svcData] = await Promise.all([
         getOrganizations(),
-        getWindowsAdmin(),
         getServicesAdmin(),
       ])
       setOrgs(orgData)
-      setWindows(winData)
       setServices(svcData)
+      
+      // Load windows for selected org
+      if (selectedOrg) {
+        const res = await fetch(`${BASE}/windows?organization=${selectedOrg}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('admin-token')}` },
+        })
+        const winData = await res.json()
+        setWindows(Array.isArray(winData) ? winData : [])
+      } else {
+        setWindows([])
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data')
     } finally {
@@ -82,7 +101,20 @@ export default function AdminServices() {
     }
   }
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { loadData() }, [selectedOrg])
+
+  const loadWindowsForOrg = async (orgId: string) => {
+    if (!orgId) { setWindows([]); return }
+    try {
+      const res = await fetch(`${BASE}/windows?organization=${orgId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('admin-token')}` },
+      })
+      const data = await res.json()
+      setWindows(Array.isArray(data) ? data : [])
+    } catch (err) {
+      setWindows([])
+    }
+  }
 
   const loadRequirements = async (serviceId: string) => {
     try {
@@ -137,11 +169,21 @@ export default function AdminServices() {
     setError('')
     try {
       if (editingWindow) {
-        const updated = await updateWindow(editingWindow._id, windowForm)
-        setWindows(prev => prev.map(w => w._id === editingWindow._id ? updated : w))
+        const res = await fetch(`${BASE}/windows/${editingWindow._id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('admin-token')}` },
+          body: JSON.stringify(windowForm),
+        })
+        const updated = await res.json()
+        setWindows(prev => prev.map((w: any) => w._id === editingWindow._id ? updated : w))
         setSuccess('Window updated!')
       } else {
-        const created = await createWindow(windowForm)
+        const res = await fetch(`${BASE}/windows`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('admin-token')}` },
+          body: JSON.stringify(windowForm),
+        })
+        const created = await res.json()
         setWindows(prev => [created, ...prev])
         setSuccess('Window created!')
       }
@@ -158,8 +200,12 @@ export default function AdminServices() {
 
   const handleDeleteWindow = async (id: string) => {
     try {
-      await deleteWindow(id)
-      setWindows(prev => prev.filter(w => w._id !== id))
+      const res = await fetch(`${BASE}/windows/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('admin-token')}` },
+      })
+      if (!res.ok) throw new Error('Delete failed')
+      setWindows(prev => prev.filter((w: any) => w._id !== id))
       setSuccess('Window deleted!')
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
@@ -207,10 +253,23 @@ export default function AdminServices() {
     setConfirmDelete(null)
   }
 
-  const filteredServices = selectedOrg ? services.filter(s => {
-    const orgId = typeof s.organization === 'string' ? s.organization : s.organization?._id
-    return orgId === selectedOrg
-  }) : services
+  const filteredServices = selectedWindow
+    ? services.filter(s => {
+        const winId = typeof s.window === 'string' ? s.window : s.window?._id
+        return winId === selectedWindow
+      })
+    : selectedOrg
+    ? services.filter(s => {
+        const orgId = typeof s.organization === 'string' ? s.organization : s.organization?._id
+        return orgId === selectedOrg
+      })
+    : services
+
+  // Group windows by floor
+  const windowsByFloor = floors.map(floor => ({
+    floor,
+    windows: windows.filter((w: any) => w.floor === floor),
+  }))
 
   if (loading) {
     return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-brand-green" /></div>
@@ -221,20 +280,8 @@ export default function AdminServices() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Services Management</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage services by window and office</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage organizations, floors, windows, services, and requirements</p>
         </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-2 mb-6">
-        <button onClick={() => setTab('windows')}
-          className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-all', tab === 'windows' ? 'bg-brand-green text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400')}>
-          Services by Window
-        </button>
-        <button onClick={() => setTab('offices')}
-          className={cn('px-4 py-2 rounded-lg text-sm font-medium transition-all', tab === 'offices' ? 'bg-brand-green text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400')}>
-          Services by Office
-        </button>
       </div>
 
       <AnimatePresence>{success && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
@@ -244,163 +291,158 @@ export default function AdminServices() {
 
       {error && <div className="flex items-center gap-2 p-4 mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"><AlertCircle className="h-5 w-5" /><span>{error}</span></div>}
 
-      {tab === 'windows' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Windows</h2>
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => { setEditingWindow(null); setWindowForm(emptyWindowForm); setShowWindowForm(true) }}
-              className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
-              <Plus className="h-4 w-4" /> New Window
-            </motion.button>
-          </div>
-
-          <div className="space-y-3">
-            {windows.map((win, idx) => (
-              <motion.div key={win._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}
-                className="p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-brand-green/10 flex items-center justify-center text-brand-green shrink-0 font-bold">
-                    {win.number}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-white">Window {win.number}</p>
-                    <p className="text-xs text-gray-500">{win.organization?.name?.en || 'No organization'} • {win.services?.length || 0} services</p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={() => { setEditingWindow(win); setWindowForm({ number: win.number, organization: win.organization?._id || '' }); setShowWindowForm(true) }}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600"><Edit3 className="h-4 w-4" /></button>
-                    <button onClick={() => setConfirmDelete({ type: 'window', id: win._id })}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
-                  </div>
-                </div>
-
-                {/* Services for this window */}
-                {win.services && win.services.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Services</h4>
-                    {win.services.map(svc => (
-                      <div key={svc._id} className="pl-4">
-                        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800">
-                          <Wrench className="h-4 w-4 text-brand-green shrink-0" />
-                          <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{svc.name?.en || 'Service'}</span>
-                          <button onClick={() => { loadRequirements(svc._id); setSelectedService(svc._id) }}
-                            className="text-xs text-brand-green hover:text-brand-green-dark font-medium">Requirements</button>
-                        </div>
-                        {/* Requirements for this service */}
-                        {selectedService === svc._id && (
-                          <div className="ml-6 mt-2 p-3 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                            <div className="flex items-center justify-between mb-2">
-                              <h5 className="text-xs font-semibold text-gray-600 dark:text-gray-400">Requirements</h5>
-                              <button onClick={() => { setEditingReq(null); setReqForm(emptyRequirementForm); setShowReqForm(true) }}
-                                className="text-xs text-brand-green hover:text-brand-green-dark font-medium">+ Add</button>
-                            </div>
-                            {requirements.length === 0 ? (
-                              <p className="text-xs text-gray-400">No requirements added yet</p>
-                            ) : (
-                              <div className="space-y-1.5">
-                                {requirements.map(req => (
-                                  <div key={req._id} className="flex items-center gap-2 px-2 py-1.5 rounded bg-gray-50 dark:bg-gray-700/50">
-                                    <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', req.isMandatory ? 'bg-red-500' : 'bg-gray-400')} />
-                                    <span className="flex-1 text-xs text-gray-700 dark:text-gray-300">{req.requirementText.en}</span>
-                                    <span className="text-[10px] text-gray-400">#{req.sequenceNo}</span>
-                                    <button onClick={() => { setEditingReq(req); setReqForm({ requirementText: { ...req.requirementText }, notes: { ...req.notes }, isMandatory: req.isMandatory, sequenceNo: req.sequenceNo }); setShowReqForm(true) }}
-                                      className="p-0.5 text-gray-400 hover:text-blue-600"><Edit3 className="h-3 w-3" /></button>
-                                    <button onClick={() => setConfirmDelete({ type: 'requirement', id: req._id })}
-                                      className="p-0.5 text-gray-400 hover:text-red-600"><Trash2 className="h-3 w-3" /></button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            ))}
-            {windows.length === 0 && <p className="text-center py-8 text-gray-400">No windows created yet</p>}
-          </div>
+      {/* Organization Selector */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Select Organization</label>
+        <div className="flex items-center gap-3">
+          <select value={selectedOrg} onChange={e => { setSelectedOrg(e.target.value); setSelectedWindow(''); loadWindowsForOrg(e.target.value) }}
+            className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
+            <option value="">Choose an organization...</option>
+            {orgs.map(org => <option key={org._id} value={org._id}>{org.name.en}</option>)}
+          </select>
         </div>
+      </div>
+
+      {selectedOrg && (
+        <>
+          {/* Windows by Floor */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <DoorOpen className="h-5 w-5 text-brand-green" /> Windows by Floor
+              </h2>
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                onClick={() => { setEditingWindow(null); setWindowForm({ ...emptyWindowForm, organization: selectedOrg }); setShowWindowForm(true) }}
+                className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
+                <Plus className="h-4 w-4" /> New Window
+              </motion.button>
+            </div>
+
+            <div className="space-y-4">
+              {windowsByFloor.map(({ floor, windows: floorWindows }) => (
+                <div key={floor} className="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                  <div className="px-4 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center gap-2">
+                    <Layers className="h-4 w-4 text-brand-green" />
+                    <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                      {floorLabels.en[floor - 1]}
+                    </span>
+                    <span className="text-xs text-gray-500">({floorWindows.length} windows)</span>
+                  </div>
+                  {floorWindows.length === 0 ? (
+                    <div className="px-4 py-3 text-sm text-gray-400">No windows on this floor</div>
+                  ) : (
+                    <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                      {floorWindows.map((win: any) => (
+                        <div key={win._id} className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-brand-green/10 flex items-center justify-center text-brand-green shrink-0 font-bold text-xs">
+                              {win.number}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-gray-900 dark:text-white text-sm">Window {win.number}</p>
+                              <p className="text-xs text-gray-500">{win.serviceCount || 0} services</p>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button onClick={() => { setEditingWindow(win); setWindowForm({ number: win.number, floor: win.floor, organization: win.organization?._id || selectedOrg, description: win.description || { en: '', am: '', or: '' } }); setShowWindowForm(true) }}
+                                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600"><Edit3 className="h-3.5 w-3.5" /></button>
+                              <button onClick={() => setConfirmDelete({ type: 'window', id: win._id })}
+                                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Services */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Wrench className="h-5 w-5 text-brand-green" /> Services
+              </h2>
+              <div className="flex items-center gap-3">
+                <select value={selectedWindow} onChange={e => setSelectedWindow(e.target.value)}
+                  className="px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
+                  <option value="">All Windows</option>
+                  {windows.map((w: any) => <option key={w._id} value={w._id}>Window {w.number} (Floor {w.floor})</option>)}
+                </select>
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                  onClick={() => { setEditingService(null); setServiceForm({ ...emptyServiceForm, organization: selectedOrg }); setShowServiceForm(true) }}
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
+                  <Plus className="h-4 w-4" /> New Service
+                </motion.button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {filteredServices.map((svc, idx) => (
+                <motion.div key={svc._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}
+                  className="p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-brand-green/10 flex items-center justify-center text-brand-green shrink-0">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 dark:text-white">{svc.name.en}</p>
+                      <p className="text-xs text-gray-500">
+                        {svc.window && typeof svc.window === 'object' ? `Window ${svc.window.number} (Floor ${svc.window.floor})` : 'No window assigned'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={() => loadRequirements(svc._id)}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-brand-green" title="Manage requirements">
+                        <List className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => { setEditingService(svc); setServiceForm({ name: { ...svc.name }, description: { ...svc.description }, organization: typeof svc.organization === 'string' ? svc.organization : svc.organization?._id || '', window: typeof svc.window === 'string' ? svc.window : svc.window?._id || '', requiredDocuments: svc.requiredDocuments || [], fee: svc.fee, processingTime: svc.processingTime, workingHours: svc.workingHours, contactPhone: svc.contactPhone }); setShowServiceForm(true) }}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600"><Edit3 className="h-4 w-4" /></button>
+                      <button onClick={() => setConfirmDelete({ type: 'service', id: svc._id })}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
+                    </div>
+                  </div>
+
+                  {/* Requirements */}
+                  {selectedService === svc._id && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Requirements</h4>
+                        <button onClick={() => { setEditingReq(null); setReqForm(emptyRequirementForm); setShowReqForm(true) }}
+                          className="text-xs text-brand-green hover:text-brand-green-dark font-medium">+ Add Requirement</button>
+                      </div>
+                      {requirements.length === 0 ? (
+                        <p className="text-xs text-gray-400">No requirements added yet</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {requirements.map(req => (
+                            <div key={req._id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                              <span className={cn('w-2 h-2 rounded-full shrink-0', req.isMandatory ? 'bg-red-500' : 'bg-gray-400')} />
+                              <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{req.requirementText.en}</span>
+                              <span className="text-xs text-gray-400">#{req.sequenceNo}</span>
+                              <button onClick={() => { setEditingReq(req); setReqForm({ requirementText: { ...req.requirementText }, notes: { ...req.notes }, isMandatory: req.isMandatory, sequenceNo: req.sequenceNo }); setShowReqForm(true) }}
+                                className="p-1 text-gray-400 hover:text-blue-600"><Edit3 className="h-3.5 w-3.5" /></button>
+                              <button onClick={() => setConfirmDelete({ type: 'requirement', id: req._id })}
+                                className="p-1 text-gray-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+              {filteredServices.length === 0 && <p className="text-center py-8 text-gray-400">No services found</p>}
+            </div>
+          </div>
+        </>
       )}
 
-      {tab === 'offices' && (
-        <div className="space-y-6">
-          {/* Organization filter */}
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <select value={selectedOrg} onChange={e => setSelectedOrg(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
-                <option value="">All Organizations</option>
-                {orgs.map(org => <option key={org._id} value={org._id}>{org.name.en}</option>)}
-              </select>
-            </div>
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => { setEditingService(null); setServiceForm(emptyServiceForm); setShowServiceForm(true) }}
-              className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
-              <Plus className="h-4 w-4" /> New Service
-            </motion.button>
-          </div>
-
-          {/* Services list */}
-          <div className="space-y-3">
-            {filteredServices.map((svc, idx) => (
-              <motion.div key={svc._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}
-                className="p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-brand-green/10 flex items-center justify-center text-brand-green shrink-0">
-                    <Wrench className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 dark:text-white">{svc.name.en}</p>
-                    <p className="text-xs text-gray-500">
-                      {typeof svc.organization === 'object' ? svc.organization?.name?.en : 'N/A'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={() => loadRequirements(svc._id)}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-brand-green" title="Manage requirements">
-                      <List className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => { setEditingService(svc); setServiceForm({ name: { ...svc.name }, description: { ...svc.description }, organization: typeof svc.organization === 'string' ? svc.organization : svc.organization?._id || '', requiredDocuments: svc.requiredDocuments || [], fee: svc.fee, processingTime: svc.processingTime, workingHours: svc.workingHours, contactPhone: svc.contactPhone }); setShowServiceForm(true) }}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600"><Edit3 className="h-4 w-4" /></button>
-                    <button onClick={() => setConfirmDelete({ type: 'service', id: svc._id })}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></button>
-                  </div>
-                </div>
-
-                {/* Requirements for this service */}
-                {selectedService === svc._id && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Requirements</h4>
-                      <button onClick={() => { setEditingReq(null); setReqForm(emptyRequirementForm); setShowReqForm(true) }}
-                        className="text-xs text-brand-green hover:text-brand-green-dark font-medium">+ Add Requirement</button>
-                    </div>
-                    {requirements.length === 0 ? (
-                      <p className="text-xs text-gray-400">No requirements added yet</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {requirements.map(req => (
-                          <div key={req._id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800">
-                            <span className={cn('w-2 h-2 rounded-full shrink-0', req.isMandatory ? 'bg-red-500' : 'bg-gray-400')} />
-                            <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{req.requirementText.en}</span>
-                            <span className="text-xs text-gray-400">#{req.sequenceNo}</span>
-                            <button onClick={() => { setEditingReq(req); setReqForm({ requirementText: { ...req.requirementText }, notes: { ...req.notes }, isMandatory: req.isMandatory, sequenceNo: req.sequenceNo }); setShowReqForm(true) }}
-                              className="p-1 text-gray-400 hover:text-blue-600"><Edit3 className="h-3.5 w-3.5" /></button>
-                            <button onClick={() => setConfirmDelete({ type: 'requirement', id: req._id })}
-                              className="p-1 text-gray-400 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </motion.div>
-            ))}
-            {filteredServices.length === 0 && <p className="text-center py-8 text-gray-400">No services found</p>}
-          </div>
+      {!selectedOrg && (
+        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+          <Building2 className="h-16 w-16 mx-auto mb-4 opacity-30" />
+          <p className="text-lg font-medium">Select an organization to manage its windows and services</p>
         </div>
       )}
 
@@ -417,16 +459,15 @@ export default function AdminServices() {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Window Number</label>
-                <input type="number" value={windowForm.number} onChange={e => setWindowForm(f => ({ ...f, number: Number(e.target.value) }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Window Name/Number</label>
+                <input value={windowForm.number} onChange={e => setWindowForm(f => ({ ...f, number: e.target.value }))}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" placeholder="e.g. Window 1, Foddaa 1" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organization</label>
-                <select value={windowForm.organization} onChange={e => setWindowForm(f => ({ ...f, organization: e.target.value }))}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Floor</label>
+                <select value={windowForm.floor} onChange={e => setWindowForm(f => ({ ...f, floor: Number(e.target.value) }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
-                  <option value="">Select organization</option>
-                  {orgs.map(org => <option key={org._id} value={org._id}>{org.name.en}</option>)}
+                  {floors.map(f => <option key={f} value={f}>{floorLabels.en[f - 1]}</option>)}
                 </select>
               </div>
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -467,11 +508,11 @@ export default function AdminServices() {
                 </div>
               ))}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Organization</label>
-                <select value={serviceForm.organization} onChange={e => setServiceForm(f => ({ ...f, organization: e.target.value }))}
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Assign to Window</label>
+                <select value={serviceForm.window} onChange={e => setServiceForm(f => ({ ...f, window: e.target.value }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
-                  <option value="">Select organization</option>
-                  {orgs.map(org => <option key={org._id} value={org._id}>{org.name.en}</option>)}
+                  <option value="">No window (standalone service)</option>
+                  {windows.map((w: any) => <option key={w._id} value={w._id}>Window {w.number} (Floor {w.floor})</option>)}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
