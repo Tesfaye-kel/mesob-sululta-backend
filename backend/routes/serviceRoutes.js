@@ -10,12 +10,14 @@ const {
   updateService,
   deleteService,
   getServicesByOrganization,
+  getServicesByWindow,
 } = require('../controllers/serviceController');
 
 const router = express.Router();
 
 router.get('/', getAllServices);
 router.get('/by-organization/:organizationId', getServicesByOrganization);
+router.get('/by-window/:windowId', getServicesByWindow);
 
 // GET /api/services/:id/requirements  — public shortcut
 router.get('/:id/requirements', async (req, res, next) => {

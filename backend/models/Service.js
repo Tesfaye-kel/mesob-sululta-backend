@@ -18,6 +18,12 @@ const serviceSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    window: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Window',
+      default: null,
+      index: true,
+    },
     requiredDocuments: {
       type: [String],
       default: [],
@@ -43,5 +49,7 @@ const serviceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Service', serviceSchema);
+// Index for efficient queries
+serviceSchema.index({ organization: 1, window: 1 });
 
+module.exports = mongoose.model('Service', serviceSchema);

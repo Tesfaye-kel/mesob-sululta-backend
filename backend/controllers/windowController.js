@@ -4,9 +4,14 @@ const Service = require('../models/Service');
 // POST /api/windows
 const createWindow = async (req, res, next) => {
   try {
-    const { number, organization, services } = req.body;
+    const { number, floor, organization, description } = req.body;
 
-    const win = await Window.create({ number, organization, services });
+    // Ensure floor is 1-5
+    if (!floor || floor < 1 || floor > 5) {
+      return res.status(400).json({ message: 'Floor must be between 1 and 5' });
+    }
+
+    const win = await Window.create({ number, floor, organization, description });
     return res.status(201).json(win);
   } catch (err) {
     next(err);
@@ -23,55 +28,55 @@ const getAllWindows = async (req, res, next) => {
 
     const windows = await Window.find(filter)
       .populate('organization', 'name logoUrl')
-      .populate('services', 'name description fee processingTime workingHours contactPhone requiredDocuments')
-      .sort({ number: 1 });
+      .sort({ floor: 1, number: 1 });
 
-    // Aggregate: group by window number and sum serviceCount
-    const grouped = new Map();
-    for (const win of windows) {
-      const key = win.number;
-      if (!grouped.has(key)) {
-        grouped.set(key, {
-          _id: win._id,
-          number: win.number,
-          serviceCount: 0,
-          organizations: [],
-        });
-      }
-      const entry = grouped.get(key);
-      entry.serviceCount += win.services.length;
-      entry.organizations.push(win.organization);
-    }
+    // Attach service count to each window
+    const windowsWithCount = await Promise.all(
+      windows.map(async (win) => {
+        const serviceCount = await Service.countDocuments({ window: win._id });
+        return { ...win.toObject(), serviceCount };
+      })
+    );
 
-    return res.json(Array.from(grouped.values()).sort((a, b) => a.number - b.number));
+    return res.json(windowsWithCount);
   } catch (err) {
     next(err);
   }
 };
 
-// GET /api/windows/grouped
-// Returns windows grouped by number for accordion UI
-const getGroupedWindows = async (req, res, next) => {
+// GET /api/windows/by-organization/:orgId
+// Returns windows grouped by floor for a specific organization
+const getWindowsByOrganization = async (req, res, next) => {
   try {
-    const windows = await Window.find()
-      .populate('organization', 'name logoUrl description')
-      .populate('services', 'name description fee processingTime workingHours contactPhone requiredDocuments')
-      .sort({ number: 1 });
+    const { orgId } = req.params;
+    
+    const windows = await Window.find({ organization: orgId })
+      .populate('organization', 'name logoUrl')
+      .sort({ floor: 1, number: 1 });
 
-    const groupedMap = new Map();
+    // Attach service count to each window
+    const windowsWithCount = await Promise.all(
+      windows.map(async (win) => {
+        const serviceCount = await Service.countDocuments({ window: win._id });
+        return { ...win.toObject(), serviceCount };
+      })
+    );
 
-    for (const win of windows) {
-      if (!groupedMap.has(win.number)) {
-        groupedMap.set(win.number, { number: win.number, organizations: [] });
+    // Group by floor
+    const grouped = new Map();
+    for (const win of windowsWithCount) {
+      const floor = win.floor;
+      if (!grouped.has(floor)) {
+        grouped.set(floor, []);
       }
-      groupedMap.get(win.number).organizations.push({
-        organization: win.organization,
-        services: win.services,
-      });
+      grouped.get(floor).push(win);
     }
 
-    const grouped = Array.from(groupedMap.values()).sort((a, b) => a.number - b.number);
-    return res.json(grouped);
+    const result = Array.from(grouped.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([floor, wins]) => ({ floor, windows: wins }));
+
+    return res.json(result);
   } catch (err) {
     next(err);
   }
@@ -81,8 +86,7 @@ const getGroupedWindows = async (req, res, next) => {
 const getWindowById = async (req, res, next) => {
   try {
     const win = await Window.findById(req.params.id)
-      .populate('organization', 'name')
-      .populate('services', 'name');
+      .populate('organization', 'name');
 
     if (!win) return res.status(404).json({ message: 'Window not found' });
     return res.json(win);
@@ -96,42 +100,10 @@ const getServicesByWindow = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // id is the window NUMBER (1–11) sent from the frontend
-    const num = Number(id);
-    let windowDocs = [];
-
-    if (!isNaN(num)) {
-      // Primary path: lookup by window number — merges all org-split docs
-      windowDocs = await Window.find({ number: num }).populate({
-        path: 'services',
-        populate: { path: 'organization', select: 'name' },
-      });
-    }
-
-    // Fallback: try by _id in case someone calls the old way
-    if (!windowDocs.length && id.match(/^[a-f\d]{24}$/i)) {
-      windowDocs = await Window.find({ _id: id }).populate({
-        path: 'services',
-        populate: { path: 'organization', select: 'name' },
-      });
-    }
-
-    if (!windowDocs.length) {
-      return res.status(404).json({ message: 'Window not found' });
-    }
-
-    // Merge services from all Window docs for this number (de-duplicate)
-    const seen = new Set();
-    const services = [];
-    for (const win of windowDocs) {
-      for (const svc of win.services) {
-        const key = String(svc._id);
-        if (!seen.has(key)) {
-          seen.add(key);
-          services.push(svc);
-        }
-      }
-    }
+    const services = await Service.find({ window: id })
+      .populate('organization', 'name')
+      .populate('window', 'number floor')
+      .sort({ createdAt: 1 });
 
     return res.json(services);
   } catch (err) {
@@ -142,11 +114,15 @@ const getServicesByWindow = async (req, res, next) => {
 // PUT /api/windows/:id
 const updateWindow = async (req, res, next) => {
   try {
-    const { number, organization, services } = req.body;
+    const { number, floor, organization, description } = req.body;
+
+    if (floor !== undefined && (floor < 1 || floor > 5)) {
+      return res.status(400).json({ message: 'Floor must be between 1 and 5' });
+    }
 
     const win = await Window.findByIdAndUpdate(
       req.params.id,
-      { number, organization, services },
+      { number, floor, organization, description },
       { new: true, runValidators: true }
     );
 
@@ -160,9 +136,12 @@ const updateWindow = async (req, res, next) => {
 // DELETE /api/windows/:id
 const deleteWindow = async (req, res, next) => {
   try {
+    // Delete all services associated with this window
+    await Service.deleteMany({ window: req.params.id });
+    // Delete the window
     const win = await Window.findByIdAndDelete(req.params.id);
     if (!win) return res.status(404).json({ message: 'Window not found' });
-    return res.json({ message: 'Window deleted successfully' });
+    return res.json({ message: 'Window and associated services deleted successfully' });
   } catch (err) {
     next(err);
   }
@@ -171,7 +150,7 @@ const deleteWindow = async (req, res, next) => {
 module.exports = {
   createWindow,
   getAllWindows,
-  getGroupedWindows,
+  getWindowsByOrganization,
   getWindowById,
   getServicesByWindow,
   updateWindow,

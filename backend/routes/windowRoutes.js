@@ -5,7 +5,7 @@ const { requireAdmin } = require('../middleware/roleMiddleware');
 const {
   createWindow,
   getAllWindows,
-  getGroupedWindows,
+  getWindowsByOrganization,
   getWindowById,
   getServicesByWindow,
   updateWindow,
@@ -14,8 +14,8 @@ const {
 
 const router = express.Router();
 
-router.get('/grouped', getGroupedWindows);
 router.get('/', getAllWindows);
+router.get('/by-organization/:orgId', getWindowsByOrganization);
 router.get('/:id/services', getServicesByWindow);
 router.get('/:id', getWindowById);
 
