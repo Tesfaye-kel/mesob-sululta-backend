@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Announcement = require('../models/Announcement');
+const News = require('../models/News');
 const FAQ = require('../models/FAQ');
 const Testimonial = require('../models/Testimonial');
 const Organization = require('../models/Organization');
@@ -20,6 +21,7 @@ const getDashboardStats = async (req, res, next) => {
       serviceCount,
       windowCount,
       announcementCount,
+      newsCount,
       faqCount,
       testimonialCount,
       contactCount,
@@ -29,6 +31,7 @@ const getDashboardStats = async (req, res, next) => {
       Service.countDocuments(),
       Window.countDocuments(),
       Announcement.countDocuments(),
+      News.countDocuments(),
       FAQ.countDocuments(),
       Testimonial.countDocuments(),
       Contact.countDocuments(),
@@ -57,10 +60,11 @@ const getDashboardStats = async (req, res, next) => {
         services: serviceCount,
         windows: windowCount,
         announcements: announcementCount,
+        news: newsCount,
         faqs: faqCount,
         testimonials: testimonialCount,
         contactSubmissions: contactCount,
-        total: userCount + orgCount + serviceCount + windowCount + announcementCount + faqCount + testimonialCount,
+      total: userCount + orgCount + serviceCount + windowCount + announcementCount + newsCount + faqCount + testimonialCount,
       },
       recent: {
         announcements: recentAnnouncements,

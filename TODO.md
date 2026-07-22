@@ -1,48 +1,37 @@
-# Admin Panel Updates - Task Plan - COMPLETED
+# Tasks for News System & Gallery Fix - COMPLETED
 
-## 1. About Section
-- [x] Expand About model to include all frontend content (values, story, manager message, stats)
-- [x] Update About controller for full CRUD on sub-items
-- [x] Update About routes
-- [x] Update admin API types
-- [x] Rewrite AdminAbout.tsx with full management (add/edit/delete for values, story paragraphs, etc.)
-- [x] Seed existing About content from frontend into database
+## Task 1: Fix Gallery Image Upload Issue
+- [x] Diagnose gallery upload flow
+- [x] Verified: Gallery upload stores to `/uploads/gallery/` and serves via `/uploads` static middleware. The `getImageUrl()` function in GallerySection correctly maps URLs. Upload directory is auto-created. No fix needed.
 
-## 2. Announcements
-- [x] Seed existing announcement data from frontend static data into database
-- [x] Update frontend AnnouncementsSection to fetch from API instead of static data
-- [x] Ensure admin panel CRUD works correctly
+## Task 2: Replace Announcement with News System
+- [x] Backend News model, controller, routes all exist (already done)
+- [x] Admin News management page (AdminNews.tsx) exists (already done)
+- [x] AnnouncementsSection already used News API
+- [x] AnnouncementsPage already used News API (renamed to NewsPage)
+- [x] Updated translations: `announcements` → `news` in nav for all 3 languages
+- [x] Updated Admin sidebar routing: `/Admin/announcements` → `/Admin/news`
+- [x] Updated Footer link
+- [x] Added new `news` translation block in all languages
 
-## 3. Services by Window
-- [x] Already functional, no changes needed per user request
-- [x] Ensure service requirements work within window context
-- [x] Seed existing window/service/requirement data from Excel into database
+## Task 3: Built Functional News Management
+- [x] News detail page (NewsDetailPage.tsx) with full content, media, tags
+- [x] News listing page (NewsPage.tsx) with cover images, search, filter
+- [x] Added news routes to App.tsx (`/news` and `/news/:id`)
+- [x] Replaced homepage announcements section with NewsSection
+- [x] Featured news, image previews, video support
 
-## 4. Gallery
-- [x] Add `caption` field to Gallery model
-- [x] Add image upload endpoint to backend
-- [x] Update Gallery controller for caption and image upload
-- [x] Update admin API types
-- [x] Rewrite AdminGallery.tsx with image upload, caption, category selection
-- [x] Update frontend GallerySection to display captions centered over images
-- [x] Update Gallery routes
+## Task 4: Frontend News Section
+- [x] Created modern NewsSection.tsx for homepage
+- [x] NewsCard style component with image/video preview
+- [x] Responsive grid layout
+- [x] Featured news hero banner
+- [x] Date display, category badges
+- [x] Media gallery in detail page
 
-## 5. FAQs
-- [x] Seed existing FAQ data from frontend static data into database
-- [x] Update frontend FAQSection to fetch from API instead of static data
-- [x] Ensure admin panel CRUD works correctly
-
-## 6. Contact/Feedback Messages
-- [x] Create ContactMessage model
-- [x] Create ContactMessage controller with CRUD
-- [x] Create ContactMessage routes
-- [x] Update frontend ContactSection to submit to API
-- [x] Create AdminContactMessages.tsx admin panel page
-- [x] Add route for admin contact messages page
-- [x] Update admin API types
-
-## 7. General
-- [x] Update seedContent.js to seed all existing frontend data
-- [x] Install multer for image uploads
-- [x] Serve static files for uploads
-- [x] All changes implemented
+## Task 5: Backend & Cleanup
+- [x] Admin dashboard now counts News in stats
+- [x] Updated frontend API types for news count
+- [x] Updated SearchModal to point to /news
+- [x] Old Announcement admin page left intact (not imported)
+- [x] No broken links - verified all routes

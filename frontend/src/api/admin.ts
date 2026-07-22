@@ -56,6 +56,7 @@ export interface DashboardStats {
     services: number
     windows: number
     announcements: number
+    news: number
     faqs: number
     testimonials: number
     contactSubmissions: number
@@ -278,6 +279,8 @@ export interface GalleryItem {
   description: MultiLang
   caption: MultiLang
   imageUrl: string
+  videoUrl?: string
+  mediaType?: 'image' | 'video'
   category: string
   order: number
   createdAt: string

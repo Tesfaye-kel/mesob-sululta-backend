@@ -1,13 +1,11 @@
 const Gallery = require('../models/Gallery');
-const path = require('path');
-const fs = require('fs');
 
+// GET /api/gallery - Public
 const getGalleryItems = async (req, res, next) => {
   try {
     const { category } = req.query;
     const filter = {};
     if (category && category !== 'all') filter.category = category;
-
     const items = await Gallery.find(filter).sort({ order: 1, createdAt: -1 });
     res.json(items);
   } catch (err) {
@@ -15,6 +13,7 @@ const getGalleryItems = async (req, res, next) => {
   }
 };
 
+// GET /api/gallery/:id - Public
 const getGalleryItem = async (req, res, next) => {
   try {
     const item = await Gallery.findById(req.params.id);
@@ -25,6 +24,7 @@ const getGalleryItem = async (req, res, next) => {
   }
 };
 
+// POST /api/gallery - Admin
 const createGalleryItem = async (req, res, next) => {
   try {
     const item = await Gallery.create(req.body);
@@ -34,10 +34,11 @@ const createGalleryItem = async (req, res, next) => {
   }
 };
 
+// PUT /api/gallery/:id - Admin
 const updateGalleryItem = async (req, res, next) => {
   try {
     const item = await Gallery.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+      returnDocument: 'after',
       runValidators: true,
     });
     if (!item) return res.status(404).json({ message: 'Gallery item not found' });
@@ -47,6 +48,7 @@ const updateGalleryItem = async (req, res, next) => {
   }
 };
 
+// DELETE /api/gallery/:id - Admin
 const deleteGalleryItem = async (req, res, next) => {
   try {
     const item = await Gallery.findByIdAndDelete(req.params.id);
@@ -57,12 +59,15 @@ const deleteGalleryItem = async (req, res, next) => {
   }
 };
 
+// POST /api/gallery/upload - Admin (file upload)
 const uploadGalleryImage = async (req, res, next) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No image file provided' });
     }
+    // Return the URL path that the frontend can use with getImageUrl()
     const imageUrl = `/uploads/gallery/${req.file.filename}`;
+    console.log('Gallery upload success:', imageUrl);
     res.json({ imageUrl, filename: req.file.filename });
   } catch (err) {
     next(err);

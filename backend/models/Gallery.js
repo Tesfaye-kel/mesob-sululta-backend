@@ -18,6 +18,12 @@ const gallerySchema = new mongoose.Schema(
       or: { type: String, default: '' },
     },
     imageUrl: { type: String, default: '' },
+    videoUrl: { type: String, default: '' },
+    mediaType: {
+      type: String,
+      enum: ['image', 'video'],
+      default: 'image',
+    },
     category: {
       type: String,
       enum: ['events', 'building', 'community', 'activities'],

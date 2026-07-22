@@ -6,6 +6,8 @@ const Organization = require('./models/Organization');
 const Service = require('./models/Service');
 const Window = require('./models/Window');
 const Announcement = require('./models/Announcement');
+const News = require('./models/News');
+const Gallery = require('./models/Gallery');
 const FAQ = require('./models/FAQ');
 
 const normalize = (value = '') =>
@@ -251,6 +253,134 @@ const seedFAQs = async () => {
   console.log(`Seed completed: ${faqs.length} FAQs inserted.`);
 };
 
+const seedGallery = async () => {
+  const existing = await Gallery.countDocuments();
+  if (existing > 0) {
+    console.log('Seed skipped: gallery items already exist.');
+    return;
+  }
+
+  // Using picsum.photos for placeholder images (free, no API key needed, reliable)
+  // Admins can replace these with real uploads via the admin panel
+  const galleryItems = [
+    {
+      title: { en: 'MESOB Sululta Building', am: 'MESOB ሱሉልታ ህንጻ', or: 'Ijaarama MESOB Sululta' },
+      description: { en: 'The main building of MESOB Sululta Branch', am: 'የMESOB ሱሉልታ ቅርንጫፍ ዋና ህንጻ', or: 'Ijaarama guddaa Damee MESOB Sululta' },
+      caption: { en: 'MESOB Sululta - Serving the Community', am: 'MESOB ሱሉልታ - ማህበረሰብን በማገልገል', or: 'MESOB Sululta - Hawaasa Tajaajiluu' },
+      imageUrl: 'https://picsum.photos/seed/mesob1/800/600',
+      category: 'building',
+      order: 1,
+    },
+    {
+      title: { en: 'Community Event', am: 'የማህበረሰብ ዝግጅት', or: 'Goosaa Hawaasaa' },
+      description: { en: 'Community engagement event at MESOB Sululta', am: 'በMESOB ሱሉልታ የማህበረሰብ ተሳትፎ ዝግጅት', or: 'Goosaa hirmaannaa hawaasaa MESOB Sulultaa' },
+      caption: { en: 'Working Together for a Better Community', am: 'ለተሻለ ማህበረሰብ አብረን መስራት', or: 'Hawaasa Fooyyaa' },
+      imageUrl: 'https://picsum.photos/seed/mesob2/800/600',
+      category: 'community',
+      order: 2,
+    },
+    {
+      title: { en: 'Service Windows', am: 'የአገልግሎት መስኮቶች', or: 'Foddaawwan Tajaajilaa' },
+      description: { en: 'Service windows at MESOB Sululta', am: 'በMESOB ሱሉልታ የአገልግሎት መስኮቶች', or: 'Foddaawwan tajaajilaa MESOB Sululta' },
+      caption: { en: 'Efficient Service Delivery', am: 'ቀልጣፋ አገልግሎት አሰጣጥ', or: 'Tajaajila Saffisaa Kennuu' },
+      imageUrl: 'https://picsum.photos/seed/mesob3/800/600',
+      category: 'activities',
+      order: 3,
+    },
+    {
+      title: { en: 'Staff Training Session', am: 'የሰራተኞች ስልጠና', or: 'Leenjii Hojjettootaa' },
+      description: { en: 'Capacity building training for MESOB staff', am: 'ለMESOB ሰራተኞች የአቅም ግንባታ ስልጠና', or: 'Leenjii ciminaa hojjettoota MESOB' },
+      caption: { en: 'Investing in Our People', am: 'በሰራተኞቻችን ላይ መዋዕለ ንዋይ ማፍሰስ', or: 'Hojjettoota Keenya Keessatti Kaappitaala' },
+      imageUrl: 'https://picsum.photos/seed/mesob4/800/600',
+      category: 'events',
+      order: 4,
+    },
+  ];
+
+  await Gallery.insertMany(galleryItems);
+  console.log(`Seed completed: ${galleryItems.length} gallery items inserted.`);
+};
+
+const seedNews = async () => {
+  const existing = await News.countDocuments();
+  if (existing > 0) {
+    console.log('Seed skipped: news items already exist.');
+    return;
+  }
+
+  const newsItems = [
+    {
+      title: { en: 'MESOB Sululta Branch Celebrates 2nd Anniversary', am: 'MESOB ሱሉልታ ቅርንጫፍ 2ኛ ዓመት ምስረታ አከበረ', or: 'Dameen MESOB Sululta Guyyaa Dhalootaa 2ffaa Kabaje' },
+      content: { en: 'The MESOB Sululta Branch proudly celebrates its second anniversary, having served over 50,000 citizens with excellence and efficiency. The branch has significantly reduced waiting times and improved service delivery across all departments.\n\nSince its opening, the Sululta Branch has become a model for customer-centric public service in the Oromia region. Citizens now enjoy faster processing times, friendly staff, and a welcoming environment.\n\nWe thank all our visitors, partners, and staff for making these two years a remarkable success. Here\'s to many more years of serving our community!', am: 'MESOB ሱሉልታ ቅርንጫፍ ከ50,000 በላይ ዜጎችን በማገልገል 2ኛ ዓመቱን በኩራት አከበረ።', or: 'Dameen MESOB Sululta waggaa 2ffaa isaa lammiilee 50,000 ol tajaajiluun kabaje.' },
+      excerpt: { en: 'MESOB Sululta Branch marks two years of serving the community with excellence.', am: 'MESOB ሱሉልታ ቅርንጫፍ ማህበረሰብን በማገልገል 2ኛ ዓመቱን አከበረ።', or: 'Dameen MESOB Sululta waggaa 2ffaa hawaasa tajaajiluun kabaje.' },
+      category: 'news',
+      isFeatured: true,
+      isPublished: true,
+      publishedAt: new Date('2024-12-15'),
+      coverImageUrl: '',
+      tags: ['anniversary', 'milestone', 'service'],
+    },
+    {
+      title: { en: 'MESOB Launches Digital Payment Integration', am: 'MESOB ዲጂታል ክፍያ ውህደት ጀመረ', or: 'MESOB Walitti Hidhinsa Kaffaltii Dijitaalaa Jalqabe' },
+      content: { en: 'MESOB Center proudly announces the launch of comprehensive digital payment integration. Citizens can now pay for all government services through MESOB Mobile App, CBE Birr, and TeleBirr platforms.\n\nThis new payment system eliminates the need for cash transactions, making service payments faster, safer, and more convenient for everyone. The integration covers all services offered at the Sululta branch.', am: 'MESOB ማዕከል አጠቃላይ የዲጂታል ክፍያ ውህደት መጀመሩን በኩራት ያስታውቃል።', or: 'Giddaan MESOB walitti hidhinsa kaffaltii dijitaalaa guutuu jalqabu isaa beeksisa.' },
+      excerpt: { en: 'Digital payments now available for all MESOB services via mobile app and money transfer platforms.', am: 'በሞባይል አፕ እና በገንዘብ ማስተላለፊያ መድረኮች ዲጂታል ክፍያ አሁን ተገኝቷል።', or: 'Kaffaltii dijitaalaa app mobiilii fi plaatformii naannoo maallaqaa tajaajila MESOB hundaaf ni argama.' },
+      category: 'news',
+      isFeatured: true,
+      isPublished: true,
+      publishedAt: new Date('2025-01-05'),
+      coverImageUrl: '',
+      tags: ['digital', 'payment', 'technology', 'innovation'],
+    },
+    {
+      title: { en: 'Notice: Extended Service Hours During Ethiopian Christmas', am: 'ማስታወቂያ፡ በኢትዮጵያ ገና የተዘረጋ የአገልግሎት ሰዓት', or: 'Beeksisa: Sa\'aatii Tajaajilaa Diriirfame Yeroo Booraa Itoophiyaa' },
+      content: { en: 'Dear Citizens, we are pleased to announce extended working hours from January 7–10 during the Ethiopian Christmas holiday. National ID and Passport services will operate from 8:00 AM to 7:00 PM.\n\nOther services will be available during regular hours. We wish you all a blessed Ethiopian Christmas!', am: 'ውድ ዜጎች፣ በኢትዮጵያ ገና በዓል ምክንያት ከጥር 7–10 የተዘረጋ የሥራ ሰዓት ማወጃችንን እንገልጻለን።', or: 'Lammiilee kabajamoo, sa\'aatii hojii diriirfame Amajjii 7–10 guyyaa boqonnaa Booraa Itoophiyaa beeksisna.' },
+      excerpt: { en: 'Extended working hours during the Ethiopian Christmas holiday for your convenience.', am: 'ለእርስዎ ምቾት በኢትዮጵያ ገና በዓል የተራዘሙ የስራ ሰአታት።', or: 'Tajaajila keessaniif sa\'aatii hojii diriirfame guyyaa Booraa Itoophiyaa.' },
+      category: 'notice',
+      isFeatured: true,
+      isPublished: true,
+      publishedAt: new Date('2024-12-28'),
+      coverImageUrl: '',
+      tags: ['holiday', 'hours', 'christmas'],
+    },
+    {
+      title: { en: 'Digital Literacy Workshop for Elderly Citizens', am: 'ለአረጋውያን ዲጂታል ማንበብና መጻፍ አውደ ጥናት', or: 'Workshopii Dijitaalaa Lammiilee Maanguddoodhaaf' },
+      content: { en: 'MESOB Sululta is hosting a free digital literacy workshop for elderly citizens every Saturday morning. Learn how to access government services from home using smartphones and computers.\n\nThe workshop covers basic smartphone use, internet navigation, and accessing MESOB online services. No prior experience needed - bring your phone and join us!', am: 'MESOB ሱሉልታ ለአረጋውያን በየቅዳሜ ማለዳ ነፃ የዲጂታል ማንበብና መጻፍ አውደ ጥናት ያካሂዳል።', or: 'MESOB Sululta lammiilee maanguddoodhaaf guyyaa Sanbata ganama worshoopii barnoota dijitaalaa bilisaa qopheessiti.' },
+      excerpt: { en: 'Free digital skills workshop every Saturday at MESOB Sululta for senior citizens.', am: 'ለአረጋውያን በየቅዳሜው ነፃ የዲጂታል ክህሎት አውደ ጥናት።', or: 'Workshopii ogummaa dijitaalaa bilisaa guyyaa Sanbata MESOB Sulultaatti lammiilee maanguddoodhaaf.' },
+      category: 'event',
+      isFeatured: false,
+      isPublished: true,
+      publishedAt: new Date('2025-01-10'),
+      coverImageUrl: '',
+      tags: ['workshop', 'digital', 'elderly', 'education'],
+    },
+    {
+      title: { en: 'Office Closure – Ethiopian Epiphany (Timkat)', am: 'ቢሮ መዘጋት – የጥምቀት በዓል', or: 'Cufamuu Waajjiraa – Timkat' },
+      content: { en: 'Dear Citizens, please note that all MESOB Center offices will be closed on January 19–20, 2025 for the Ethiopian Epiphany (Timkat) public holiday. Normal operations resume on January 21.\n\nWe apologize for any inconvenience this may cause. Emergency services will be available through our online platform.', am: 'ውድ ዜጎች፣ ሁሉም MESOB ማዕከል ቢሮዎች ጥር 11–12 ለጥምቀት በዓል ዝግ እንደሚሆኑ እንገልጻለን።', or: 'Lammiilee kabajamoo, waajjiraalee MESOB hundi Amajjii 19–20 Timkataaf cufamuu isaanii beeksisna.' },
+      excerpt: { en: 'MESOB offices closed January 19-20 for the Timkat holiday.', am: 'MESOB ቢሮዎች ለጥምቀት በዓል ጥር 11-12 ዝግ ናቸው።', or: 'Waajjiraaleen MESOB Amajjii 19-20 Timkataaf cufamoo ta\'u.' },
+      category: 'holiday',
+      isFeatured: false,
+      isPublished: true,
+      publishedAt: new Date('2025-01-15'),
+      coverImageUrl: '',
+      tags: ['holiday', 'closure', 'timkat'],
+    },
+    {
+      title: { en: 'Updated Passport Application Requirements', am: 'የተሻሻሉ የፓስፖርት ማመልከቻ መስፈርቶች', or: 'Barbaachisuuwwan Gaaffii Paasipoortii Fooyya\'an' },
+      content: { en: 'Starting February 1, 2025, all new passport applications must include an updated national ID card issued within the last 5 years. Please ensure your national ID is current before applying.\n\nThis change is part of our ongoing effort to improve document security and streamline the passport application process.', am: 'ከየካቲት 1, 2025 ጀምሮ ሁሉም አዲስ የፓስፖርት ማመልከቻዎች የተሻሻለ ብሔራዊ መታወቂያ ማካተት አለባቸው።', or: 'Gurraandhala 1, 2025 irraa jalqabee, gaaffii paasipoortii haaraa hundi kaardii ID biyyoolessa haaromsame of keessaa qabaachuu qaba.' },
+      excerpt: { en: 'Important update: New passport applications now require an ID card issued within 5 years.', am: 'አስፈላጊ ማሻሻያ፡ አዲስ የፓስፖርት ማመልከቻዎች በ5 ዓመት ውስጥ የተሰጠ መታወቂያ ያስፈልጋቸዋል።', or: 'Fooyya\'insa barbaachisaa: Gaaffii paasipoortii haaraa kaardii ID waggaa 5 keessatti kenname barbaada.' },
+      category: 'notice',
+      isFeatured: false,
+      isPublished: true,
+      publishedAt: new Date('2025-01-20'),
+      coverImageUrl: '',
+      tags: ['passport', 'requirements', 'id', 'update'],
+    },
+  ];
+
+  await News.insertMany(newsItems);
+  console.log(`Seed completed: ${newsItems.length} news items inserted.`);
+};
+
 const seedWindowsFromExcel = async () => {
   const existing = await Window.countDocuments();
   if (existing > 0) {
@@ -329,8 +459,10 @@ const seedSiteContent = async () => {
   await seedAbout();
   await seedContact();
   await seedAnnouncements();
+  await seedNews();
+  await seedGallery();
   await seedFAQs();
   await seedWindowsFromExcel();
 };
 
-module.exports = { seedAbout, seedContact, seedAnnouncements, seedFAQs, seedWindowsFromExcel, seedSiteContent };
+module.exports = { seedAbout, seedContact, seedAnnouncements, seedNews, seedGallery, seedFAQs, seedWindowsFromExcel, seedSiteContent };
