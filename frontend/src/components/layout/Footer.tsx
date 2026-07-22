@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Phone, Mail, MapPin, Clock, Facebook, Twitter, Youtube, ExternalLink } from 'lucide-react'
+import { Phone, Mail, MapPin, Clock, ExternalLink, Facebook, Twitter, Youtube, Send } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import MesobLogo, { EthiopiaEmblem } from '@/components/brand/MesobLogo'
 
@@ -10,7 +10,7 @@ export default function Footer() {
     { labelEn: 'Home',          labelAm: 'መነሻ',          labelOr: 'Mana',            path: '/' },
     { labelEn: 'About Us',      labelAm: 'ስለ እኛ',         labelOr: "Waa'ee Keenya",   path: '/about' },
     { labelEn: 'Organization',  labelAm: 'ድርጅት',          labelOr: 'Dhaabbata',       path: '/organization' },
-    { labelEn: 'Announcements', labelAm: 'ማስታወቂያዎች',     labelOr: 'Beeksisaalee',    path: '/announcements' },
+    { labelEn: 'News', labelAm: 'ዜና',     labelOr: 'Beeksisaalee',    path: '/news' },
     { labelEn: 'Gallery',       labelAm: 'ጋለሪ',           labelOr: 'Galerii',         path: '/gallery' },
     { labelEn: 'FAQ',           labelAm: 'ጥያቄዎች',        labelOr: 'Gaaffilee',       path: '/faq' },
     { labelEn: 'Contact',       labelAm: 'ያናግሩን',         labelOr: 'Nu Qunnamaa',     path: '/contact' },
@@ -160,9 +160,10 @@ export default function Footer() {
             <div className="flex items-center gap-3">
               <span className="text-xs text-gray-500">{followUsLabel}</span>
               {[
-                { Icon: Facebook, label: 'Facebook', href: '#' },
-                { Icon: Twitter,  label: 'Twitter/X', href: '#' },
-                { Icon: Youtube,  label: 'YouTube',   href: '#' },
+                { Icon: Facebook, label: 'Facebook', href: 'https://facebook.com/mesobsululta' },
+                { Icon: Twitter,  label: 'Twitter/X', href: 'https://twitter.com/mesobsululta' },
+                { Icon: Youtube,  label: 'YouTube',   href: 'https://youtube.com/@mesobsululta' },
+                { Icon: Send,     label: 'Telegram',  href: 'https://t.me/mesobsululta' },
               ].map(({ Icon, label, href }) => (
                 <a key={label} href={href} aria-label={label} className="p-2 rounded-lg bg-gray-800 hover:bg-brand-green text-gray-400 hover:text-white transition-all duration-200">
                   <Icon className="h-4 w-4" aria-hidden />

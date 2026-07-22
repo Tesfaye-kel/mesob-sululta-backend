@@ -33,7 +33,7 @@ export default function SearchModal({ onClose }: SearchModalProps) {
     ...announcements
       .filter(a => a.titleEn.toLowerCase().includes(q))
       .slice(0, 2)
-      .map(a => ({ title: a.titleEn, path: '/announcements', type: 'Announcement' })),
+      .map(a => ({ title: a.titleEn, path: '/news', type: 'Announcement' })),
     ...faqs
       .filter(f => f.questionEn.toLowerCase().includes(q))
       .slice(0, 2)

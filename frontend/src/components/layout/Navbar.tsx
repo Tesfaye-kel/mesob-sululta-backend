@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { key: 'about', path: '/about', anchor: 'about' },
   { key: 'services', path: '/tajaajila', anchor: 'services' },
   { key: 'organization', path: '/organization', anchor: 'organization' },
-  { key: 'announcements', path: '/announcements', anchor: 'announcements' },
+  { key: 'news', path: '/news', anchor: 'announcements' },
   { key: 'gallery', path: '/gallery', anchor: 'gallery' },
   { key: 'faq', path: '/faq', anchor: 'faq' },
   { key: 'contact', path: '/contact', anchor: 'contact' },
@@ -98,7 +98,7 @@ interface NavbarProps {
 }
 
 const scrollableOnHomeKeys: NavItem['key'][] = [
-  'about', 'services', 'organization', 'announcements',
+  'about', 'services', 'organization', 'news',
   'gallery', 'faq', 'contact',
 ]
 
@@ -230,7 +230,7 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
             <nav className="hidden lg:flex items-center gap-0.5" aria-label="Main navigation">
               {navItems.map((item) => {
                 const isActive = isHome ? activeHomeSection === item.anchor : location.pathname === item.path
-                const showNewsDot = item.key === 'announcements' && newNewsCount > 0
+                const showNewsDot = item.key === 'news' && newNewsCount > 0
                 return (
                   <motion.div
                     key={item.path}
@@ -435,7 +435,7 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
 
               <nav className="p-4 space-y-1" aria-label="Mobile navigation">
                 {navItems.map((item, index) => {
-                  const showNewsDot = item.key === 'announcements' && newNewsCount > 0
+                  const showNewsDot = item.key === 'news' && newNewsCount > 0
                   return (
                     <motion.div
                       key={item.path}

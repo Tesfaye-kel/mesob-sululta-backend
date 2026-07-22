@@ -10,7 +10,8 @@ import Layout from '@/components/layout/Layout'
 import HomePage from '@/pages/HomePage'
 import AboutPage from '@/pages/AboutPage'
 import OrganizationPage from '@/pages/OrganizationPage'
-import AnnouncementsPage from '@/pages/AnnouncementsPage'
+import NewsPage from '@/pages/NewsPage'
+import NewsDetailPage from '@/pages/NewsDetailPage'
 import GalleryPage from '@/pages/GalleryPage'
 import FAQPage from '@/pages/FAQPage'
 import ContactPage from '@/pages/ContactPage'
@@ -70,7 +71,8 @@ export default function App() {
                     <Route path="tajaajila" element={<PageWrapper><TajaajilaaPage /></PageWrapper>} />
                     <Route path="tajaajila/office/:officeId" element={<PageWrapper><OfficeServicesPage /></PageWrapper>} />
                     <Route path="organization" element={<PageWrapper><OrganizationPage /></PageWrapper>} />
-                    <Route path="announcements" element={<PageWrapper><AnnouncementsPage /></PageWrapper>} />
+                    <Route path="news" element={<PageWrapper><NewsPage /></PageWrapper>} />
+                    <Route path="news/:id" element={<PageWrapper><NewsDetailPage /></PageWrapper>} />
                     <Route path="gallery" element={<PageWrapper><GalleryPage /></PageWrapper>} />
                     <Route path="faq" element={<PageWrapper><FAQPage /></PageWrapper>} />
                     <Route path="contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
@@ -84,7 +86,7 @@ export default function App() {
                     <Route element={<AdminLayout />}>
                       <Route path="dashboard" element={<AdminDashboard />} />
                       <Route path="about" element={<AdminAbout />} />
-                      <Route path="announcements" element={<AdminNews />} />
+                      <Route path="news" element={<AdminNews />} />
                       <Route path="services" element={<AdminServices />} />
                       <Route path="faqs" element={<AdminFAQs />} />
                       <Route path="testimonials" element={<AdminTestimonials />} />

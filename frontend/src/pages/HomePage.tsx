@@ -13,7 +13,7 @@ import AboutSection from '@/components/sections/AboutSection'
 import OrganizationSection from '@/components/sections/OrganizationSection'
 import GallerySection from '@/components/sections/GallerySection'
 import FeedbackSection from '@/components/sections/FeedbackSection'
-import AnnouncementsSection from '@/components/sections/AnnouncementsSection'
+import NewsSection from '@/components/sections/NewsSection'
 import FAQSection from '@/components/sections/FAQSection'
 import ContactSection from '@/components/sections/ContactSection'
 import { getOrganizations, type Organization } from '@/api/tajaajila'
@@ -161,7 +161,7 @@ export default function HomePage() {
         </div>
       </HomeSection>
 
-      {/* Announcements */}
+      {/* News */}
       <HomeSection
         id="announcements"
         title={t.announcements.title}
@@ -169,7 +169,7 @@ export default function HomePage() {
         bg="bg-gray-50/50 dark:bg-gray-900/30"
       >
         <div className="section-padding pt-0">
-          <AnnouncementsSection compact showHeader={false} />
+          <NewsSection compact showHeader={false} />
         </div>
       </HomeSection>
 
