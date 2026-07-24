@@ -15,8 +15,11 @@ const { seedSiteContent } = require('./seedContent');
 
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Security headers (relaxed for cross-origin image loading in dev)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false,
+}));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

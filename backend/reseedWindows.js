@@ -214,8 +214,24 @@ async function run() {
 
   const results = [];
 
+  // Floor mapping for each window number
+  const FLOOR_MAP = {
+    1: 1,
+    2: 1,
+    3: 2,
+    4: 2,
+    5: 2,
+    6: 3,
+    7: 3,
+    8: 4,
+    9: 4,
+    10: 5,
+    11: 5,
+  };
+
   for (const [windowNum, serviceNames] of Object.entries(WINDOW_SERVICES)) {
     const num = Number(windowNum);
+    const floor = FLOOR_MAP[num] || 1;
     const matchedIds = new Set();
     const missed = [];
 
@@ -240,11 +256,11 @@ async function run() {
 
     for (const { orgId, services } of byOrg.values()) {
       if (orgId) {
-        results.push({ number: num, organization: orgId, services });
+        results.push({ number: num, floor, organization: orgId, services });
       }
     }
 
-    console.log(`Foddaa ${num}: matched ${matchedIds.size}/${serviceNames.length}${missed.length ? ', missed: ' + missed.slice(0,3).join('; ') : ''}`);
+    console.log(`Foddaa ${num} (Floor ${floor}): matched ${matchedIds.size}/${serviceNames.length}${missed.length ? ', missed: ' + missed.slice(0,3).join('; ') : ''}`);
   }
 
   await Window.insertMany(results);

@@ -441,15 +441,25 @@ const seedWindowsFromExcel = async () => {
     grouped.get(key).services.add(String(service._id));
   }
 
+  // Floor mapping for each window number
+  const FLOOR_MAP = {
+    1: 1, 2: 1, 3: 2, 4: 2, 5: 2,
+    6: 3, 7: 3, 8: 4, 9: 4, 10: 5, 11: 5,
+  };
+
   const payload = Array.from(grouped.values()).map((item) => ({
     number: item.number,
+    floor: FLOOR_MAP[item.number] || 1,
     organization: item.organization,
     services: Array.from(item.services),
   }));
 
+  // Delete old windows without floor (from previous seed)
+  await Window.deleteMany({ floor: { $exists: false } });
+
   if (payload.length) {
     await Window.insertMany(payload);
-    console.log(`Seed completed: inserted ${payload.length} window records.`);
+    console.log(`Seed completed: inserted ${payload.length} window records with floor info.`);
   } else {
     console.warn('Window seed completed with 0 records (check Excel/org matching).');
   }
