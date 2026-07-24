@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Image, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Upload } from 'lucide-react'
 import { getGalleryItemsList, createGalleryItem, updateGalleryItem, deleteGalleryItem, type GalleryItem } from '@/api/admin'
 import { cn } from '@/lib/utils'
+import { getImageUrl } from '@/lib/images'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 

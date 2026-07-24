@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, ZoomIn, Image, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
+import { getImageUrl } from '@/lib/images'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
@@ -16,10 +17,22 @@ interface GalleryItem {
   category: string
 }
 
+// Handles image load errors by hiding the broken img and showing fallback
+function handleImgError(e: React.SyntheticEvent<HTMLImageElement>) {
+  const img = e.currentTarget
+  img.style.display = 'none'
+  const parent = img.parentElement
+  if (!parent) return
+  const fallback = parent.querySelector('.img-fallback')
+  if (fallback) (fallback as HTMLElement).style.display = 'flex'
+}
+
 export default function GallerySection() {
   const { t, language } = useLanguage()
   const [items, setItems] = useState<GalleryItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeCategory, setActiveCategory] = useState('All')
+  const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
 
   const categoryLabels: Record<string, string> = {
     All: t.gallery.all,
@@ -39,8 +52,6 @@ export default function GallerySection() {
       .finally(() => setLoading(false))
   }, [])
 
-  const [activeCategory, setActiveCategory] = useState('All')
-  const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
   const filtered = items.filter(g => activeCategory === 'All' || g.category.toLowerCase() === activeCategory.toLowerCase())
 
   const getCaption = (item: GalleryItem) => {
@@ -53,13 +64,6 @@ export default function GallerySection() {
     if (language === 'am' && item.title?.am) return item.title.am
     if (language === 'or' && item.title?.or) return item.title.or
     return item.title?.en || ''
-  }
-
-  const getImageUrl = (url: string) => {
-    if (!url) return ''
-    if (url.startsWith('http')) return url
-    if (url.startsWith('/uploads')) return `${BASE.replace('/api', '')}${url}`
-    return `${BASE.replace('/api', '')}/uploads/gallery/${url}`
   }
 
   return (
@@ -100,7 +104,15 @@ export default function GallerySection() {
                 role="button" tabIndex={0} aria-label={`View ${getTitle(item)}`}
                 onKeyDown={e => e.key === 'Enter' && setLightbox(item)}>
                 {imgUrl ? (
-                  <img src={imgUrl} alt={getTitle(item)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <div className="relative w-full h-full">
+                    <img
+                      src={imgUrl}
+                      alt={getTitle(item)}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={handleImgError}
+                    />
+                    <div className="img-fallback absolute inset-0 bg-gradient-to-br from-brand-green to-brand-blue opacity-80" aria-hidden style={{ display: 'none' }} />
+                  </div>
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-brand-green to-brand-blue opacity-80" aria-hidden />
                 )}
@@ -153,13 +165,17 @@ export default function GallerySection() {
               onClick={e => e.stopPropagation()}
             >
               <div className="w-full aspect-video rounded-2xl overflow-hidden mb-4 bg-gray-800 relative">
-                {getImageUrl(lightbox.imageUrl) ? (
-                  <img src={getImageUrl(lightbox.imageUrl)} alt={getTitle(lightbox)} className="w-full h-full object-contain" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-green to-brand-blue">
+                <div className="relative w-full h-full">
+                  <img
+                    src={getImageUrl(lightbox.imageUrl)}
+                    alt={getTitle(lightbox)}
+                    className="w-full h-full object-contain"
+                    onError={handleImgError}
+                  />
+                  <div className="img-fallback absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-green to-brand-blue" style={{ display: 'none' }}>
                     <Image className="h-12 w-12 text-white/60" aria-hidden />
                   </div>
-                )}
+                </div>
                 {/* Caption in lightbox */}
                 {getCaption(lightbox) && (
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-12">

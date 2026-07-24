@@ -42,6 +42,16 @@ const categoryVariant: Record<string, 'default' | 'notice' | 'event' | 'holiday'
   news: 'default', notice: 'notice', event: 'event', holiday: 'holiday', press: 'press',
 }
 
+// Handles image load errors by hiding the broken img and showing fallback
+function handleImgError(e: React.SyntheticEvent<HTMLImageElement>) {
+  const img = e.currentTarget
+  img.style.display = 'none'
+  const parent = img.parentElement
+  if (!parent) return
+  const fallback = parent.querySelector('.img-fallback')
+  if (fallback) (fallback as HTMLElement).style.display = 'flex'
+}
+
 export default function NewsSection({ compact = false, showHeader = true }: NewsSectionProps) {
   const { t, language } = useLanguage()
   const [items, setItems] = useState<NewsData[]>([])
@@ -151,8 +161,12 @@ export default function NewsSection({ compact = false, showHeader = true }: News
                 {/* Cover image */}
                 {imgUrl ? (
                   <div className="relative h-40 overflow-hidden bg-gray-100 dark:bg-gray-700">
-                    <img src={getImageUrl(imgUrl)} alt={title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <img src={getImageUrl(imgUrl)} alt={title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={handleImgError} />
+                    <div className="img-fallback absolute inset-0 bg-gradient-to-br from-brand-green to-brand-blue flex items-center justify-center" style={{ display: 'none' }}>
+                      <Megaphone className="h-10 w-10 text-white/50" />
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
                   </div>
                 ) : (
                   <div className="h-32 bg-gradient-to-br from-brand-green to-brand-blue flex items-center justify-center">
@@ -217,11 +231,17 @@ export default function NewsSection({ compact = false, showHeader = true }: News
               {/* Featured image */}
               {(selectedNews.coverImageUrl || categoryImages[selectedNews.category]) && (
                 <div className="w-full aspect-video rounded-2xl overflow-hidden mb-4 bg-gray-800 relative">
-                  <img
-                    src={getImageUrl(selectedNews.coverImageUrl || categoryImages[selectedNews.category])}
-                    alt={getTitle(selectedNews)}
-                    className="w-full h-full object-contain"
-                  />
+                  <div className="relative w-full h-full">
+                    <img
+                      src={getImageUrl(selectedNews.coverImageUrl || categoryImages[selectedNews.category])}
+                      alt={getTitle(selectedNews)}
+                      className="w-full h-full object-contain"
+                      onError={handleImgError}
+                    />
+                    <div className="img-fallback absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-green to-brand-blue" style={{ display: 'none' }}>
+                      <Megaphone className="h-12 w-12 text-white/60" />
+                    </div>
+                  </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-12">
                     <div className="flex items-center gap-2 mb-2">
                       <Badge variant={categoryVariant[selectedNews.category] || 'default'} size="sm">
@@ -238,27 +258,6 @@ export default function NewsSection({ compact = false, showHeader = true }: News
                       <Calendar className="h-3.5 w-3.5" aria-hidden />
                       {formatDate(selectedNews.publishedAt)}
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Title and date (if no cover image) */}
-              {!selectedNews.coverImageUrl && !categoryImages[selectedNews.category] && (
-                <div className="mb-4 text-center">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Badge variant={categoryVariant[selectedNews.category] || 'default'} size="sm">
-                      {(t.announcements.categories as Record<string, string>)[selectedNews.category] || selectedNews.category}
-                    </Badge>
-                    {selectedNews.isFeatured && (
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-green/80 text-white">
-                        {t.common?.featuredNews || 'Featured'}
-                      </span>
-                    )}
-                  </div>
-                  <h2 className="text-white font-bold text-2xl md:text-3xl">{getTitle(selectedNews)}</h2>
-                  <div className="flex items-center justify-center gap-1.5 mt-2 text-white/60 text-xs">
-                    <Calendar className="h-3.5 w-3.5" aria-hidden />
-                    {formatDate(selectedNews.publishedAt)}
                   </div>
                 </div>
               )}

@@ -129,6 +129,7 @@ export default function NewsDetailPage() {
                 src={getImageUrl(item.coverImageUrl)}
                 alt={title}
                 className="w-full h-auto max-h-[500px] object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
               />
             </div>
           )}

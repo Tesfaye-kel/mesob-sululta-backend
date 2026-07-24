@@ -135,7 +135,7 @@ export default function SinglePageNavbar({ onSearchOpen }: SinglePageNavbarProps
                   )}
                   aria-current={isActive ? 'true' : undefined}
                 >
-                  {t.nav[labelKey]}
+                  {(t.nav as Record<string, string>)[labelKey] ?? labelKey}
                   {isActive && (
                     <motion.div
                       layoutId="nav-indicator"
@@ -279,7 +279,7 @@ export default function SinglePageNavbar({ onSearchOpen }: SinglePageNavbarProps
                         isActive ? 'bg-white/20 text-white font-semibold' : 'text-white/80 hover:bg-white/10 hover:text-white'
                       )}
                     >
-                      {t.nav[labelKey]}
+                      {(t.nav as Record<string, string>)[labelKey] ?? labelKey}
                     </button>
                   </motion.div>
                 )
