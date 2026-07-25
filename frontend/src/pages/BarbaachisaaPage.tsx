@@ -13,7 +13,7 @@ export default function BarbaachisaaPage() {
   const location = useLocation()
   const { language, t } = useLanguage()
 
-  const fromPath: string = (location.state as { from?: string })?.from ?? '/tajaajila'
+  const fromPath: string = (location.state as { from?: string })?.from ?? '/'
 
   const [service, setService] = useState<Service | null>(null)
   const [requirements, setRequirements] = useState<Requirement[]>([])
@@ -59,7 +59,7 @@ export default function BarbaachisaaPage() {
     <div className="section-padding">
       <div className="container-gov max-w-3xl">
         <Breadcrumb crumbs={[
-          { label: servicesNav, to: '/tajaajila' },
+          { label: servicesNav, to: '/', state: { scrollTo: 'services' } },
           { label: backLabel, to: fromPath },
           { label: pageTitle },
         ]} />

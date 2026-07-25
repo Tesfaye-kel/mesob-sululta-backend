@@ -151,7 +151,7 @@ export default function OfficeServicesPage() {
     <div className="section-padding">
       <div className="container-gov max-w-5xl">
         <Breadcrumb crumbs={[
-          { label: servicesNav, to: '/tajaajila' },
+          { label: servicesNav, to: '/', state: { scrollTo: 'services' } },
           { label: orgName || fallbackOffice },
         ]} />
 

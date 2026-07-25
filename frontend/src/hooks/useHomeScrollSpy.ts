@@ -26,6 +26,8 @@ export interface UseHomeScrollSpyOptions {
   pickMostVisible?: boolean
   /** offset from top where sections are considered "active" */
   activeOffset?: number
+  /** disable the observer, keeping activeId as the first section id */
+  enabled?: boolean
 }
 
 export function useHomeScrollSpy({
@@ -33,13 +35,14 @@ export function useHomeScrollSpy({
   rootMarginTop = -120,
   pickMostVisible = true,
   activeOffset = 100,
+  enabled = true,
 }: UseHomeScrollSpyOptions) {
   const [activeId, setActiveId] = useState<HomeSectionId>(sectionIds[0] ?? 'home')
   const [scrollProgress, setScrollProgress] = useState(0)
   const reducedMotion = useMemo(() => getReducedMotion(), [])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined' || !enabled) return
 
     if (reducedMotion) {
       // Fallback: find first visible section on load
@@ -124,7 +127,7 @@ export function useHomeScrollSpy({
     for (const { el } of elements) observer.observe(el)
 
     return () => observer.disconnect()
-  }, [sectionIds, rootMarginTop, reducedMotion, pickMostVisible, activeOffset])
+  }, [sectionIds, rootMarginTop, reducedMotion, pickMostVisible, activeOffset, enabled])
 
   return { activeId, scrollProgress }
 }
