@@ -8,17 +8,10 @@ import { AdminAuthProvider } from '@/contexts/AdminAuthContext'
 import Layout from '@/components/layout/Layout'
 
 import HomePage from '@/pages/HomePage'
-import AboutPage from '@/pages/AboutPage'
-import OrganizationPage from '@/pages/OrganizationPage'
-import NewsPage from '@/pages/NewsPage'
 import NewsDetailPage from '@/pages/NewsDetailPage'
-import GalleryPage from '@/pages/GalleryPage'
-import FAQPage from '@/pages/FAQPage'
-import ContactPage from '@/pages/ContactPage'
-import FeedbackPage from '@/pages/FeedbackPage'
 import NotFoundPage from '@/pages/NotFoundPage'
-import TajaajilaaPage from '@/pages/TajaajilaaPage'
 import OfficeServicesPage from '@/pages/OfficeServicesPage'
+import BarbaachisaaPage from '@/pages/BarbaachisaaPage'
 
 // Admin pages
 import AdminLogin from '@/pages/admin/AdminLogin'
@@ -66,17 +59,12 @@ export default function App() {
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={<Layout />}>
+                    {/* Homepage with all sections */}
                     <Route index element={<PageWrapper><HomePage /></PageWrapper>} />
-                    <Route path="about" element={<PageWrapper><AboutPage /></PageWrapper>} />
-                    <Route path="tajaajila" element={<PageWrapper><TajaajilaaPage /></PageWrapper>} />
+                    {/* Deep content pages (detail views not on homepage) */}
                     <Route path="tajaajila/office/:officeId" element={<PageWrapper><OfficeServicesPage /></PageWrapper>} />
-                    <Route path="organization" element={<PageWrapper><OrganizationPage /></PageWrapper>} />
-                    <Route path="news" element={<PageWrapper><NewsPage /></PageWrapper>} />
+                    <Route path="tajaajila/service/:serviceId/barbaachisa" element={<PageWrapper><BarbaachisaaPage /></PageWrapper>} />
                     <Route path="news/:id" element={<PageWrapper><NewsDetailPage /></PageWrapper>} />
-                    <Route path="gallery" element={<PageWrapper><GalleryPage /></PageWrapper>} />
-                    <Route path="faq" element={<PageWrapper><FAQPage /></PageWrapper>} />
-                    <Route path="contact" element={<PageWrapper><ContactPage /></PageWrapper>} />
-                    <Route path="feedback" element={<PageWrapper><FeedbackPage /></PageWrapper>} />
                     <Route path="*" element={<PageWrapper><NotFoundPage /></PageWrapper>} />
                   </Route>
 

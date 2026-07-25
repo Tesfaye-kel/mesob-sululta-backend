@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
 import { Menu, X, Sun, Moon, Search, ChevronDown } from 'lucide-react'
@@ -102,12 +102,6 @@ const scrollableOnHomeKeys: NavItem['key'][] = [
   'gallery', 'faq', 'contact',
 ]
 
-const navItemVariants = {
-  idle: { scale: 1 },
-  hover: { scale: 1.05, transition: { type: 'spring', stiffness: 400, damping: 10 } },
-  tap: { scale: 0.95, transition: { type: 'spring', stiffness: 500, damping: 15 } },
-}
-
 const mobileItemVariants = {
   initial: { opacity: 0, x: -20 },
   animate: (i: number) => ({
@@ -126,7 +120,8 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
   const { activeId: activeHomeSection } = useHomeScrollSpy({
     sectionIds: HOME_ANCHORS as unknown as HomeAnchorId[],
     pickMostVisible: true,
-    activeOffset: 120,
+    activeOffset: 200,
+    enabled: isHome,
   })
 
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -179,16 +174,16 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
 
   const currentLang = languages.find(l => l.code === language)!
 
+  const navigate = useNavigate()
+
   const handleNavClick = useCallback((item: NavItem) => {
     if (isHome) {
-      const shouldScroll = scrollableOnHomeKeys.includes(item.key)
-      if (shouldScroll) {
-        scrollToHomeSection(item.anchor)
-      } else {
-        window.location.href = item.path
-      }
+      scrollToHomeSection(item.anchor)
+    } else {
+      // Navigate to homepage with scroll-to-section state
+      navigate('/', { state: { scrollTo: item.anchor }, replace: true })
     }
-  }, [isHome])
+  }, [isHome, navigate])
 
   const iconBtn = cn(
     'p-2 rounded-lg transition-all duration-200',
@@ -214,7 +209,10 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
           animate={{ opacity: scrolled ? 1 : 0.92 }}
           transition={{ duration: 0.25, ease: 'easeInOut' }}
         >
-          <div className="container-gov flex items-center justify-between h-20 lg:h-16">
+          <div className={cn(
+            'container-gov flex items-center justify-between transition-all duration-200',
+            scrolled ? 'h-16' : 'h-20 lg:h-16'
+          )}>
             <NavLink
               to="/"
               className="flex items-center gap-2 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg"
@@ -227,19 +225,15 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
               </div>
             </NavLink>
 
-            <nav className="hidden lg:flex items-center gap-0.5" aria-label="Main navigation">
+            <nav className={cn(
+              'hidden lg:flex items-center transition-all duration-200',
+              scrolled ? 'gap-0' : 'gap-0.5'
+            )} aria-label="Main navigation">
               {navItems.map((item) => {
                 const isActive = isHome ? activeHomeSection === item.anchor : location.pathname === item.path
                 const showNewsDot = item.key === 'news' && newNewsCount > 0
                 return (
-                  <motion.div
-                    key={item.path}
-                    variants={navItemVariants}
-                    initial="idle"
-                    whileHover="hover"
-                    whileTap="tap"
-                    className="relative"
-                  >
+                  <div key={item.path} className="relative">
                     {isHome ? (
                       <button
                         type="button"
@@ -248,8 +242,9 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                         aria-current={isActive ? 'true' : undefined}
                       >
                         <span className={cn(
-                          'relative inline-flex items-center px-2.5 py-1.5',
-                          'text-xs font-semibold whitespace-nowrap cursor-pointer select-none',
+                          'relative inline-flex items-center transition-all duration-200',
+                          scrolled ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-1.5 text-xs',
+                          'font-semibold whitespace-nowrap cursor-pointer select-none',
                           'transition-colors duration-200 rounded-lg',
                           isActive ? 'text-white' : 'text-white/75 hover:text-white'
                         )}>
@@ -268,15 +263,16 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                         </span>
                       </button>
                     ) : (
-                      <NavLink
-                        to={item.path}
-                        end={item.path === '/'}
+                      <button
+                        type="button"
+                        onClick={() => handleNavClick(item)}
                         className="relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50 rounded-lg"
-                        aria-current={isActive ? 'page' : undefined}
+                        aria-current={isActive ? 'true' : undefined}
                       >
                         <span className={cn(
-                          'relative inline-flex items-center px-2.5 py-1.5',
-                          'text-xs font-semibold whitespace-nowrap cursor-pointer select-none',
+                          'relative inline-flex items-center transition-all duration-200',
+                          scrolled ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-1.5 text-xs',
+                          'font-semibold whitespace-nowrap cursor-pointer select-none',
                           'transition-colors duration-200 rounded-lg',
                           isActive ? 'text-white' : 'text-white/75 hover:text-white'
                         )}>
@@ -293,9 +289,9 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                             {showNewsDot && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
                           </span>
                         </span>
-                      </NavLink>
+                      </button>
                     )}
-                  </motion.div>
+                  </div>
                 )
               })}
             </nav>
@@ -460,20 +456,17 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                           {showNewsDot && <span className="ml-2 w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
                         </button>
                       ) : (
-                        <NavLink
-                          to={item.path}
-                          end={item.path === '/'}
-                          onClick={() => setMobileOpen(false)}
-                          className={({ isActive }) => cn(
-                            'flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
-                            isActive
-                              ? 'bg-brand-green/10 text-brand-green dark:bg-brand-green/20 dark:text-brand-green-light font-semibold'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        <button
+                          type="button"
+                          onClick={() => { setMobileOpen(false); handleNavClick(item) }}
+                          className={cn(
+                            'w-full flex items-center px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
+                            'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                           )}
                         >
                           {t.nav[item.key]}
                           {showNewsDot && <span className="ml-2 w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
-                        </NavLink>
+                        </button>
                       )}
                     </motion.div>
                   )

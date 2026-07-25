@@ -4,6 +4,8 @@ import { ChevronRight } from 'lucide-react'
 interface Crumb {
   label: string
   to?: string
+  /** Optional location state to pass with the navigation */
+  state?: Record<string, unknown>
 }
 
 export default function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
@@ -15,6 +17,7 @@ export default function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
           {crumb.to ? (
             <Link
               to={crumb.to}
+              state={crumb.state}
               className="hover:text-brand-green dark:hover:text-brand-green-light transition-colors"
             >
               {crumb.label}
