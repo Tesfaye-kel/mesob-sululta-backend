@@ -6,7 +6,6 @@ import Hero from '@/components/home/Hero'
 import WhyMesob from '@/components/home/WhyMesob'
 import OfficeHours from '@/components/home/OfficeHours'
 import Testimonials from '@/components/home/Testimonials'
-import Partners from '@/components/home/Partners'
 
 // Shared section content — same as navbar pages
 import AboutSection from '@/components/sections/AboutSection'
@@ -46,7 +45,7 @@ function HomeSection({
       className={`section-padding ${bg}`}
       aria-label={title}
     >
-      <div className="container-gov mb-10">
+      <div className="container-gov mb-6">
         <div>
           <h2 className="section-title">{title}</h2>
           {subtitle && <p className="section-subtitle">{subtitle}</p>}
@@ -221,8 +220,6 @@ export default function HomePage() {
           <FeedbackSection />
         </div>
       </HomeSection>
-
-      <Partners />
     </>
   )
 }

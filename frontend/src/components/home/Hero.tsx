@@ -193,6 +193,7 @@ export default function Hero() {
 
   return (
     <section
+      id="home"
       className="relative min-h-[92vh] flex items-center overflow-hidden w-full"
       aria-label="Hero section"
     >
