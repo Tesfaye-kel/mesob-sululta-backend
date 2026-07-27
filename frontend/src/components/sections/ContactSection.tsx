@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +8,7 @@ import AnimatedSection from '@/components/common/AnimatedSection'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { getContact, type ContactContent } from '@/api/tajaajila'
 
 const schema = z.object({
   name: z.string().min(2),
@@ -24,10 +25,17 @@ interface ContactSectionProps {
 }
 
 export default function ContactSection({ compact = false, showHeader = true }: ContactSectionProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [contact, setContact] = useState<ContactContent | null>(null)
+
+  useEffect(() => {
+    getContact()
+      .then(setContact)
+      .catch(() => {}) // silently fail, fallback to hardcoded defaults
+  }, [])
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({ resolver: zodResolver(schema) })
 
@@ -51,6 +59,11 @@ export default function ContactSection({ compact = false, showHeader = true }: C
     }
   }
 
+  const address = contact?.address?.[language] || contact?.address?.en || 'Main Road, Sululta Town, Oromia, Ethiopia'
+  const phone = contact?.phone || '+251 11 111 0000'
+  const email = contact?.email || 'info@mesob-sululta.gov.et'
+  const hours = contact?.workingHours?.[language] || contact?.workingHours?.en || 'Mon–Fri: 8:30 AM – 5:30 PM\nSat: 8:30 AM – 12:00 PM'
+
   const content = (
     <div className="container-gov">
       {showHeader && (
@@ -67,10 +80,10 @@ export default function ContactSection({ compact = false, showHeader = true }: C
         <AnimatedSection variant="fadeLeft">
           <div className="space-y-4">
             {[
-              { icon: MapPin, label: t.contact.address, value: 'Main Road, Sululta Town, Oromia, Ethiopia', color: 'bg-brand-green/10 text-brand-green' },
-              { icon: Phone, label: t.contact.phone, value: '+251 11 111 0000', href: 'tel:+251111110000', color: 'bg-brand-blue/10 text-brand-blue' },
-              { icon: Mail, label: t.contact.email, value: 'info@mesob-sululta.gov.et', href: 'mailto:info@mesob-sululta.gov.et', color: 'bg-brand-gold/10 text-brand-gold' },
-              { icon: Clock, label: t.contact.hours, value: 'Mon–Fri: 8:30 AM – 5:30 PM\nSat: 8:30 AM – 12:00 PM', color: 'bg-purple-100 dark:bg-purple-900/20 text-purple-600' },
+              { icon: MapPin, label: t.contact.address, value: address, color: 'bg-brand-green/10 text-brand-green' },
+              { icon: Phone, label: t.contact.phone, value: phone, href: `tel:${phone.replace(/[^+\d]/g, '')}`, color: 'bg-brand-blue/10 text-brand-blue' },
+              { icon: Mail, label: t.contact.email, value: email, href: `mailto:${email}`, color: 'bg-brand-gold/10 text-brand-gold' },
+              { icon: Clock, label: t.contact.hours, value: hours, color: 'bg-purple-100 dark:bg-purple-900/20 text-purple-600' },
             ].map((item) => (
               <div key={item.label} className="flex items-start gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${item.color}`}>

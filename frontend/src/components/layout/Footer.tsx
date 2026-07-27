@@ -1,10 +1,19 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Phone, Mail, MapPin, Clock, ExternalLink, Facebook, Twitter, Youtube, Send } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import MesobLogo, { EthiopiaEmblem } from '@/components/brand/MesobLogo'
+import { getContact, type ContactContent } from '@/api/tajaajila'
 
 export default function Footer() {
   const { t, language } = useLanguage()
+  const [contact, setContact] = useState<ContactContent | null>(null)
+
+  useEffect(() => {
+    getContact()
+      .then(setContact)
+      .catch(() => {}) // silently fail, fallback to hardcoded defaults
+  }, [])
 
   const quickLinks = [
     { labelEn: 'Home',          labelAm: 'መነሻ',          labelOr: 'Mana',            path: '/' },
@@ -40,6 +49,10 @@ export default function Footer() {
   const getLabel = (link: { labelEn: string; labelAm: string; labelOr: string }) =>
     language === 'am' ? link.labelAm : language === 'or' ? link.labelOr : link.labelEn
 
+  const address = contact?.address?.[language] || contact?.address?.en || ''
+  const phone = contact?.phone || '+251 11 111 0000'
+  const email = contact?.email || 'info@mesob-sululta.gov.et'
+
   return (
     <footer className="bg-gray-900 dark:bg-gray-950 text-gray-300" aria-label="Site footer">
       <div className="h-1.5 bg-gradient-to-r from-brand-green via-brand-gold to-brand-red" aria-hidden />
@@ -60,21 +73,15 @@ export default function Footer() {
             <div className="space-y-2.5">
               <div className="flex items-start gap-2.5 text-sm">
                 <MapPin className="h-4 w-4 text-brand-gold mt-0.5 shrink-0" aria-hidden />
-                <span>
-                  {language === 'am' ? 'ዋና መንገድ፣ ሱሉልታ ከተማ፣ ኦሮሚያ ክልል' :
-                   language === 'or' ? 'Karaa Guddaa, Magaalaa Sululta, Oromiyaa' :
-                   'Main Road, Sululta Town, Oromia Region'}
-                </span>
+                <span>{address || `${language === 'am' ? 'ዋና መንገድ፣ ሱሉልታ ከተማ፣ ኦሮሚያ ክልል' : language === 'or' ? 'Karaa Guddaa, Magaalaa Sululta, Oromiyaa' : 'Main Road, Sululta Town, Oromia Region'}`}</span>
               </div>
               <div className="flex items-center gap-2.5 text-sm">
                 <Phone className="h-4 w-4 text-brand-gold shrink-0" aria-hidden />
-                <a href="tel:+251111110000" className="hover:text-white transition-colors">+251 11 111 0000</a>
+                <a href={`tel:${phone.replace(/[^+\d]/g, '')}`} className="hover:text-white transition-colors">{phone}</a>
               </div>
               <div className="flex items-center gap-2.5 text-sm">
                 <Mail className="h-4 w-4 text-brand-gold shrink-0" aria-hidden />
-                <a href="mailto:info@mesob-sululta.gov.et" className="hover:text-white transition-colors break-all">
-                  info@mesob-sululta.gov.et
-                </a>
+                <a href={`mailto:${email}`} className="hover:text-white transition-colors break-all">{email}</a>
               </div>
               <div className="flex items-start gap-2.5 text-sm">
                 <Clock className="h-4 w-4 text-brand-gold mt-0.5 shrink-0" aria-hidden />
