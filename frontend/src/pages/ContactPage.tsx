@@ -1,15 +1,15 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion } from 'framer-motion'
 import { Phone, Mail, MapPin, Clock, Send, AlertTriangle, CheckCircle } from 'lucide-react'
-import { useState } from 'react'
 import AnimatedSection from '@/components/common/AnimatedSection'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { getContact, type ContactContent } from '@/api/tajaajila'
 
 const schema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -22,12 +22,16 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 export default function ContactPage() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [contact, setContact] = useState<ContactContent | null>(null)
 
   useEffect(() => {
     document.title = `Contact | MESOB Center – Sululta Branch`
+    getContact()
+      .then(setContact)
+      .catch(() => {})
   }, [])
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
@@ -36,11 +40,27 @@ export default function ContactPage() {
 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1500))
-    setLoading(false)
-    setSubmitted(true)
-    reset()
+    try {
+      const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+      const res = await fetch(`${BASE}/contact-messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, type: 'contact' }),
+      })
+      if (!res.ok) throw new Error('Failed to send message')
+      setSubmitted(true)
+      reset()
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const address = contact?.address?.[language] || contact?.address?.en || 'Main Road, Sululta Town, Oromia Region, Ethiopia'
+  const phone = contact?.phone || '+251 11 111 0000'
+  const email = contact?.email || 'info@mesob-sululta.gov.et'
+  const hours = contact?.workingHours?.[language] || contact?.workingHours?.en || 'Mon–Fri: 8:30 AM – 5:30 PM\nSat: 8:30 AM – 12:00 PM'
 
   return (
     <div className="section-padding">
@@ -59,27 +79,27 @@ export default function ContactPage() {
                   {
                     icon: MapPin,
                     label: t.contact.address,
-                    value: 'Main Road, Sululta Town, Oromia Region, Ethiopia',
+                    value: address,
                     color: 'bg-brand-green/10 text-brand-green dark:bg-brand-green/20 dark:text-brand-green-light',
                   },
                   {
                     icon: Phone,
                     label: t.contact.phone,
-                    value: '+251 11 111 0000',
-                    href: 'tel:+251111110000',
+                    value: phone,
+                    href: `tel:${phone.replace(/[^+\d]/g, '')}`,
                     color: 'bg-brand-blue/10 text-brand-blue dark:bg-brand-blue/20 dark:text-blue-300',
                   },
                   {
                     icon: Mail,
                     label: t.contact.email,
-                    value: 'info@mesob-sululta.gov.et',
-                    href: 'mailto:info@mesob-sululta.gov.et',
+                    value: email,
+                    href: `mailto:${email}`,
                     color: 'bg-brand-gold/10 text-brand-gold dark:bg-brand-gold/20',
                   },
                   {
                     icon: Clock,
                     label: t.contact.hours,
-                    value: 'Mon–Fri: 8:30 AM – 5:30 PM\nSat: 8:30 AM – 12:00 PM',
+                    value: hours,
                     color: 'bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400',
                   },
                 ].map((item) => (
