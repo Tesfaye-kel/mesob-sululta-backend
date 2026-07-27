@@ -1,13 +1,16 @@
 // Load secret values from .env into process.env
-require('dotenv').config();
+// Try multiple paths for different deployment environments (local, Vercel, etc.)
+const dotenv = require('dotenv');
+const path = require('path');
+dotenv.config();
+// Also try loading from the backend directory directly (useful for some deployment setups)
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-
-const path = require('path');
 const apiRoutes = require('./routes');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 const { seedOrganizations} = require('./seed');
