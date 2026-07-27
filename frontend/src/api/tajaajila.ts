@@ -1,5 +1,14 @@
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
+export interface ContactContent {
+  _id: string
+  address: MultiLang
+  phone: string
+  email: string
+  workingHours: MultiLang
+  mapEmbedUrl: string
+}
+
 export interface MultiLang {
   en: string
   am: string
@@ -86,6 +95,8 @@ export const getOrganizationById = (id: string) => get<Organization>(`/organizat
 
 export const getServiceById = (id: string) => get<Service>(`/services/${id}`)
 export const getServiceRequirements = (id: string) => get<Requirement[]>(`/services/${id}/requirements`)
+
+export const getContact = () => get<ContactContent>('/contact')
 
 export const getNewsList = (params?: string) => get<NewsItem[]>(`/news${params ? `?${params}` : ''}`)
 export const getLatestNews = (since?: string) => get<{ count: number; latest: { title: MultiLang; publishedAt: string } | null }>(`/news/latest${since ? `?since=${since}` : ''}`)
