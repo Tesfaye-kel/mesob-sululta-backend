@@ -219,7 +219,7 @@ export default function AdminLayout() {
                       )}
                     >
                       <link.icon className="h-5 w-5 shrink-0" />
-                      {nav[link.labelKey] || link.labelKey}
+                      {(nav as any)[link.labelKey] || link.labelKey}
                     </NavLink>
                   )
                 })}
