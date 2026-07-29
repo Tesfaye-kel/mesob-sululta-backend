@@ -62,9 +62,9 @@ const floorColors = [
 ]
 
 const floorLabels = {
-  en: ['Floor 1', 'Floor 2', 'Floor 3', 'Floor 4', 'Floor 5'],
+  en: ['Floor 1st', 'Floor 2nd', 'Floor 3rd', 'Floor 4th', 'Floor 5th'],
   am: ['ወለል 1', 'ወለል 2', 'ወለል 3', 'ወለል 4', 'ወለል 5'],
-  or: ['Bona 1', 'Bona 2', 'Bona 3', 'Bona 4', 'Bona 5'],
+  or: ['Floor 1ffaa', 'Floor 2ffaa', 'Floor 3ffaa', 'Floor 4ffaa', 'Floor 5ffaa'],
 }
 
 export default function OfficeServicesPage() {
@@ -156,11 +156,8 @@ export default function OfficeServicesPage() {
         ]} />
 
         <AnimatedHeading as="h2" className="mb-2 mt-4">{orgName || fallbackOffice}</AnimatedHeading>
-        <p className="text-gray-600 dark:text-gray-400 text-sm mb-8">
-          {language === 'am' ? `${totalWindows} ፎዳዎች በ5 ወለሎች ላይ ተከፋፍለዋል` : language === 'or' ? `${totalWindows} foddaawwan banotaa 5 irratti qoodaman` : `${totalWindows} windows across 5 floors`}
-        </p>
 
-        {loading && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-brand-green" /></div>}
+        {loading && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-brand-green dark:text-green-400" /></div>}
 
         {error && (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
@@ -181,183 +178,155 @@ export default function OfficeServicesPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: group.floor * 0.1 }}
                 >
-                  {/* Floor Header */}
-                  <div className={`bg-gradient-to-r ${floorColors[group.floor - 1]} rounded-xl p-4 mb-4 shadow-md`}>
+                  {/* Floor Header — integrated with windows */}
+                  <div className={`bg-gradient-to-r ${floorColors[group.floor - 1]} rounded-t-xl px-4 py-3 shadow-md`}>
                     <div className="flex items-center gap-3">
                       <Layers className="h-5 w-5 text-white/80" />
                       <div>
-                        <h3 className="text-white font-bold text-lg">{floorLabels.en[group.floor - 1]}</h3>
-                        <p className="text-white/70 text-xs">{group.windows.length} {language === 'am' ? 'ፎዳዎች' : language === 'or' ? 'foddaawwan' : 'windows'}</p>
+                        <h3 className="text-white font-bold text-lg">
+                          {language === 'am' ? floorLabels.am[group.floor - 1] : language === 'or' ? floorLabels.or[group.floor - 1] : floorLabels.en[group.floor - 1]}
+                        </h3>
                       </div>
                     </div>
                   </div>
 
-                  {/* Windows */}
-                  <div className="space-y-3">
-                    {group.windows.map((win) => (
-                      <motion.div
-                        key={win._id}
-                        layout
-                        className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden"
-                      >
-                        {/* Window Header - Clickable */}
-                        <button
-                          onClick={() => handleWindowToggle(win._id)}
-                          className="w-full text-left p-5 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={`h-10 w-10 rounded-lg bg-gradient-to-r ${floorColors[group.floor - 1]} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
-                              {win.number.match(/\d+/)?.[0] || win.number}
-                            </div>
-                            <div>
-                              <p className="font-bold text-gray-900 dark:text-white text-lg">
-                                {language === 'am' ? `ፎዳ ${win.number.match(/\d+/)?.[0] || win.number}ኛ` : language === 'or' ? `Foddaa ${win.number.match(/\d+/)?.[0] || win.number}ffaa` : `Window ${win.number.match(/\d+/)?.[0] || win.number}`}
-                              </p>
-                            </div>
-                          </div>
-                          <motion.div
-                            animate={{ rotate: expandedWindow === win._id ? 180 : 0 }}
-                            transition={{ duration: 0.2 }}
+                  {/* Windows — attached directly below floor header with no gap */}
+                  <div className="rounded-b-xl overflow-hidden border-x border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {group.windows.map((win) => (
+                        <div key={win._id}>
+                          {/* Window Header - Clickable */}
+                          <button
+                            onClick={() => handleWindowToggle(win._id)}
+                            className="w-full text-left p-4 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between"
                           >
-                            <ChevronDown className="h-5 w-5 text-gray-400" />
-                          </motion.div>
-                        </button>
-
-                        {/* Expanded Services */}
-                        <AnimatePresence>
-                          {expandedWindow === win._id && (
+                            <div className="flex items-center gap-4">
+                              <div className={`h-10 w-10 rounded-lg bg-gradient-to-r ${floorColors[group.floor - 1]} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
+                                {win.number.match(/\d+/)?.[0] || win.number}
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-900 dark:text-white text-lg">
+                                  {language === 'am' ? `ፎዳ ${win.number.match(/\d+/)?.[0] || win.number}ኛ` : language === 'or' ? `Foddaa ${win.number.match(/\d+/)?.[0] || win.number}ffaa` : `Window ${win.number.match(/\d+/)?.[0] || win.number}`}
+                                </p>
+                              </div>
+                            </div>
                             <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.3, ease: 'easeInOut' }}
-                              className="overflow-hidden"
+                              animate={{ rotate: expandedWindow === win._id ? 180 : 0 }}
+                              transition={{ duration: 0.2 }}
                             >
-                              <div className="px-5 pb-5 pt-0 border-t border-gray-100 dark:border-gray-700">
-                                {/* Loading services */}
-                                {!windowServices[win._id] && (
-                                  <div className="flex justify-center py-8">
-                                    <Loader2 className="h-6 w-6 animate-spin text-brand-green" />
-                                  </div>
-                                )}
+                              <ChevronDown className="h-5 w-5 text-gray-400 dark:text-gray-300" />
+                            </motion.div>
+                          </button>
 
-                                {/* Services List */}
-                                {windowServices[win._id] && windowServices[win._id].length === 0 && (
-                                  <div className="py-8 text-center text-gray-400 text-sm">
-                                    {language === 'am' ? 'ምንም አገልግሎቶች የሉም' : language === 'or' ? 'Tajaajilli hin jiru' : 'No services available'}
-                                  </div>
-                                )}
+                          {/* Expanded Services */}
+                          <AnimatePresence>
+                            {expandedWindow === win._id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                className="overflow-hidden"
+                              >
+                                <div className="px-5 pb-5 pt-0 border-t border-gray-100 dark:border-gray-700">
+                                  {!windowServices[win._id] && (
+                                    <div className="flex justify-center py-8">
+                                      <Loader2 className="h-6 w-6 animate-spin text-brand-green dark:text-green-400" />
+                                    </div>
+                                  )}
+
+                                  {windowServices[win._id] && windowServices[win._id].length === 0 && (
+                                    <div className="py-8 text-center text-gray-400 dark:text-gray-300 text-sm">
+                                      {language === 'am' ? 'ምንም አገልግሎቶች የሉም' : language === 'or' ? 'Tajaajilli hin jiru' : 'No services available'}
+                                    </div>
+                                  )}
 
                                 {windowServices[win._id] && windowServices[win._id].length > 0 && (
-                                  <div className="mt-4 space-y-2">
-                                    {windowServices[win._id].map((svc) => (
-                                      <div key={svc._id} className="rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-                                        {/* Service Row */}
-                                        <button
-                                          onClick={() => handleServiceToggle(svc._id, win._id)}
-                                          className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700/30 transition-colors"
-                                        >
-                                          <div className="flex items-start gap-3">
-                                            <FileText className="h-4 w-4 text-brand-green shrink-0 mt-0.5" />
-                                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                              {language === 'am' ? (svc.name.am || svc.name.or || svc.name.en)
-                                                : language === 'or' ? (svc.name.or || svc.name.en)
-                                                : svc.name.en}
-                                            </span>
-                                          </div>
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-xs text-brand-green font-medium">
-                                              {language === 'am' ? 'ያስፈልጋሉ ሰነዶች' : language === 'or' ? 'Wantoota Barbaachisoo' : 'Requirements'}
-                                            </span>
-                                            <motion.div
-                                              animate={{ rotate: expandedService === svc._id ? 180 : 0 }}
-                                              transition={{ duration: 0.2 }}
-                                            >
-                                              <ChevronDown className="h-4 w-4 text-brand-green" />
-                                            </motion.div>
-                                          </div>
-                                        </button>
+                                    <div className="mt-4 space-y-2">
+                                      {windowServices[win._id].map((svc) => (
+                                        <div key={svc._id} className="rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                          <button
+                                            onClick={() => handleServiceToggle(svc._id, win._id)}
+                                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700/30 transition-colors"
+                                          >
+                                            <div className="flex items-start gap-3">
+                                              <FileText className="h-4 w-4 text-brand-green dark:text-green-400 shrink-0 mt-0.5" />
+                                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                                {language === 'am' ? (svc.name.am || svc.name.or || svc.name.en)
+                                                  : language === 'or' ? (svc.name.or || svc.name.en)
+                                                  : svc.name.en}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-xs text-brand-green dark:text-green-400 font-medium">
+                                                {language === 'am' ? 'ያስፈልጋሉ ሰነዶች' : language === 'or' ? 'Wantoota Barbaachisoo' : 'Requirements'}
+                                              </span>
+                                              <motion.div animate={{ rotate: expandedService === svc._id ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                                              <ChevronDown className="h-4 w-4 text-brand-green dark:text-green-400" />
+                                              </motion.div>
+                                            </div>
+                                          </button>
 
-                                        {/* Requirements - Expanded */}
-                                        <AnimatePresence>
-                                          {expandedService === svc._id && (
-                                            <motion.div
-                                              initial={{ height: 0, opacity: 0 }}
-                                              animate={{ height: 'auto', opacity: 1 }}
-                                              exit={{ height: 0, opacity: 0 }}
-                                              transition={{ duration: 0.25, ease: 'easeInOut' }}
-                                              className="overflow-hidden"
-                                            >
-                                              <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700">
-                                                {!serviceRequirements[svc._id] ? (
-                                                  <div className="flex justify-center py-4">
-                                                    <Loader2 className="h-5 w-5 animate-spin text-brand-green" />
-                                                  </div>
-                                                ) : serviceRequirements[svc._id].length === 0 ? (
-                                                  <p className="text-sm text-gray-400 py-3 text-center">
-                                                    {language === 'am' ? 'ምንም መስፈርቶች የሉም' : language === 'or' ? 'Barbaachisoonni hin jiran' : 'No requirements listed'}
-                                                  </p>
-                                                ) : (
-                                                  <div className="space-y-2 mt-2">
-                                                    {serviceRequirements[svc._id]
-                                                      .sort((a, b) => a.sequenceNo - b.sequenceNo)
-                                                      .map((req) => (
-                                                        <div
-                                                          key={req._id}
-                                                          className={cn(
-                                                            'flex items-start gap-3 p-3 rounded-lg',
-                                                            req.isMandatory
-                                                              ? 'bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/20'
-                                                              : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700'
-                                                          )}
-                                                        >
-                                                          {req.isMandatory ? (
-                                                            <CheckCircle2 className="h-4 w-4 text-brand-green mt-0.5 shrink-0" />
-                                                          ) : (
-                                                            <Circle className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
-                                                          )}
-                                                          <div>
-                                                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                                                              {language === 'am'
-                                                                ? (req.requirementText.am || req.requirementText.or || req.requirementText.en)
-                                                                : language === 'or'
-                                                                ? (req.requirementText.or || req.requirementText.en)
-                                                                : req.requirementText.en}
-                                                            </p>
-                                                            {req.notes && (req.notes.en || req.notes.am || req.notes.or) && (
-                                                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                                                {language === 'am'
-                                                                  ? (req.notes.am || req.notes.en)
-                                                                  : language === 'or'
-                                                                  ? (req.notes.or || req.notes.en)
-                                                                  : req.notes.en}
+                                          <AnimatePresence>
+                                            {expandedService === svc._id && (
+                                              <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                                className="overflow-hidden"
+                                              >
+                                                <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700">
+                                                  {!serviceRequirements[svc._id] ? (
+                                                    <div className="flex justify-center py-4">
+                                                      <Loader2 className="h-5 w-5 animate-spin text-brand-green dark:text-green-400" />
+                                                    </div>
+                                                  ) : serviceRequirements[svc._id].length === 0 ? (
+                                                    <p className="text-sm text-gray-400 dark:text-gray-300 py-3 text-center">
+                                                      {language === 'am' ? 'ምንም መስፈርቶች የሉም' : language === 'or' ? 'Barbaachisoonni hin jiran' : 'No requirements listed'}
+                                                    </p>
+                                                  ) : (
+                                                    <div className="space-y-2 mt-2">
+                                                      {serviceRequirements[svc._id]
+                                                        .sort((a, b) => a.sequenceNo - b.sequenceNo)
+                                                        .map((req) => (
+                                                          <div key={req._id} className={cn('flex items-start gap-3 p-3 rounded-lg', req.isMandatory ? 'bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/20' : 'bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700')}>
+                                                            {req.isMandatory ? <CheckCircle2 className="h-4 w-4 text-brand-green dark:text-green-400 mt-0.5 shrink-0" /> : <Circle className="h-4 w-4 text-gray-400 dark:text-gray-300 mt-0.5 shrink-0" />}
+                                                            <div>
+                                                              <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                                                                {language === 'am' ? (req.requirementText.am || req.requirementText.or || req.requirementText.en) : language === 'or' ? (req.requirementText.or || req.requirementText.en) : req.requirementText.en}
                                                               </p>
-                                                            )}
+                                                              {req.notes && (req.notes.en || req.notes.am || req.notes.or) && (
+                                                                <p className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">
+                                                                  {language === 'am' ? (req.notes.am || req.notes.en) : language === 'or' ? (req.notes.or || req.notes.en) : req.notes.en}
+                                                                </p>
+                                                              )}
+                                                            </div>
                                                           </div>
-                                                        </div>
-                                                      ))}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            </motion.div>
-                                          )}
-                                        </AnimatePresence>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    ))}
+                                                        ))}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </motion.div>
+                                            )}
+                                          </AnimatePresence>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      ))}
 
-                    {group.windows.length === 0 && (
-                      <div className="text-center py-8 text-gray-400 text-sm">
-                        {language === 'am' ? 'በዚህ ወለል ላይ ምንም ፎዳዎች የሉም' : language === 'or' ? 'Bona kana irratti foddaawwan hin jiran' : 'No windows on this floor'}
-                      </div>
-                    )}
+                      {group.windows.length === 0 && (
+                        <div className="text-center py-8 text-gray-400 dark:text-gray-300 text-sm">
+                          {language === 'am' ? 'በዚህ ወለል ላይ ምንም ፎዳዎች የሉም' : language === 'or' ? 'Bona kana irratti foddaawwan hin jiran' : 'No windows on this floor'}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}

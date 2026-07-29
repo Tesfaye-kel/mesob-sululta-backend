@@ -306,6 +306,17 @@ export const createWindow = (data: { number: number; organization: string; servi
 export const updateWindow = (id: string, data: { number?: number; organization?: string; services?: string[] }) => authFetch<WindowAdmin>(`/windows/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteWindow = (id: string) => authFetch<{ message: string }>(`/windows/${id}`, { method: 'DELETE' })
 
+// Assign services to a window
+export const assignServicesToWindow = (windowId: string, serviceIds: string[]) =>
+  authFetch<{ message: string; services: ServiceAdmin[] }>(`/windows/${windowId}/assign-services`, {
+    method: 'PUT',
+    body: JSON.stringify({ serviceIds }),
+  })
+
+// Get available (unassigned) services for a window
+export const getAvailableServicesForWindow = (windowId: string) =>
+  authFetch<ServiceAdmin[]>(`/windows/${windowId}/available-services`)
+
 // ─── Services (admin) ────────────────────────────────────────────
 export interface ServiceAdmin {
   _id: string

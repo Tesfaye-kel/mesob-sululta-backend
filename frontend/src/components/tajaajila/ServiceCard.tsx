@@ -36,7 +36,7 @@ export default function ServiceCard({ id, nameEn, nameAm, nameOr, officeName, fr
     setIsAnimating(true)
     setTimeout(() => {
       navigate(to, { state: { from: fromPath } })
-    }, 500)
+    }, 150)
   }
 
   const ctaLabel =

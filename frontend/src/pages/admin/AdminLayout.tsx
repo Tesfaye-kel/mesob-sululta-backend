@@ -29,30 +29,6 @@ const sidebarLinks = [
   { to: '/Admin/settings', labelKey: 'settings', icon: Settings },
 ]
 
-const adminLabels: Record<string, Record<string, string>> = {
-  en: {
-    dashboard: 'Dashboard', about: 'About', news: 'News', services: 'Services',
-    organizations: 'Organizations', gallery: 'Gallery', faqs: 'FAQs',
-    contact: 'Contact', messages: 'Messages', testimonials: 'Testimonials',
-    users: 'Users', profile: 'Profile', settings: 'Settings',
-    adminPanel: 'Admin Panel', theme: 'Theme', logout: 'Logout', admin: 'Admin',
-  },
-  am: {
-    dashboard: 'ዳሽቦርድ', about: 'ስለ እኛ', news: 'ዜና', services: 'አገልግሎቶች',
-    organizations: 'ድርጅቶች', gallery: 'ጋለሪ', faqs: 'ጥያቄዎች',
-    contact: 'ያናግሩን', messages: 'መልዕክቶች', testimonials: 'ምስክርነቶች',
-    users: 'ተጠቃሚዎች', profile: 'ፕሮፋይል', settings: 'ቅንብሮች',
-    adminPanel: 'አስተዳደር ፓነል', theme: 'ጭብጥ', logout: 'ውጣ', admin: 'አስተዳዳሪ',
-  },
-  or: {
-    dashboard: 'Daashboordii', about: "Waa'ee", news: 'Oduu', services: 'Tajaajiloota',
-    organizations: 'Dhaabbatoolee', gallery: 'Galerii', faqs: 'Gaaffilee',
-    contact: 'Qunnamii', messages: 'Ergaalee', testimonials: 'Ragaalee',
-    users: 'Fayyadamtoota', profile: 'Profaayilii', settings: 'Sajoo',
-    adminPanel: 'Paanelii Bulchiinsaa', theme: 'Bifa', logout: 'Ba\'i', admin: 'Bulchiinsaa',
-  },
-}
-
 const sidebarVariants = {
   open: { width: 240, transition: { type: 'spring', stiffness: 300, damping: 30 } },
   closed: { width: 64, transition: { type: 'spring', stiffness: 300, damping: 30 } },
@@ -70,10 +46,10 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebar, setMobileSidebar] = useState(false)
 
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
 
   const langLabels: Record<string, string> = { en: 'EN', am: 'አማ', or: 'AF' }
-  const nav = adminLabels[language]
+  const nav = t.admin
 
   const handleLogout = () => {
     logout()
@@ -141,7 +117,7 @@ export default function AdminLayout() {
                       exit={{ opacity: 0 }}
                       className="whitespace-nowrap"
                     >
-                      {nav[link.labelKey] || link.labelKey}
+                      {(nav as any)[link.labelKey] || link.labelKey}
                     </motion.span>
                   )}
                 </NavLink>

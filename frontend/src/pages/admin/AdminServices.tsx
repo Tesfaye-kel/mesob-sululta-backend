@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Wrench, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Building2, Layers, DoorOpen, List, FileText } from 'lucide-react'
-import { getOrganizations, getServicesAdmin, createService, updateService, deleteService, getWindowsAdmin, createWindow, updateWindow, deleteWindow, getRequirementsByService, createRequirement, updateRequirement, deleteRequirement, type OrganizationSummary, type ServiceAdmin, type WindowAdmin, type RequirementAdmin } from '@/api/admin'
+import { Wrench, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Building2, Layers, DoorOpen, List, FileText, ArrowRight, ArrowLeft, CheckSquare, Square } from 'lucide-react'
+import { getOrganizations, getServicesAdmin, createService, updateService, deleteService, createWindow, updateWindow, deleteWindow, getRequirementsByService, createRequirement, updateRequirement, deleteRequirement, assignServicesToWindow, getAvailableServicesForWindow, type OrganizationSummary, type ServiceAdmin, type RequirementAdmin } from '@/api/admin'
 import { cn } from '@/lib/utils'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
@@ -70,6 +70,15 @@ export default function AdminServices() {
   const [editingReq, setEditingReq] = useState<RequirementAdmin | null>(null)
   const [reqForm, setReqForm] = useState(emptyRequirementForm)
   const [savingReq, setSavingReq] = useState(false)
+
+  // Assign Services modal
+  const [showAssignModal, setShowAssignModal] = useState(false)
+  const [assigningWindow, setAssigningWindow] = useState<any | null>(null)
+  const [availableServices, setAvailableServices] = useState<ServiceAdmin[]>([])
+  const [assignedServices, setAssignedServices] = useState<ServiceAdmin[]>([])
+  const [selectedAvailable, setSelectedAvailable] = useState<Set<string>>(new Set())
+  const [selectedAssigned, setSelectedAssigned] = useState<Set<string>>(new Set())
+  const [savingAssignment, setSavingAssignment] = useState(false)
 
   const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: string } | null>(null)
 
@@ -253,6 +262,115 @@ export default function AdminServices() {
     setConfirmDelete(null)
   }
 
+  // Assign Services
+  const handleOpenAssignModal = async (win: any) => {
+    setAssigningWindow(win)
+    setSelectedAvailable(new Set())
+    setSelectedAssigned(new Set())
+    setShowAssignModal(true)
+    setError('')
+
+    try {
+      // Load available services (not assigned to this window)
+      const available = await getAvailableServicesForWindow(win._id)
+      setAvailableServices(Array.isArray(available) ? available : [])
+
+      // Load currently assigned services for this window
+      const res = await fetch(`${BASE}/windows/${win._id}/services`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('admin-token')}` },
+      })
+      const assigned = await res.json()
+      setAssignedServices(Array.isArray(assigned) ? assigned : [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load services')
+    }
+  }
+
+  const handleAssignServices = async () => {
+    if (!assigningWindow) return
+    setSavingAssignment(true)
+    setError('')
+    try {
+      // The backend smart logic handles this correctly:
+      // We send ALL service IDs that should belong to this window
+      // (current assigned + newly selected available ones)
+      const currentlyAssignedIds = assignedServices.map(s => s._id)
+      const allServiceIds = [...currentlyAssignedIds, ...Array.from(selectedAvailable)]
+
+      const result = await assignServicesToWindow(assigningWindow._id, allServiceIds)
+      
+      if (result && result.services) {
+        setAssignedServices(result.services)
+      } else {
+        // Refresh the data
+        const res = await fetch(`${BASE}/windows/${assigningWindow._id}/services`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('admin-token')}` },
+        })
+        const updatedAssigned = await res.json()
+        setAssignedServices(Array.isArray(updatedAssigned) ? updatedAssigned : [])
+      }
+
+      // Remove assigned services from available list
+      setAvailableServices(prev => prev.filter(s => !selectedAvailable.has(s._id)))
+      setSelectedAvailable(new Set())
+      setSuccess('Services assigned successfully!')
+      // Refresh just windows for this org (faster than full loadData)
+      if (selectedOrg) {
+        fetch(`${BASE}/windows?organization=${selectedOrg}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('admin-token')}` },
+        })
+          .then(r => r.json())
+          .then(data => setWindows(Array.isArray(data) ? data : []))
+          .catch(() => {})
+      }
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to assign services')
+    } finally {
+      setSavingAssignment(false)
+    }
+  }
+
+  const handleUnassignServices = async () => {
+    if (!assigningWindow) return
+    setSavingAssignment(true)
+    setError('')
+    try {
+      // We send ALL service IDs that should remain AFTER removing selected ones
+      const remainingIds = assignedServices
+        .filter(s => !selectedAssigned.has(s._id))
+        .map(s => s._id)
+
+      const result = await assignServicesToWindow(assigningWindow._id, remainingIds)
+
+      if (result && result.services) {
+        setAssignedServices(result.services)
+      } else {
+        setAssignedServices(prev => prev.filter(s => !selectedAssigned.has(s._id)))
+      }
+
+      // Move unassigned services back to available
+      const unassignedServices = assignedServices.filter(s => selectedAssigned.has(s._id))
+      setAvailableServices(prev => [...prev, ...unassignedServices])
+      setSelectedAssigned(new Set())
+      setSuccess('Services unassigned successfully!')
+      // Refresh just windows for this org (faster than full loadData)
+      if (selectedOrg) {
+        fetch(`${BASE}/windows?organization=${selectedOrg}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('admin-token')}` },
+        })
+          .then(r => r.json())
+          .then(data => setWindows(Array.isArray(data) ? data : []))
+          .catch(() => {})
+      }
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to unassign services')
+    } finally {
+      setSavingAssignment(false)
+    }
+  }
+
   const filteredServices = selectedWindow
     ? services.filter(s => {
         const winId = typeof s.window === 'string' ? s.window : s.window?._id
@@ -343,6 +461,10 @@ export default function AdminServices() {
                               <p className="text-xs text-gray-500">{win.serviceCount || 0} services</p>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
+                              <button onClick={() => handleOpenAssignModal(win)}
+                                className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-brand-green" title="Assign services">
+                                <CheckSquare className="h-3.5 w-3.5" />
+                              </button>
                               <button onClick={() => { setEditingWindow(win); setWindowForm({ number: win.number, floor: win.floor, organization: win.organization?._id || selectedOrg, description: win.description || { en: '', am: '', or: '' } }); setShowWindowForm(true) }}
                                 className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600"><Edit3 className="h-3.5 w-3.5" /></button>
                               <button onClick={() => setConfirmDelete({ type: 'window', id: win._id })}
@@ -445,6 +567,130 @@ export default function AdminServices() {
           <p className="text-lg font-medium">Select an organization to manage its windows and services</p>
         </div>
       )}
+
+      {/* Assign Services Modal */}
+      <AnimatePresence>{showAssignModal && assigningWindow && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowAssignModal(false)}>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-4xl bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Assign Services</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Window {assigningWindow.number} — Floor {assigningWindow.floor}
+                </p>
+              </div>
+              <button onClick={() => setShowAssignModal(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
+            </div>
+
+            <div className="flex-1 grid grid-cols-2 gap-6 min-h-0">
+              {/* Available Services */}
+              <div className="flex flex-col min-h-0">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Available Services</h3>
+                  <span className="text-xs text-gray-500">{availableServices.length} services</span>
+                </div>
+                <div className="flex-1 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                  {availableServices.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-sm text-gray-400 p-4 text-center">
+                      All services are assigned to this window or no services exist for this organization
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {availableServices.map(svc => (
+                        <div key={svc._id}
+                          onClick={() => {
+                            const newSet = new Set(selectedAvailable)
+                            if (newSet.has(svc._id)) newSet.delete(svc._id)
+                            else newSet.add(svc._id)
+                            setSelectedAvailable(newSet)
+                          }}
+                          className={cn(
+                            'flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors',
+                            selectedAvailable.has(svc._id) ? 'bg-brand-green/5 dark:bg-brand-green/10' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                          )}>
+                          {selectedAvailable.has(svc._id) ? (
+                            <CheckSquare className="h-5 w-5 text-brand-green shrink-0" />
+                          ) : (
+                            <Square className="h-5 w-5 text-gray-400 shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{svc.name.en}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedAvailable.size > 0 && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={handleAssignServices}
+                    disabled={savingAssignment}
+                    className="mt-3 flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-brand-green text-white text-sm font-semibold rounded-xl hover:bg-brand-green-dark transition-all disabled:opacity-50">
+                    {savingAssignment ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                    Assign {selectedAvailable.size} service{selectedAvailable.size !== 1 ? 's' : ''}
+                  </motion.button>
+                )}
+              </div>
+
+              {/* Assigned Services */}
+              <div className="flex flex-col min-h-0">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Assigned Services</h3>
+                  <span className="text-xs text-gray-500">{assignedServices.length} services</span>
+                </div>
+                <div className="flex-1 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                  {assignedServices.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-sm text-gray-400 p-4 text-center">
+                      No services assigned to this window yet. Select services from the left panel.
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {assignedServices.map(svc => (
+                        <div key={svc._id}
+                          onClick={() => {
+                            const newSet = new Set(selectedAssigned)
+                            if (newSet.has(svc._id)) newSet.delete(svc._id)
+                            else newSet.add(svc._id)
+                            setSelectedAssigned(newSet)
+                          }}
+                          className={cn(
+                            'flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors',
+                            selectedAssigned.has(svc._id) ? 'bg-red-50 dark:bg-red-900/10' : 'hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                          )}>
+                          {selectedAssigned.has(svc._id) ? (
+                            <CheckSquare className="h-5 w-5 text-red-500 shrink-0" />
+                          ) : (
+                            <CheckSquare className="h-5 w-5 text-brand-green shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{svc.name.en}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedAssigned.size > 0 && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={handleUnassignServices}
+                    disabled={savingAssignment}
+                    className="mt-3 flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-red-500 text-white text-sm font-semibold rounded-xl hover:bg-red-600 transition-all disabled:opacity-50">
+                    {savingAssignment ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowLeft className="h-4 w-4" />}
+                    Unassign {selectedAssigned.size} service{selectedAssigned.size !== 1 ? 's' : ''}
+                  </motion.button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}</AnimatePresence>
 
       {/* Window Form Modal */}
       <AnimatePresence>{showWindowForm && (

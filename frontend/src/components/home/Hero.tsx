@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { useActiveRoute } from '@/contexts/ActiveRouteContext'
 import { Badge } from '@/components/ui/Badge'
 import AnimatedCounter from './AnimatedCounter'
+import MesobLogo from '@/components/brand/MesobLogo'
 
 // ─── Photos from /public ──────────────────────────────────────────────────────
 const slides = [
@@ -292,32 +293,30 @@ export default function Hero() {
               transition={{ duration: 0.45 }}
               className="flex flex-col items-center text-center text-white max-w-3xl mx-auto"
             >
-              {/* Badge */}
+              {/* Logo */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1, duration: 0.4 }}
+                className="mb-6"
               >
-                <Badge
-                  variant="new"
-                  size="lg"
-                  className="mb-6 bg-white/15 text-white border border-white/25 backdrop-blur-sm"
-                >
-                  <Star className="h-3.5 w-3.5" aria-hidden />
-                  {officialBadge}
-                </Badge>
+                <MesobLogo size={64} />
               </motion.div>
 
               {/* Headline */}
-              <motion.h1
-                className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 drop-shadow-lg"
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.55 }}
-              >
-                {t.hero.title}{' '}
-                <span className="text-brand-gold">{t.hero.titleHighlight}</span>
-              </motion.h1>
+              <AnimatePresence mode="wait">
+                <motion.h1
+                  key={current}
+                  className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 drop-shadow-lg"
+                  initial={{ opacity: 0, scale: 0.92, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, scale: 1.05, filter: 'blur(2px)' }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                >
+                  {t.hero.title}{' '}
+                  <span className="text-brand-gold">{t.hero.titleHighlight}</span>
+                </motion.h1>
+              </AnimatePresence>
 
               {/* Slide caption */}
               <AnimatePresence mode="wait">

@@ -209,10 +209,7 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
           animate={{ opacity: scrolled ? 1 : 0.92 }}
           transition={{ duration: 0.25, ease: 'easeInOut' }}
         >
-          <div className={cn(
-            'container-gov flex items-center justify-between transition-all duration-200',
-            scrolled ? 'h-16' : 'h-20 lg:h-16'
-          )}>
+          <div className="container-gov flex items-center justify-between h-16">
             <NavLink
               to="/"
               className="flex items-center gap-2 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg"
@@ -225,72 +222,28 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
               </div>
             </NavLink>
 
-            <nav className={cn(
-              'hidden lg:flex items-center transition-all duration-200',
-              scrolled ? 'gap-0' : 'gap-0.5'
-            )} aria-label="Main navigation">
+            <nav className="hidden lg:flex items-center gap-0.5" aria-label="Main navigation">
               {navItems.map((item) => {
                 const isActive = isHome ? activeHomeSection === item.anchor : location.pathname === item.path
                 const showNewsDot = item.key === 'news' && newNewsCount > 0
                 return (
                   <div key={item.path} className="relative">
-                    {isHome ? (
-                      <button
-                        type="button"
-                        onClick={() => handleNavClick(item)}
-                        className="relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50 rounded-lg"
-                        aria-current={isActive ? 'true' : undefined}
-                      >
-                        <span className={cn(
-                          'relative inline-flex items-center transition-all duration-200',
-                          scrolled ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-1.5 text-xs',
-                          'font-semibold whitespace-nowrap cursor-pointer select-none',
-                          'transition-colors duration-200 rounded-lg',
-                          isActive ? 'text-white' : 'text-white/75 hover:text-white'
-                        )}>
-                          {isActive && (
-                            <motion.span
-                              layoutId="nav-capsule"
-                              className="absolute inset-0 rounded-lg bg-white/15"
-                              transition={{ type: 'spring', stiffness: 380, damping: 30, mass: 0.8 }}
-                              aria-hidden
-                            />
-                          )}
-                          <span className="relative z-10 flex items-center gap-1">
-                            {t.nav[item.key]}
-                            {showNewsDot && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
-                          </span>
+                    <button
+                      type="button"
+                      onClick={() => handleNavClick(item)}
+                      className="relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50 rounded-lg"
+                      aria-current={isActive ? 'true' : undefined}
+                    >
+                      <span className="relative inline-flex items-center px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap cursor-pointer select-none rounded-lg transition-colors duration-200 text-white/75 hover:text-white">
+                        {isActive && (
+                          <span className="absolute inset-0 rounded-lg bg-white/15" aria-hidden />
+                        )}
+                        <span className="relative z-10 flex items-center gap-1">
+                          {t.nav[item.key]}
+                          {showNewsDot && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
                         </span>
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleNavClick(item)}
-                        className="relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50 rounded-lg"
-                        aria-current={isActive ? 'true' : undefined}
-                      >
-                        <span className={cn(
-                          'relative inline-flex items-center transition-all duration-200',
-                          scrolled ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-1.5 text-xs',
-                          'font-semibold whitespace-nowrap cursor-pointer select-none',
-                          'transition-colors duration-200 rounded-lg',
-                          isActive ? 'text-white' : 'text-white/75 hover:text-white'
-                        )}>
-                          {isActive && (
-                            <motion.span
-                              layoutId="nav-capsule"
-                              className="absolute inset-0 rounded-lg bg-white/15"
-                              transition={{ type: 'spring', stiffness: 380, damping: 30, mass: 0.8 }}
-                              aria-hidden
-                            />
-                          )}
-                          <span className="relative z-10 flex items-center gap-1">
-                            {t.nav[item.key]}
-                            {showNewsDot && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
-                          </span>
-                        </span>
-                      </button>
-                    )}
+                      </span>
+                    </button>
                   </div>
                 )
               })}
