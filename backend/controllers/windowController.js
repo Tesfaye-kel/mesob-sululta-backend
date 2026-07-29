@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Window = require('../models/Window');
 const Service = require('../models/Service');
 
@@ -23,22 +24,42 @@ const createWindow = async (req, res, next) => {
 const getAllWindows = async (req, res, next) => {
   try {
     const { organization } = req.query;
-    const filter = {};
-    if (organization) filter.organization = organization;
+    const match = {};
+    if (organization) match.organization = new mongoose.Types.ObjectId(organization);
 
-    const windows = await Window.find(filter)
-      .populate('organization', 'name logoUrl')
-      .sort({ floor: 1, number: 1 });
+    const windows = await Window.aggregate([
+      { $match: match },
+      {
+        $lookup: {
+          from: 'services',
+          localField: '_id',
+          foreignField: 'window',
+          as: 'services',
+        },
+      },
+      {
+        $addFields: {
+          serviceCount: { $size: '$services' },
+        },
+      },
+      { $sort: { floor: 1, number: 1 } },
+      {
+        $lookup: {
+          from: 'organizations',
+          localField: 'organization',
+          foreignField: '_id',
+          as: 'orgInfo',
+        },
+      },
+      {
+        $addFields: {
+          organization: { $arrayElemAt: ['$orgInfo', 0] },
+        },
+      },
+      { $project: { services: 0, orgInfo: 0, 'organization.createdAt': 0, 'organization.updatedAt': 0, 'organization.__v': 0 } },
+    ]);
 
-    // Attach service count to each window
-    const windowsWithCount = await Promise.all(
-      windows.map(async (win) => {
-        const serviceCount = await Service.countDocuments({ window: win._id });
-        return { ...win.toObject(), serviceCount };
-      })
-    );
-
-    return res.json(windowsWithCount);
+    return res.json(windows);
   } catch (err) {
     next(err);
   }
@@ -133,6 +154,76 @@ const updateWindow = async (req, res, next) => {
   }
 };
 
+// PUT /api/windows/:id/assign-services
+const assignServicesToWindow = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { serviceIds } = req.body; // array of service IDs that should belong to this window
+
+    // Verify window exists
+    const win = await Window.findById(id);
+    if (!win) return res.status(404).json({ message: 'Window not found' });
+
+    // Get the list of services currently assigned to this window
+    const currentServiceIds = await Service.find({ window: id }).distinct('_id');
+    const currentIds = currentServiceIds.map(s => s.toString());
+    const targetIds = (serviceIds || []).map(s => s.toString());
+
+    // Services to REMOVE from this window (currently assigned but NOT in the new list)
+    const toRemove = currentIds.filter(cid => !targetIds.includes(cid));
+    if (toRemove.length > 0) {
+      await Service.updateMany({ _id: { $in: toRemove } }, { window: null });
+    }
+
+    // Services to ADD to this window (in the new list but NOT currently assigned)
+    const toAdd = targetIds.filter(tid => !currentIds.includes(tid));
+    if (toAdd.length > 0) {
+      // First unassign them from any other window they might belong to
+      await Service.updateMany({ _id: { $in: toAdd } }, { window: null });
+      // Then assign them to this window
+      await Service.updateMany(
+        { _id: { $in: toAdd }, organization: win.organization },
+        { window: id }
+      );
+    }
+
+    // Return updated services for this window
+    const services = await Service.find({ window: id })
+      .populate('organization', 'name')
+      .sort({ createdAt: -1 });
+
+    return res.json({ message: 'Services updated successfully', services });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// GET /api/windows/:id/available-services
+// Returns services belonging to the same organization that are NOT assigned to this window
+const getAvailableServicesForWindow = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const win = await Window.findById(id);
+    if (!win) return res.status(404).json({ message: 'Window not found' });
+
+    // Services that belong to the same org but are NOT assigned to this window
+    const services = await Service.find({
+      organization: win.organization,
+      $or: [
+        { window: null },
+        { window: { $ne: id } },
+      ],
+    })
+      .populate('organization', 'name')
+      .sort({ createdAt: -1 });
+
+    return res.json(services);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // DELETE /api/windows/:id
 const deleteWindow = async (req, res, next) => {
   try {
@@ -154,5 +245,7 @@ module.exports = {
   getWindowById,
   getServicesByWindow,
   updateWindow,
+  assignServicesToWindow,
+  getAvailableServicesForWindow,
   deleteWindow,
 };
