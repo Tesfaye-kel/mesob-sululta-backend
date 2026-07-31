@@ -120,7 +120,7 @@ export const translations = {
     admin: {
       // Layout
       adminPanel: 'Admin Panel', admin: 'Admin', theme: 'Theme', logout: 'Logout',
-      dashboard: 'Dashboard', about: 'About', news: 'News', services: 'Services',
+      dashboard: 'Dashboard', about: 'About', leadership: 'Leadership', news: 'News', services: 'Services',
       organizations: 'Organizations', gallery: 'Gallery', faqs: 'FAQs',
       contact: 'Contact', messages: 'Messages', testimonials: 'Testimonials',
       users: 'Users', profile: 'Profile', settings: 'Settings',
@@ -457,7 +457,7 @@ export const translations = {
     },
     admin: {
       adminPanel: 'የአስተዳደር ፓነል', admin: 'አስተዳዳሪ', theme: 'ጭብጥ', logout: 'ውጣ',
-      dashboard: 'ዳሽቦርድ', about: 'ስለ እኛ', news: 'ዜና', services: 'አገልግሎቶች',
+      dashboard: 'ዳሽቦርድ', about: 'ስለ እኛ', leadership: 'አመራሮች', news: 'ዜና', services: 'አገልግሎቶች',
       organizations: 'ድርጅቶች', gallery: 'ጋለሪ', faqs: 'ጥያቄዎች',
       contact: 'ያናግሩን', messages: 'መልዕክቶች', testimonials: 'ምስክርነቶች',
       users: 'ተጠቃሚዎች', profile: 'ፕሮፋይል', settings: 'ቅንብሮች',
@@ -787,7 +787,7 @@ export const translations = {
     },
     admin: {
       adminPanel: 'Paanelii Bulchiinsaa', admin: 'Bulchiinsaa', theme: 'Bifa', logout: "Ba'i",
-      dashboard: 'Daashboordii', about: "Waa'ee", news: 'Oduu', services: 'Tajaajiloota',
+      dashboard: 'Daashboordii', about: "Waa'ee", leadership: 'Dhaabbata', news: 'Oduu', services: 'Tajaajiloota',
       organizations: 'Wajjiralee', gallery: 'Galerii', faqs: 'Gaaffilee',
       contact: 'Qunnamii', messages: 'Ergaalee', testimonials: 'Ragaalee',
       users: 'Fayyadamtoota', profile: 'Profaayilii', settings: 'Settingii',
@@ -955,7 +955,7 @@ export const translations = {
       saveAllChanges: 'Jijjiramoota Hunda Qabadhu',
       deleteConfirmTitle: '{type} haquu?',
       deleteConfirmDesc: 'Kun deebisuu hin danda\'amu.',
-      floor1: 'Bona 1', floor2: 'Bona 2', floor3: 'Bona 3', floor4: 'Bona 4', floor5: 'Bona 5',
+      floor1: 'Darbii 1', floor2: 'Darbii 2', floor3: 'Darbii 3', floor4: 'Darbii 4', floor5: 'Darbii 5',
       noWindowStandalone: 'Foddaa hin qabu (tajaajila kophaa)',
       fee: 'Kaffaltii (ETB)',
       processingTime: 'Yeroo Addaa',
@@ -963,7 +963,7 @@ export const translations = {
       contactPhone: 'Bilbila Qunnamtii',
       assignToWindow: 'Foddaatti Ramadi',
       windowName: 'Maqaa Foddaa/Lakkoofsa',
-      floor: 'Bona',
+      floor: 'Darbii',
       serviceUpdated: 'Tajaajilni fooyyee\'e!',
       serviceCreated: 'Tajaajilni uumame!',
       serviceDeleted: 'Tajaajilni haqame!',
