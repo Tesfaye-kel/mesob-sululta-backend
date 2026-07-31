@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Star, Search, ChevronLeft, ChevronRight, Loader2, X, ArrowRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useActiveRoute } from '@/contexts/ActiveRouteContext'
 import { Badge } from '@/components/ui/Badge'
 import AnimatedCounter from './AnimatedCounter'
 import MesobLogo from '@/components/brand/MesobLogo'
+import { searchServices, Service } from '@/api/tajaajila'
 
 // ─── Photos from /public ──────────────────────────────────────────────────────
 const slides = [
@@ -94,10 +95,6 @@ const quickServices = [
 ]
 
 // ── Cinematic burst slide variants ────────────────────────────────────────────
-// Exit: the current image gently "explodes" outward — scales up while fading out,
-//       giving a soft burst/bloom effect before the next image appears.
-// Enter: the new image blooms in from a slight under-scale, creating a cinematic
-//        "push through" feel with a subtle luminance overlay at peak transition.
 const slideVariants = {
   enter: {
     opacity: 0,
@@ -126,6 +123,16 @@ const burstVariants = {
   hidden:  { opacity: 0, scale: 0.6 },
   visible: { opacity: 0.18, scale: 2.2 },
   gone:    { opacity: 0, scale: 3.0 },
+}
+
+// ── Debounce hook ─────────────────────────────────────────────────────────────
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay)
+    return () => clearTimeout(id)
+  }, [value, delay])
+  return debounced
 }
 
 export default function Hero() {
@@ -184,12 +191,97 @@ export default function Hero() {
   const prev = () => goTo((current - 1 + slides.length) % slides.length)
   const next = () => goTo((current + 1) % slides.length)
 
+  // ── Search state ──────────────────────────────────────────────────────────
   const [query, setQuery] = useState('')
+  const [results, setResults] = useState<Service[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
+  const [showDropdown, setShowDropdown] = useState(false)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const debouncedQuery = useDebounce(query, 300)
+
+  // Fetch search results when debounced query changes
+  useEffect(() => {
+    const q = debouncedQuery.trim()
+    if (q.length < 1) {
+      setResults([])
+      setShowDropdown(false)
+      setSearchError(null)
+      return
+    }
+
+    let cancelled = false
+    setIsSearching(true)
+    setSearchError(null)
+
+    searchServices(q)
+      .then(data => {
+        if (!cancelled) {
+          setResults(data)
+          setShowDropdown(true)
+          setIsSearching(false)
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          setSearchError(err.message || 'Search failed')
+          setResults([])
+          setShowDropdown(true)
+          setIsSearching(false)
+        }
+      })
+
+    return () => { cancelled = true }
+  }, [debouncedQuery])
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const q = query.trim()
-    if (q) navigate(`/services?q=${encodeURIComponent(q)}`)
+    if (q) {
+      setShowDropdown(false)
+      navigate(`/services?q=${encodeURIComponent(q)}`)
+    }
+  }
+
+  const handleSelectService = useCallback((service: Service) => {
+    setShowDropdown(false)
+    setQuery('')
+    const orgId = service.organization?._id
+    const windowId = service.window?._id
+    const serviceId = service._id
+    if (orgId && windowId) {
+      navigate(`/tajaajila/office/${orgId}?window=${windowId}&service=${serviceId}`)
+    } else if (orgId) {
+      navigate(`/tajaajila/office/${orgId}`)
+    } else {
+      navigate(`/services?q=${encodeURIComponent(getLocalizedName(service))}`)
+    }
+  }, [navigate, language])
+
+  const getLocalizedName = (service: Service): string => {
+    if (language === 'am') return service.name.am || service.name.en
+    if (language === 'or') return service.name.or || service.name.en
+    return service.name.en
+  }
+
+  const getLocalizedOrgName = (service: Service): string => {
+    if (!service.organization?.name) return ''
+    const orgName = service.organization.name as unknown as string | { en: string; am: string; or: string }
+    if (typeof orgName === 'string') return orgName
+    if (language === 'am') return (orgName as { en: string; am: string; or: string }).am || (orgName as { en: string; am: string; or: string }).en
+    if (language === 'or') return (orgName as { en: string; am: string; or: string }).or || (orgName as { en: string; am: string; or: string }).en
+    return (orgName as { en: string; am: string; or: string }).en
   }
 
   return (
@@ -293,14 +385,16 @@ export default function Hero() {
               transition={{ duration: 0.45 }}
               className="flex flex-col items-center text-center text-white max-w-3xl mx-auto"
             >
-              {/* Logo */}
+              {/* Logo row */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.1, duration: 0.4 }}
-                className="mb-6"
+                className="mb-6 flex items-center justify-center gap-6"
               >
+                <img src="/hero-icon.jpg" alt="" width={64} height={64} className="object-contain" draggable={false} />
                 <MesobLogo size={64} />
+                <img src="/hero-icon.jpg" alt="" width={64} height={64} className="object-contain" draggable={false} />
               </motion.div>
 
               {/* Headline */}
@@ -332,33 +426,134 @@ export default function Hero() {
                 </motion.p>
               </AnimatePresence>
 
-              {/* Search bar */}
-              <motion.form
-                onSubmit={handleSearch}
-                className="w-full max-w-xl mb-10"
+              {/* Search bar with live results dropdown */}
+              <motion.div
+                className="w-full max-w-xl mb-10 relative"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
-                role="search"
+                ref={searchRef}
               >
-                <div className="relative flex items-center">
-                  <Search className="absolute left-4 h-5 w-5 text-gray-400 pointer-events-none" aria-hidden />
-                  <input
-                    type="search"
-                    value={query}
-                    onChange={e => setQuery(e.target.value)}
-                    placeholder={searchPlaceholder}
-                    className="w-full pl-12 pr-32 py-4 rounded-xl bg-white/95 backdrop-blur text-gray-900 placeholder-gray-400 text-base shadow-2xl focus:outline-none focus:ring-2 focus:ring-brand-gold"
-                    aria-label={searchPlaceholder}
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 px-5 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 text-sm"
-                  >
-                    {searchBtnLabel}
-                  </button>
-                </div>
-              </motion.form>
+                <form onSubmit={handleSearch} role="search">
+                  <div className="relative flex items-center">
+                    <Search className="absolute left-4 h-5 w-5 text-gray-400 pointer-events-none" aria-hidden />
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={e => {
+                        setQuery(e.target.value)
+                        if (e.target.value.trim().length > 0) {
+                          setShowDropdown(true)
+                        } else {
+                          setShowDropdown(false)
+                          setResults([])
+                        }
+                      }}
+                      onFocus={() => {
+                        if (query.trim().length >= 1) setShowDropdown(true)
+                      }}
+                      placeholder={searchPlaceholder}
+                      className="w-full pl-12 pr-32 py-4 rounded-xl bg-white/95 backdrop-blur text-gray-900 placeholder-gray-400 text-base shadow-2xl focus:outline-none focus:ring-2 focus:ring-brand-gold"
+                      aria-label={searchPlaceholder}
+                      autoComplete="off"
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-2 px-5 py-2.5 bg-brand-green hover:bg-brand-green-dark text-white font-semibold rounded-lg transition-all duration-200 active:scale-95 text-sm"
+                    >
+                      {searchBtnLabel}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Search results dropdown */}
+                <AnimatePresence>
+                  {showDropdown && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 text-left"
+                    >
+                      {/* Loading state */}
+                      {isSearching && (
+                        <div className="flex items-center gap-3 px-5 py-4 text-gray-500">
+                          <Loader2 className="h-5 w-5 animate-spin text-brand-green" />
+                          <span className="text-sm">
+                            {language === 'am' ? 'በመፈለግ ላይ...' : language === 'or' ? 'Barbaadamaa jira...' : 'Searching...'}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Error state */}
+                      {!isSearching && searchError && (
+                        <div className="px-5 py-4 text-sm text-red-500">
+                          {language === 'am' ? 'ፍለጋው አልተሳካም። እባክዎ እንደገና ይሞክሩ።' : language === 'or' ? 'Barbaadni hin milkoofne. Mee ammas yaali.' : 'Search failed. Please try again.'}
+                        </div>
+                      )}
+
+                      {/* Empty state */}
+                      {!isSearching && !searchError && query.trim().length >= 1 && results.length === 0 && (
+                        <div className="px-5 py-6 text-center">
+                          <p className="text-gray-400 text-sm">
+                            {language === 'am' ? 'ምንም አገልግሎት አልተገኘም' : language === 'or' ? 'Tajaajilli tokkollee hin argamne' : 'No services found'}
+                          </p>
+                          <p className="text-gray-300 text-xs mt-1">
+                            {language === 'am' ? `"${query}" በሚለው ፍለጋ` : language === 'or' ? `Barbaaduu "${query}"` : `for "${query}"`}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Results */}
+                      {!isSearching && results.length > 0 && (
+                        <ul>
+                          {results.map((service) => (
+                            <li key={service._id}>
+                              <button
+                                onClick={() => handleSelectService(service)}
+                                className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors text-left border-b border-gray-50 last:border-0 group"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 group-hover:text-brand-green transition-colors truncate">
+                                    {getLocalizedName(service)}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    {getLocalizedOrgName(service) && (
+                                      <span className="text-xs text-gray-400 truncate">
+                                        {getLocalizedOrgName(service)}
+                                      </span>
+                                    )}
+                                    {service.window && (
+                                      <span className="text-xs text-brand-green font-medium shrink-0">
+                                        {language === 'am' ? `ፎዳ ${service.window.number} (ወለል ${service.window.floor})` : language === 'or' ? `Foddaa ${service.window.number} (Darbii ${service.window.floor})` : `Window ${service.window.number} (Floor ${service.window.floor})`}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-brand-green shrink-0 transition-colors" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {/* See all results link */}
+                      {!isSearching && results.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setShowDropdown(false)
+                            navigate(`/services?q=${encodeURIComponent(query.trim())}`)
+                          }}
+                          className="w-full px-5 py-3 text-center text-sm text-brand-green font-medium hover:bg-brand-green/5 transition-colors border-t border-gray-100"
+                        >
+                          {language === 'am' ? `ሁሉንም ውጤቶች ለ "${query}" ይመልከቱ` : language === 'or' ? `Bu'aa hunda ilaali "${query}"` : `See all results for "${query}"`}
+                        </button>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
 
               {/* Slide controls */}
               <motion.div
@@ -474,4 +669,3 @@ export default function Hero() {
     </section>
   )
 }
-

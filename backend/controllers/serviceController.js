@@ -158,9 +158,44 @@ const getServicesByOrganization = async (req, res, next) => {
   }
 };
 
+// GET /api/services/search?q=...
+const searchServices = async (req, res, next) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.trim().length === 0) {
+      return res.json([]);
+    }
+
+    const query = q.trim();
+    // Escape regex special characters
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'i');
+
+    const services = await Service.find({
+      $or: [
+        { 'name.en': regex },
+        { 'name.am': regex },
+        { 'name.or': regex },
+        { 'description.en': regex },
+        { 'description.am': regex },
+        { 'description.or': regex },
+      ],
+    })
+      .populate('organization', 'name')
+      .populate('window', 'number floor')
+      .limit(10)
+      .sort({ createdAt: -1 });
+
+    return res.json(services);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createService,
   getAllServices,
+  searchServices,
   getServiceById,
   updateService,
   deleteService,

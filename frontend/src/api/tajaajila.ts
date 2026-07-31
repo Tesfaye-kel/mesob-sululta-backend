@@ -92,9 +92,11 @@ export const getWindowServices = (id: string) => get<Service[]>(`/windows/${id}/
 export const getOrganizations = () => get<Organization[]>('/organizations')
 export const getOrganizationServices = (id: string) => get<Service[]>(`/organizations/${id}/services`)
 export const getOrganizationById = (id: string) => get<Organization>(`/organizations/${id}`)
+export const getOrganizationWithWindows = (id: string) => get<{ organization: Organization; windowGroups: WindowGroupedByFloor[] }>(`/organizations/${id}/with-windows`)
 
 export const getServiceById = (id: string) => get<Service>(`/services/${id}`)
 export const getServiceRequirements = (id: string) => get<Requirement[]>(`/services/${id}/requirements`)
+export const searchServices = (q: string) => get<Service[]>(`/services/search?q=${encodeURIComponent(q)}`)
 
 export const getContact = () => get<ContactContent>('/contact')
 

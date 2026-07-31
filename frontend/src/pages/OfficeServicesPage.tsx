@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { Loader2, AlertCircle, Layers, ChevronDown, FileText, CheckCircle2, Circle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
@@ -64,12 +64,71 @@ const floorColors = [
 const floorLabels = {
   en: ['Floor 1st', 'Floor 2nd', 'Floor 3rd', 'Floor 4th', 'Floor 5th'],
   am: ['ወለል 1', 'ወለል 2', 'ወለል 3', 'ወለል 4', 'ወለል 5'],
-  or: ['Floor 1ffaa', 'Floor 2ffaa', 'Floor 3ffaa', 'Floor 4ffaa', 'Floor 5ffaa'],
+  or: ['Darbii 1ffaa', 'Darbii 2ffaa', 'Darbii 3ffaa', 'Darbii 4ffaa', 'Darbii 5ffaa'],
 }
 
+// ── Simple in-memory cache ──────────────────────────────────────────────────
+const cache = new Map<string, { data: { organization: Organization; windowGroups: WindowGroup[] }; timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+function getCached(key: string) {
+  const entry = cache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    cache.delete(key)
+    return null
+  }
+  return entry.data
+}
+
+function setCache(key: string, data: { organization: Organization; windowGroups: WindowGroup[] }) {
+  cache.set(key, { data, timestamp: Date.now() })
+}
+
+// ── Skeleton Loader ──────────────────────────────────────────────────────────
+function SkeletonRow({ colorClass }: { colorClass: string }) {
+  return (
+    <div className="animate-pulse">
+      <div className={`bg-gradient-to-r ${colorClass} rounded-t-xl px-4 py-3 shadow-md`}>
+        <div className="flex items-center gap-3">
+          <div className="h-5 w-5 rounded bg-white/30" />
+          <div className="h-5 w-32 rounded bg-white/30" />
+        </div>
+      </div>
+      <div className="rounded-b-xl overflow-hidden border-x border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className={`h-10 w-10 rounded-lg bg-gradient-to-r ${colorClass} opacity-50`} />
+                <div className="h-5 w-24 rounded bg-gray-200 dark:bg-gray-700" />
+              </div>
+              <div className="h-5 w-5 rounded bg-gray-200 dark:bg-gray-700" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LoadingSkeleton() {
+  return (
+    <div className="space-y-8 mt-8">
+      <SkeletonRow colorClass={floorColors[0]} />
+      <SkeletonRow colorClass={floorColors[1]} />
+      <SkeletonRow colorClass={floorColors[2]} />
+    </div>
+  )
+}
+
+// ── Page Component ───────────────────────────────────────────────────────────
 export default function OfficeServicesPage() {
   const { officeId } = useParams<{ officeId: string }>()
   const { language, t } = useLanguage()
+  const [searchParams] = useSearchParams()
+  const targetWindowId = searchParams.get('window')
+  const targetServiceId = searchParams.get('service')
   const [org, setOrg] = useState<Organization | null>(null)
   const [windowGroups, setWindowGroups] = useState<WindowGroup[]>([])
   const [expandedWindow, setExpandedWindow] = useState<string | null>(null)
@@ -78,6 +137,8 @@ export default function OfficeServicesPage() {
   const [serviceRequirements, setServiceRequirements] = useState<Record<string, Requirement[]>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const targetWindowRef = useRef<HTMLDivElement>(null)
+  const hasAutoExpanded = useRef(false)
 
   const orgName = org
     ? (language === 'am' ? (org.name.am || org.name.or || org.name.en)
@@ -90,23 +151,84 @@ export default function OfficeServicesPage() {
 
   useEffect(() => {
     if (!officeId) return
+
+    const cacheKey = `org-windows-${officeId}`
+    const cached = getCached(cacheKey)
+    if (cached) {
+      setOrg(cached.organization)
+      setWindowGroups(cached.windowGroups)
+      setLoading(false)
+      document.title = `${cached.organization.name?.or || cached.organization.name?.en} | MESOB`
+      return
+    }
+
     setLoading(true)
     setError(null)
     
-    Promise.all([
-      fetch(`${BASE}/organizations/${officeId}`).then(r => r.json()),
-      fetch(`${BASE}/windows/by-organization/${officeId}`).then(r => r.json()),
-    ])
-      .then(([orgData, winData]) => {
-        setOrg(orgData)
-        setWindowGroups(Array.isArray(winData) ? winData : [])
-        document.title = `${orgData.name?.or || orgData.name?.en} | MESOB`
+    fetch(`${BASE}/organizations/${officeId}/with-windows`)
+      .then(r => {
+        if (!r.ok) throw new Error('Failed to fetch')
+        return r.json()
+      })
+      .then((data: { organization: Organization; windowGroups: WindowGroup[] }) => {
+        setOrg(data.organization)
+        setWindowGroups(data.windowGroups)
+        setCache(cacheKey, data)
+        document.title = `${data.organization.name?.or || data.organization.name?.en} | MESOB`
       })
       .catch(() => setError('error'))
       .finally(() => setLoading(false))
   }, [officeId, language])
 
-  const handleWindowToggle = async (windowId: string) => {
+  // Auto-expand target window and service from query params
+  useEffect(() => {
+    if (loading || !targetWindowId || hasAutoExpanded.current) return
+
+    // Find the window in the groups
+    const found = windowGroups.some(g => g.windows.some(w => w._id === targetWindowId))
+    if (!found) return
+
+    hasAutoExpanded.current = true
+
+    // Expand the target window
+    setExpandedWindow(targetWindowId)
+
+    // Fetch window services if not already loaded
+    if (!windowServices[targetWindowId]) {
+      fetch(`${BASE}/windows/${targetWindowId}/services`)
+        .then(r => r.json())
+        .then(data => {
+          const services = Array.isArray(data) ? data : []
+          setWindowServices(prev => ({ ...prev, [targetWindowId]: services }))
+          setCache(`window-services-${targetWindowId}`, { windowGroups: services as unknown as WindowGroup[], organization: {} as Organization })
+
+          // If there's a target service, expand it after services load
+          if (targetServiceId && services.some((s: Service) => s._id === targetServiceId)) {
+            setTimeout(() => {
+              setExpandedService(targetServiceId)
+            }, 400)
+          }
+        })
+        .catch(() => {
+          setWindowServices(prev => ({ ...prev, [targetWindowId]: [] }))
+        })
+    } else if (targetServiceId) {
+      // Services already loaded, expand the target service
+      setTimeout(() => {
+        setExpandedService(targetServiceId)
+      }, 400)
+    }
+
+    // Smooth scroll to the target window after a short delay
+    setTimeout(() => {
+      const el = document.getElementById(`window-${targetWindowId}`)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 600)
+  }, [loading, windowGroups, targetWindowId, targetServiceId, windowServices])
+
+  const handleWindowToggle = useCallback(async (windowId: string) => {
     if (expandedWindow === windowId) {
       setExpandedWindow(null)
       return
@@ -117,16 +239,24 @@ export default function OfficeServicesPage() {
     
     if (!windowServices[windowId]) {
       try {
+        const cacheKey = `window-services-${windowId}`
+        const cached = getCached(cacheKey)
+        if (cached) {
+          setWindowServices(prev => ({ ...prev, [windowId]: cached.windowGroups as unknown as Service[] }))
+          return
+        }
         const res = await fetch(`${BASE}/windows/${windowId}/services`)
         const data = await res.json()
-        setWindowServices(prev => ({ ...prev, [windowId]: Array.isArray(data) ? data : [] }))
+        const services = Array.isArray(data) ? data : []
+        setWindowServices(prev => ({ ...prev, [windowId]: services }))
+        setCache(cacheKey, { windowGroups: services as unknown as WindowGroup[], organization: {} as Organization })
       } catch {
         setWindowServices(prev => ({ ...prev, [windowId]: [] }))
       }
     }
-  }
+  }, [expandedWindow, windowServices])
 
-  const handleServiceToggle = async (serviceId: string, windowId: string) => {
+  const handleServiceToggle = useCallback(async (serviceId: string, windowId: string) => {
     if (expandedService === serviceId) {
       setExpandedService(null)
       return
@@ -136,16 +266,22 @@ export default function OfficeServicesPage() {
     
     if (!serviceRequirements[serviceId]) {
       try {
+        const cacheKey = `service-requirements-${serviceId}`
+        const cached = getCached(cacheKey)
+        if (cached) {
+          setServiceRequirements(prev => ({ ...prev, [serviceId]: cached.windowGroups as unknown as Requirement[] }))
+          return
+        }
         const res = await fetch(`${BASE}/services/${serviceId}/requirements`)
         const data = await res.json()
-        setServiceRequirements(prev => ({ ...prev, [serviceId]: Array.isArray(data) ? data : [] }))
+        const reqs = Array.isArray(data) ? data : []
+        setServiceRequirements(prev => ({ ...prev, [serviceId]: reqs }))
+        setCache(cacheKey, { windowGroups: reqs as unknown as WindowGroup[], organization: {} as Organization })
       } catch {
         setServiceRequirements(prev => ({ ...prev, [serviceId]: [] }))
       }
     }
-  }
-
-  const totalWindows = windowGroups.reduce((sum, g) => sum + g.windows.length, 0)
+  }, [expandedService, serviceRequirements])
 
   return (
     <div className="section-padding">
@@ -157,7 +293,8 @@ export default function OfficeServicesPage() {
 
         <AnimatedHeading as="h2" className="mb-2 mt-4">{orgName || fallbackOffice}</AnimatedHeading>
 
-        {loading && <div className="flex justify-center py-16"><Loader2 className="h-8 w-8 animate-spin text-brand-green dark:text-green-400" /></div>}
+        {/* Skeleton loading UI that matches the actual layout */}
+        {loading && <LoadingSkeleton />}
 
         {error && (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
@@ -197,6 +334,7 @@ export default function OfficeServicesPage() {
                         <div key={win._id}>
                           {/* Window Header - Clickable */}
                           <button
+                            id={`window-${win._id}`}
                             onClick={() => handleWindowToggle(win._id)}
                             className="w-full text-left p-4 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors flex items-center justify-between"
                           >

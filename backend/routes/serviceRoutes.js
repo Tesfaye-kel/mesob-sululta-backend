@@ -6,6 +6,7 @@ const Requirement = require('../models/Requirement');
 const {
   createService,
   getAllServices,
+  searchServices,
   getServiceById,
   updateService,
   deleteService,
@@ -16,6 +17,7 @@ const {
 const router = express.Router();
 
 router.get('/', getAllServices);
+router.get('/search', searchServices);
 router.get('/by-organization/:organizationId', getServicesByOrganization);
 router.get('/by-window/:windowId', getServicesByWindow);
 
