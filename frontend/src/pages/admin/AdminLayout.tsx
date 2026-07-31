@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Megaphone, HelpCircle, MessageSquareQuote,
   Building2, Users, UserCircle, Settings, LogOut,
   ChevronLeft, Menu, X, Shield, Sun, Moon, Globe,
-  Info, Image, Phone, Wrench, MessageSquare,
+  Info, Image, Phone, Wrench, MessageSquare, Crown,
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 const sidebarLinks = [
   { to: '/Admin/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
   { to: '/Admin/about', labelKey: 'about', icon: Info },
+  { to: '/Admin/leadership', labelKey: 'leadership', icon: Crown },
   { to: '/Admin/news', labelKey: 'news', icon: Megaphone },
   { to: '/Admin/services', labelKey: 'services', icon: Wrench },
   { to: '/Admin/organizations', labelKey: 'organizations', icon: Building2 },

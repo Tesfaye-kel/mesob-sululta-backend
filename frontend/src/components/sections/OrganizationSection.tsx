@@ -1,22 +1,60 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import AnimatedSection, { StaggerContainer, StaggerItem } from '@/components/common/AnimatedSection'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { departments } from '@/data/departments'
+import { Loader2, Users } from 'lucide-react'
 
-const leadership = [
-  { name: 'Ato Abebe Girma',      roleEn: 'Branch Manager',         roleAm: 'የቅርንጫፍ ሥራ አስኪያጅ',     roleOr: 'Hooggana Damee',             avatar: 'A', color: 'bg-brand-green' },
-  { name: 'W/ro Tigist Haile',    roleEn: 'Deputy Manager',         roleAm: 'ምክትል ሥራ አስኪያጅ',       roleOr: 'Itti Aanaa Hooggana',        avatar: 'T', color: 'bg-brand-blue' },
-  { name: 'Ato Girma Bekele',     roleEn: 'Head of Administration', roleAm: 'የአስተዳደር ኃላፊ',          roleOr: 'Hogganaa Bulchiinsaa',       avatar: 'G', color: 'bg-brand-gold' },
-  { name: 'W/ro Selamawit Alemu', roleEn: 'Head of Finance',        roleAm: 'የፋይናንስ ኃላፊ',           roleOr: 'Hogganaa Maallaqaa',         avatar: 'S', color: 'bg-purple-600' },
-]
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+interface LeadershipMember {
+  _id?: string
+  name: string
+  role: { en: string; am: string; or: string }
+  avatar: string
+  color: string
+  order: number
+}
 
 export default function OrganizationSection() {
   const { t, language } = useLanguage()
+  const [leadership, setLeadership] = useState<LeadershipMember[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`${BASE}/api/organization-content`)
+      .then(r => r.json())
+      .then((data: { leadership: LeadershipMember[] }) => {
+        const sorted = (data.leadership || []).sort((a, b) => a.order - b.order)
+        setLeadership(sorted)
+      })
+      .catch(() => {
+        // Silently fail - component will show empty state
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   const branchManagerLabel = language === 'am' ? 'ቅርንጫፍ ሥራ አስኪያጅ' : language === 'or' ? 'Hooggana Damee' : 'Branch Manager'
   const deputyLabel        = language === 'am' ? 'ምክትል ሥራ አስኪያጅ'  : language === 'or' ? 'Itti Aanaa Hooggana' : 'Deputy Manager'
   const opsLabel           = language === 'am' ? 'ሥራዎች እና አገልግሎቶች' : language === 'or' ? 'Hojiiwwanii fi Tajaajilaalee' : 'Operations & Services'
   const futureDesc         = language === 'am' ? t.about.futureExpansionDesc : language === 'or' ? t.organization.futureExpansionDesc : t.organization.futureExpansionDesc
+
+  const getRole = (member: LeadershipMember) => {
+    if (language === 'am') return member.role.am || member.role.en
+    if (language === 'or') return member.role.or || member.role.en
+    return member.role.en
+  }
+
+  const getInitial = (name: string) => name.charAt(0).toUpperCase()
+
+  const getImageUrl = (avatar: string) => {
+    if (!avatar) return ''
+    if (avatar.startsWith('http')) return avatar
+    return `${BASE}${avatar}`
+  }
+
+  const topLeader = leadership.length > 0 ? leadership[0] : null
+  const teamMembers = leadership.length > 1 ? leadership.slice(1) : []
 
   return (
     <div className="container-gov">
@@ -64,25 +102,75 @@ export default function OrganizationSection() {
         <h2 className="section-title">{t.organization.leadership}</h2>
       </AnimatedSection>
 
-      <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-        {leadership.map((person) => {
-          const role = language === 'am' ? person.roleAm : language === 'or' ? person.roleOr : person.roleEn
-          return (
-            <StaggerItem key={person.name}>
-              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 text-center hover:shadow-card-hover transition-all duration-300 group">
-                <motion.div
-                  className={`w-16 h-16 rounded-2xl ${person.color} text-white text-2xl font-bold flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}
-                  whileHover={{ rotate: 5 }}
-                >
-                  {person.avatar}
-                </motion.div>
-                <h3 className="font-bold text-gray-900 dark:text-white mb-1">{person.name}</h3>
-                <p className="text-sm text-brand-green dark:text-brand-green-light font-medium">{role}</p>
+      {loading && (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
+        </div>
+      )}
+
+      {!loading && leadership.length === 0 && (
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          <Users className="h-12 w-12 mx-auto mb-3 opacity-40" />
+          <p>{language === 'am' ? 'እስካሁን የአመራር አባላት አልተጨመሩም' : language === 'or' ? 'Amma iyyuu miseensonni hooggansa hin dabalamne' : 'No leadership members added yet'}</p>
+        </div>
+      )}
+
+      {!loading && leadership.length > 0 && (
+        <>
+          {/* Top Leader - Featured */}
+          {topLeader && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex justify-center mb-12"
+            >
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 border-2 border-brand-green/20 dark:border-brand-green/30 text-center hover:shadow-xl transition-all duration-300 group max-w-sm w-full">
+                <div className="w-28 h-28 rounded-2xl overflow-hidden mx-auto mb-5 ring-4 ring-brand-green/20 group-hover:ring-brand-green/40 transition-all duration-300">
+                  {topLeader.avatar ? (
+                    <img
+                      src={getImageUrl(topLeader.avatar)}
+                      alt={topLeader.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className={`w-full h-full ${topLeader.color || 'bg-brand-green'} flex items-center justify-center text-white text-4xl font-bold`}>
+                      {getInitial(topLeader.name)}
+                    </div>
+                  )}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{topLeader.name}</h3>
+                <p className="text-brand-green dark:text-brand-green-light font-medium text-base">{getRole(topLeader)}</p>
               </div>
-            </StaggerItem>
-          )
-        })}
-      </StaggerContainer>
+            </motion.div>
+          )}
+
+          {/* Team Members */}
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            {teamMembers.map((member) => (
+              <StaggerItem key={member._id || member.name}>
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 text-center hover:shadow-card-hover transition-all duration-300 group">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-4 ring-2 ring-gray-100 dark:ring-gray-700 group-hover:ring-brand-green/30 group-hover:scale-110 transition-all duration-300">
+                    {member.avatar ? (
+                      <img
+                        src={getImageUrl(member.avatar)}
+                        alt={member.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className={`w-full h-full ${member.color || 'bg-brand-green'} flex items-center justify-center text-white text-2xl font-bold`}>
+                        {getInitial(member.name)}
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="font-bold text-gray-900 dark:text-white mb-1">{member.name}</h3>
+                  <p className="text-sm text-brand-green dark:text-brand-green-light font-medium">{getRole(member)}</p>
+                </div>
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
+        </>
+      )}
 
       <AnimatedSection variant="fadeUp">
         <div className="bg-brand-gold/5 dark:bg-brand-gold/10 border border-brand-gold/20 dark:border-brand-gold/30 rounded-2xl p-6 text-center">

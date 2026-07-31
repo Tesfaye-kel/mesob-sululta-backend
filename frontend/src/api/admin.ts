@@ -377,3 +377,29 @@ export const deleteContactMessage = (id: string) => authFetch<{ message: string 
 export const getUsers = () => authFetch<Array<{ _id: string; name: string; email: string; role: string }>>('/admin/users')
 export const deleteUser = (id: string) => authFetch<{ message: string }>(`/admin/users/${id}`, { method: 'DELETE' })
 export const registerAdmin = (data: { name: string; email: string; password: string }) => authFetch<{ user: { id: string; name: string; email: string; role: string }; token: string }>('/admin/register', { method: 'POST', body: JSON.stringify(data) })
+
+// ─── Organization Content ────────────────────────────────────────
+export interface OrgContentLeadership {
+  _id?: string
+  name: string
+  role: MultiLang
+  avatar: string
+  color: string
+  order: number
+}
+
+export interface OrganizationContent {
+  _id: string
+  leadership: OrgContentLeadership[]
+  futureExpansion: MultiLang
+  hierarchyTitle: MultiLang
+  createdAt: string
+  updatedAt: string
+}
+
+export const getOrganizationContent = () => authFetch<OrganizationContent>('/organization-content')
+export const updateOrganizationContent = (data: Partial<OrganizationContent>) => authFetch<OrganizationContent>('/organization-content', { method: 'PUT', body: JSON.stringify(data) })
+
+export const addOrgContentLeadership = (data: Partial<OrgContentLeadership>) => authFetch<OrganizationContent>('/organization-content/leadership', { method: 'POST', body: JSON.stringify(data) })
+export const updateOrgContentLeadership = (id: string, data: Partial<OrgContentLeadership>) => authFetch<OrganizationContent>(`/organization-content/leadership/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteOrgContentLeadership = (id: string) => authFetch<OrganizationContent>(`/organization-content/leadership/${id}`, { method: 'DELETE' })

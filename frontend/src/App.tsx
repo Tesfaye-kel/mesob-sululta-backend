@@ -18,6 +18,7 @@ import AdminLogin from '@/pages/admin/AdminLogin'
 import AdminLayout from '@/pages/admin/AdminLayout'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminAbout from '@/pages/admin/AdminAbout'
+import AdminLeadership from '@/pages/admin/AdminLeadership'
 import AdminAnnouncements from '@/pages/admin/AdminAnnouncements'
 import AdminNews from '@/pages/admin/AdminNews'
 import AdminServices from '@/pages/admin/AdminServices'
@@ -74,6 +75,7 @@ export default function App() {
                     <Route element={<AdminLayout />}>
                       <Route path="dashboard" element={<AdminDashboard />} />
                       <Route path="about" element={<AdminAbout />} />
+                      <Route path="leadership" element={<AdminLeadership />} />
                       <Route path="news" element={<AdminNews />} />
                       <Route path="services" element={<AdminServices />} />
                       <Route path="faqs" element={<AdminFAQs />} />

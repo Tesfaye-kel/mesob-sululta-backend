@@ -1,0 +1,401 @@
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Users, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Upload, Building2, Rocket } from 'lucide-react'
+import { getOrganizationContent, updateOrganizationContent, addOrgContentLeadership, updateOrgContentLeadership, deleteOrgContentLeadership, type OrganizationContent, type OrgContentLeadership } from '@/api/admin'
+import { useLanguage } from '@/contexts/LanguageContext'
+
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+const emptyMember = {
+  name: '',
+  role: { en: '', am: '', or: '' },
+  avatar: '',
+  color: 'bg-brand-green',
+  order: 0,
+}
+
+const colorOptions = [
+  { value: 'bg-brand-green', label: 'Green' },
+  { value: 'bg-brand-blue', label: 'Blue' },
+  { value: 'bg-brand-gold', label: 'Gold' },
+  { value: 'bg-purple-600', label: 'Purple' },
+  { value: 'bg-rose-600', label: 'Rose' },
+  { value: 'bg-amber-600', label: 'Amber' },
+  { value: 'bg-cyan-600', label: 'Cyan' },
+  { value: 'bg-indigo-600', label: 'Indigo' },
+]
+
+export default function AdminLeadership() {
+  const { language } = useLanguage()
+  const [content, setContent] = useState<OrganizationContent | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [editingMember, setEditingMember] = useState<OrgContentLeadership | null>(null)
+  const [form, setForm] = useState(emptyMember)
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+
+  // Organization content fields
+  const [hierarchyTitle, setHierarchyTitle] = useState({ en: '', am: '', or: '' })
+  const [futureExpansion, setFutureExpansion] = useState({ en: '', am: '', or: '' })
+  const [savingOrgContent, setSavingOrgContent] = useState(false)
+
+  const fetchContent = async () => {
+    try {
+      const data = await getOrganizationContent()
+      setContent(data)
+      setHierarchyTitle(data.hierarchyTitle || { en: '', am: '', or: '' })
+      setFutureExpansion(data.futureExpansion || { en: '', am: '', or: '' })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchContent() }, [])
+
+  const sortedLeadership = content?.leadership
+    ? [...content.leadership].sort((a, b) => a.order - b.order)
+    : []
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploading(true)
+    try {
+      const token = localStorage.getItem('admin-token')
+      const formData = new FormData()
+      formData.append('avatar', file)
+
+      const res = await fetch(`${BASE}/api/organization-content/leadership/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      })
+      if (!res.ok) throw new Error('Upload failed')
+      const data = await res.json()
+      setForm(prev => ({ ...prev, avatar: data.imageUrl }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleSaveOrgContent = async () => {
+    setSavingOrgContent(true)
+    setError('')
+    try {
+      const updated = await updateOrganizationContent({
+        hierarchyTitle,
+        futureExpansion,
+      })
+      setContent(updated)
+      setSuccess('Organization content saved!')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSavingOrgContent(false)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return
+    setSaving(true)
+    setError('')
+    try {
+      if (editingMember?._id) {
+        const updated = await updateOrgContentLeadership(editingMember._id, form)
+        setContent(updated)
+        setSuccess('Member updated!')
+      } else {
+        const created = await addOrgContentLeadership(form)
+        setContent(created)
+        setSuccess('Member added!')
+      }
+      setShowForm(false)
+      setEditingMember(null)
+      setForm(emptyMember)
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      const updated = await deleteOrgContentLeadership(id)
+      setContent(updated)
+      setSuccess('Member deleted!')
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete')
+    }
+    setConfirmDelete(null)
+  }
+
+  const getInitial = (name: string) => name.charAt(0).toUpperCase()
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Organization Content</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage organization structure, leadership, and information</p>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {success && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+            className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm">
+            <CheckCircle className="h-4 w-4 shrink-0" /><span>{success}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {loading && (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-center gap-2 p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 mb-4">
+          <AlertCircle className="h-5 w-5" /><span>{error}</span>
+        </div>
+      )}
+
+      {!loading && (
+        <>
+          {/* ── Organization Content Section ──────────────────────────── */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
+            <div className="flex items-center gap-3 mb-6">
+              <Building2 className="h-5 w-5 text-brand-green" />
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Organization Content</h2>
+            </div>
+
+            <div className="space-y-4">
+              {/* Hierarchy Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Hierarchy Title</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {(['en', 'am', 'or'] as const).map(lang => (
+                    <input key={lang} value={hierarchyTitle[lang]}
+                      onChange={e => setHierarchyTitle(prev => ({ ...prev, [lang]: e.target.value }))}
+                      placeholder={`Title (${lang.toUpperCase()})`}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+                  ))}
+                </div>
+              </div>
+
+              {/* Future Expansion */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Future Expansion Text</label>
+                <div className="grid grid-cols-1 gap-3">
+                  {(['en', 'am', 'or'] as const).map(lang => (
+                    <textarea key={lang} value={futureExpansion[lang]}
+                      onChange={e => setFutureExpansion(prev => ({ ...prev, [lang]: e.target.value }))}
+                      placeholder={`Future expansion (${lang.toUpperCase()})`}
+                      rows={2}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none" />
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <button onClick={handleSaveOrgContent} disabled={savingOrgContent}
+                  className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
+                  {savingOrgContent && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Save Organization Content
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Leadership Team Section ──────────────────────────────── */}
+          <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-brand-green" />
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Leadership Team</h2>
+              </div>
+              <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                onClick={() => { setEditingMember(null); setForm(emptyMember); setShowForm(true) }}
+                className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
+                <Plus className="h-4 w-4" /> Add Member
+              </motion.button>
+            </div>
+
+            {sortedLeadership.length === 0 && (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <Users className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">No leadership members yet</p>
+              </div>
+            )}
+
+            {sortedLeadership.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {sortedLeadership.map((member, idx) => (
+                  <motion.div key={member._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}
+                    className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-gray-100 dark:bg-gray-800">
+                      {member.avatar ? (
+                        <img src={member.avatar.startsWith('http') ? member.avatar : `${BASE}${member.avatar}`}
+                          alt={member.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className={`w-full h-full ${member.color || 'bg-brand-green'} flex items-center justify-center text-white font-bold text-lg`}>
+                          {getInitial(member.name)}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 dark:text-white truncate">{member.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 truncate">
+                        {language === 'am' ? member.role.am || member.role.en
+                          : language === 'or' ? member.role.or || member.role.en
+                          : member.role.en}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">Order: {member.order}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button onClick={() => { setEditingMember(member); setForm({ name: member.name, role: { ...member.role }, avatar: member.avatar, color: member.color, order: member.order }); setShowForm(true) }}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 hover:text-blue-600">
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => setConfirmDelete(member._id!)}
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-500 hover:text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Modal Form */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowForm(false)}>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  {editingMember ? 'Edit Member' : 'Add Member'}
+                </h2>
+                <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Photo</label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0">
+                      {form.avatar ? (
+                        <img src={form.avatar.startsWith('http') ? form.avatar : `${BASE}${form.avatar}`}
+                          alt="Preview" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-2xl font-bold">
+                          {form.name ? form.name.charAt(0).toUpperCase() : '?'}
+                        </div>
+                      )}
+                    </div>
+                    <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm font-medium rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                      <Upload className="h-4 w-4" />
+                      {uploading ? 'Uploading...' : 'Upload Photo'}
+                      <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
+                    </label>
+                    {form.avatar && (
+                      <button onClick={() => setForm(prev => ({ ...prev, avatar: '' }))}
+                        className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+                </div>
+
+                {(['en', 'am', 'or'] as const).map(lang => (
+                  <div key={lang}>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role ({lang.toUpperCase()})</label>
+                    <input value={form.role[lang]} onChange={e => setForm(f => ({ ...f, role: { ...f.role, [lang]: e.target.value } }))}
+                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+                  </div>
+                ))}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                  <div className="flex flex-wrap gap-2">
+                    {colorOptions.map(c => (
+                      <button key={c.value} onClick={() => setForm(f => ({ ...f, color: c.value }))}
+                        className={`w-8 h-8 rounded-lg ${c.value} ${form.color === c.value ? 'ring-2 ring-offset-2 ring-brand-green' : ''}`}
+                        title={c.label} />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Order (display position)</label>
+                  <input type="number" value={form.order} onChange={e => setForm(f => ({ ...f, order: parseInt(e.target.value) || 0 }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <button onClick={() => setShowForm(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                  <button onClick={handleSave} disabled={saving || !form.name.trim()}
+                    className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
+                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {editingMember ? 'Update' : 'Add'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            onClick={() => setConfirmDelete(null)}>
+            <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+              onClick={e => e.stopPropagation()}
+              className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl text-center">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Member?</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+              <div className="flex items-center justify-center gap-3">
+                <button onClick={() => setConfirmDelete(null)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                <button onClick={() => handleDelete(confirmDelete)}
+                  className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
