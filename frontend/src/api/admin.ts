@@ -208,6 +208,7 @@ export interface AboutValue {
   icon: string
   title: MultiLang
   description: MultiLang
+  color: string
   order: number
 }
 
@@ -215,6 +216,7 @@ export interface AboutStat {
   _id?: string
   value: string
   label: MultiLang
+  color: string
   order: number
 }
 
@@ -237,6 +239,14 @@ export interface AboutContent {
   managerMessage: MultiLang
   managerName: string
   managerTitle: MultiLang
+  managerPhoto: string
+  storyBadge: MultiLang
+  storyTitle: MultiLang
+  missionTitle: MultiLang
+  visionTitle: MultiLang
+  valuesTitle: MultiLang
+  valuesSubtitle: MultiLang
+  managerMessageTitle: MultiLang
   createdAt: string
   updatedAt: string
 }
@@ -256,6 +266,23 @@ export const deleteAboutValue = (id: string) => authFetch<{ message: string }>(`
 export const addAboutStat = (data: Partial<AboutStat>) => authFetch<AboutContent>('/about/stats', { method: 'POST', body: JSON.stringify(data) })
 export const updateAboutStat = (id: string, data: Partial<AboutStat>) => authFetch<AboutContent>(`/about/stats/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteAboutStat = (id: string) => authFetch<{ message: string }>(`/about/stats/${id}`, { method: 'DELETE' })
+
+// About manager photo upload
+export const uploadManagerPhoto = async (file: File): Promise<{ imageUrl: string }> => {
+  const token = getToken()
+  const formData = new FormData()
+  formData.append('photo', file)
+  const res = await fetch(`${BASE}/about/upload-manager-photo`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  })
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ message: 'Upload failed' }))
+    throw new Error(error.message || 'Upload failed')
+  }
+  return res.json()
+}
 
 // ─── Contact ────────────────────────────────────────────────────
 export interface ContactContent {

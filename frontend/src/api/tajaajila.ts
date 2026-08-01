@@ -100,5 +100,56 @@ export const searchServices = (q: string) => get<Service[]>(`/services/search?q=
 
 export const getContact = () => get<ContactContent>('/contact')
 
+// ─── About ──────────────────────────────────────────────────────
+export interface AboutStory {
+  _id?: string
+  paragraph: MultiLang
+  order: number
+}
+
+export interface AboutValue {
+  _id?: string
+  icon: string
+  title: MultiLang
+  description: MultiLang
+  color: string
+  order: number
+}
+
+export interface AboutStat {
+  _id?: string
+  value: string
+  label: MultiLang
+  color: string
+  order: number
+}
+
+export interface AboutContent {
+  _id: string
+  mission: MultiLang
+  vision: MultiLang
+  objectives: MultiLang
+  branchIntroduction: MultiLang
+  history: MultiLang
+  storyBadge: MultiLang
+  storyTitle: MultiLang
+  missionTitle: MultiLang
+  visionTitle: MultiLang
+  valuesTitle: MultiLang
+  valuesSubtitle: MultiLang
+  managerMessageTitle: MultiLang
+  managerPhoto: string
+  story: AboutStory[]
+  values: AboutValue[]
+  stats: AboutStat[]
+  managerMessage: MultiLang
+  managerName: string
+  managerTitle: MultiLang
+  createdAt: string
+  updatedAt: string
+}
+
+export const getAbout = () => get<AboutContent>('/about')
+
 export const getNewsList = (params?: string) => get<NewsItem[]>(`/news${params ? `?${params}` : ''}`)
 export const getLatestNews = (since?: string) => get<{ count: number; latest: { title: MultiLang; publishedAt: string } | null }>(`/news/latest${since ? `?since=${since}` : ''}`)

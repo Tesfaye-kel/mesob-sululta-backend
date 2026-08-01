@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { getOfficeIcon } from './officeIconMap'
+import { getOfficePhoto } from './officeImageMap'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
 
@@ -44,6 +45,7 @@ export default function OfficeCard({ id, name, serviceCount, index = 0 }: Office
                         'View Services'
 
   const Icon = getOfficeIcon(name.or || name.en)
+  const photo = getOfficePhoto(`${name.or} ${name.en} ${name.am}`)
   const colorIndex = index % 4
   const { bg, text } = OFFICE_COLORS[colorIndex]
 
@@ -62,17 +64,28 @@ export default function OfficeCard({ id, name, serviceCount, index = 0 }: Office
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className={cn(
         'group block rounded-xl shadow-md hover:shadow-lg hover:-translate-y-2',
-        'flex flex-col items-center justify-center gap-4 p-8',
+        'flex flex-col items-center justify-center gap-3 p-6',
         'transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-green/50',
-        'h-56',
+        'h-48',
         'cursor-pointer',
         bg
       )}
       aria-label={`${displayName} — ${ctaLabel}`}
     >
-      <div className={cn('h-20 w-20 rounded-full flex items-center justify-center bg-white dark:bg-gray-900 shadow-md', text)}>
-        <Icon className="h-10 w-10" aria-hidden />
-      </div>
+      {photo ? (
+        <div className="h-20 w-20 rounded-full overflow-hidden shrink-0 shadow-md border-2 border-white dark:border-gray-900 transition-transform duration-300 group-hover:scale-110">
+          <img
+            src={photo}
+            alt={displayName}
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      ) : (
+        <div className={cn('h-20 w-20 rounded-full flex items-center justify-center bg-white dark:bg-gray-900 shadow-md', text)}>
+          <Icon className="h-10 w-10" aria-hidden />
+        </div>
+      )}
 
       <div className="text-center flex-1 flex flex-col justify-center">
         <h3 className="font-bold text-gray-900 dark:text-white text-base leading-snug line-clamp-3">

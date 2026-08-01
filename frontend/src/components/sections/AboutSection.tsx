@@ -1,8 +1,10 @@
-import { useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Target, Eye, Heart, Award, TrendingUp, History } from 'lucide-react'
+import { Target, Eye, Heart, Award, TrendingUp, History, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
+import { getAbout, type AboutContent } from '@/api/tajaajila'
+import { getImageUrl } from '@/lib/images'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -27,66 +29,98 @@ function Reveal({ children, className = '', delay = 0 }: { children: React.React
   )
 }
 
+// ─── Icon mapping ─────────────────────────────────────────────────
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Heart: Heart,
+  Award: Award,
+  Eye: Eye,
+  TrendingUp: TrendingUp,
+  Target: Target,
+  History: History,
+}
+
+function getIcon(iconName: string): React.ComponentType<{ className?: string }> {
+  return iconMap[iconName] || Heart
+}
+
+// ─── Static color mapping ──────────────────────────────────────────
+// Literal class strings so Tailwind JIT always includes them.
+const VALUE_COLORS: Record<string, { text: string; bg: string; glow: string }> = {
+  red:    { text: 'text-red-600 dark:text-red-400',                  bg: 'bg-red-100 dark:bg-red-900/30',            glow: 'group-hover:shadow-red-500/20' },
+  gold:   { text: 'text-brand-gold',                                 bg: 'bg-brand-gold/10 dark:bg-brand-gold/25',   glow: 'group-hover:shadow-yellow-500/20' },
+  blue:   { text: 'text-brand-blue dark:text-blue-300',              bg: 'bg-brand-blue/10 dark:bg-brand-blue/25',   glow: 'group-hover:shadow-blue-500/20' },
+  green:  { text: 'text-brand-green dark:text-brand-green-light',    bg: 'bg-brand-green/10 dark:bg-brand-green/25', glow: 'group-hover:shadow-green-500/20' },
+  purple: { text: 'text-purple-600 dark:text-purple-400',            bg: 'bg-purple-100 dark:bg-purple-900/30',      glow: 'group-hover:shadow-purple-500/20' },
+  teal:   { text: 'text-teal-600 dark:text-teal-400',                bg: 'bg-teal-100 dark:bg-teal-900/30',          glow: 'group-hover:shadow-teal-500/20' },
+}
+
+function getValueColor(color = ''): { text: string; bg: string; glow: string } {
+  const c = (color || '').toLowerCase()
+  if (c.includes('red')) return VALUE_COLORS.red
+  if (c.includes('gold') || c.includes('yellow')) return VALUE_COLORS.gold
+  if (c.includes('blue')) return VALUE_COLORS.blue
+  if (c.includes('purple')) return VALUE_COLORS.purple
+  if (c.includes('teal')) return VALUE_COLORS.teal
+  if (c.includes('green')) return VALUE_COLORS.green
+  return VALUE_COLORS.green
+}
+
+// ─── Stat text colors (literal so Tailwind keeps them) ─────────────
+const STAT_COLORS: Record<string, string> = {
+  red:    'text-red-600',
+  gold:   'text-brand-gold',
+  blue:   'text-brand-blue',
+  green:  'text-brand-green',
+  purple: 'text-purple-600',
+  teal:   'text-teal-600',
+}
+
+function getStatColor(color = ''): string {
+  const c = (color || '').toLowerCase()
+  if (c.includes('red')) return STAT_COLORS.red
+  if (c.includes('gold') || c.includes('yellow')) return STAT_COLORS.gold
+  if (c.includes('blue')) return STAT_COLORS.blue
+  if (c.includes('purple')) return STAT_COLORS.purple
+  if (c.includes('teal')) return STAT_COLORS.teal
+  if (c.includes('green')) return STAT_COLORS.green
+  return STAT_COLORS.green
+}
+
 export default function AboutSection() {
   const { t, language } = useLanguage()
+  const [about, setAbout] = useState<AboutContent | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const values = [
-    { icon: Heart,      glow: 'group-hover:shadow-red-500/20',
-      color: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400',
-      titleEn: 'Citizen-First', titleAm: 'ዜጎችን ቅድሚያ', titleOr: 'Lammiilee Dursa Kennu',
-      descEn: 'Every decision starts with what is best for citizens.',
-      descAm: 'ለዜጎች ምርጥ የሆነው ከማሰብ ጀምሮ እያንዳንዱ ውሳኔ ይወሰናል።',
-      descOr: "Murteen hundi kan jalqaban maal lammiileef gaariidha." },
-    { icon: Award,      glow: 'group-hover:shadow-yellow-500/20',
-      color: 'bg-brand-gold/10 dark:bg-brand-gold/25 text-brand-gold',
-      titleEn: 'Excellence', titleAm: 'ምርጥነት', titleOr: 'Caalaatti Hojjechuu',
-      descEn: 'We strive for the highest quality in every service delivered.',
-      descAm: 'በሚሰጠው እያንዳንዱ አገልግሎት ከፍተኛ ጥራት ለማሳካት እንጥራለን።',
-      descOr: "Tajaajila kennamu kamiyyuu keessatti qulqullina olaanaa galmaasuuf hojjennan." },
-    { icon: Eye,        glow: 'group-hover:shadow-blue-500/20',
-      color: 'bg-brand-blue/10 dark:bg-brand-blue/25 text-brand-blue dark:text-blue-300',
-      titleEn: 'Transparency', titleAm: 'ግልጽነት', titleOr: 'Iftoomina',
-      descEn: 'Open, honest, and accountable operations at all times.',
-      descAm: 'ሁሌ ጊዜ ክፍት፣ ታማኝ እና ተጠያቂ አሠራር።',
-      descOr: "Hojii baname, dhugaawaa fi itti gaafatamaa yeroo hunda." },
-    { icon: TrendingUp, glow: 'group-hover:shadow-green-500/20',
-      color: 'bg-brand-green/10 dark:bg-brand-green/25 text-brand-green dark:text-brand-green-light',
-      titleEn: 'Innovation', titleAm: 'ፈጠራ', titleOr: 'Haaroomsa',
-      descEn: 'Embracing digital transformation to modernize service delivery.',
-      descAm: 'የዲጂታል ለውጥን ተቀብሎ አገልግሎት አሰጣጥን ዘመናዊ ማድረግ።',
-      descOr: "Jijjiirama dijitaalaa fudhachuun tajaajila kennuu ammayyeessuu." },
-    { icon: Target,     glow: 'group-hover:shadow-purple-500/20',
-      color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400',
-      titleEn: 'Efficiency', titleAm: 'ቅልጥፍና', titleOr: 'Hojii Saffisaa',
-      descEn: 'Minimizing bureaucracy to maximize value for citizens.',
-      descAm: 'ቢሮክራሲን ቀንሶ ለዜጎች ዋጋ ማሳደግ።',
-      descOr: "Biirookratii hir'isuun bu'aa lammiileef guddisuu." },
-    { icon: History,    glow: 'group-hover:shadow-teal-500/20',
-      color: 'bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400',
-      titleEn: 'Integrity', titleAm: 'ሐቀኝነት', titleOr: 'Qulqullina Yaadaa',
-      descEn: 'Upholding the highest ethical standards in public service.',
-      descAm: 'ለህዝብ አገልግሎት ከፍተኛ የስነ-ምግባር ደረጃዎችን ማክበር።',
-      descOr: "Sadarkaa xiyyeeffannoo ol'aanaa tajaajila ummataa keessatti eeguu." },
-  ]
+  useEffect(() => {
+    getAbout()
+      .then(setAbout)
+      .catch(() => {}) // Silently fail — render fallbacks
+      .finally(() => setLoading(false))
+  }, [])
 
-  const storyText = {
-    p1: {
-      en: "MESOB Center was established as part of Ethiopia's digital transformation agenda. The name 'Mesob' refers to the traditional Ethiopian basket — a symbol of unity, sharing, and service.",
-      am: "MESOB ማዕከል የኢትዮጵያ ዲጂታል ትሩፋት አጀንዳ አካል ሆኖ ተቋቋመ። 'ሜሶብ' አሃድነትን፣ አጋርነትን እና አገልግሎትን ያሳያል።",
-      or: "Giddaan MESOB akka kutaa sagantaa jijjiirama dijitaalaa Itoophiyaatti hundaa'e. Maqaan 'Mesob' tokkummaa, qooduu fi tajaajila bakka bu'u.",
-    },
-    p2: {
-      en: "The Sululta Branch brings over 50 federal government services under one roof — making government accessible, efficient, and transparent for every citizen.",
-      am: "ሱሉልታ ቅርንጫፍ ከ50 በላይ የፌዴራሌ አገልግሎቶችን ለሁሉም ዜጋ ቀላሉ፣ ቀልጣፋ እና ግልጽ ማድረግ ጀምሯል።",
-      or: "Dameen Sululta tajaajila federaalaa 50+ ol takka jalatti argamsiisa — mootummaa dhaqqabamaa, saffisaa fi ifaa taasisuu.",
-    },
+  const get = (obj?: { en: string; am: string; or: string } | null): string => {
+    if (!obj) return ''
+    return language === 'am' ? obj.am : language === 'or' ? obj.or : obj.en
   }
 
-  const get = (obj: { en: string; am: string; or: string }) =>
-    language === 'am' ? obj.am : language === 'or' ? obj.or : obj.en
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-green" />
+      </div>
+    )
+  }
 
-  const valuesSubtitle = language === 'am' ? 'እያንዳንዱ ሥራ የሚመራበት መርህ' : language === 'or' ? 'Gatiileen hojii keenya hundaa kan qajeelchu' : 'The principles that guide everything we do'
-  const managerTitle   = language === 'am' ? 'የቅርንጫፍ ሥራ አስኪያጅ፣ MESOB ሱሉልታ' : language === 'or' ? 'Hooggana Damee, MESOB Sululta' : 'Branch Manager, MESOB Sululta'
+  // Sort sub-documents by order
+  const story = about?.story ? [...about.story].sort((a, b) => a.order - b.order) : []
+  const values = about?.values ? [...about.values].sort((a, b) => a.order - b.order) : []
+  const stats = about?.stats ? [...about.stats].sort((a, b) => a.order - b.order) : []
+
+  const managerPhoto = about?.managerPhoto || ''
+  const managerName = about?.managerName || ''
+  const managerTitle = get(about?.managerTitle)
+  const managerMessage = get(about?.managerMessage)
+  const managerInitial = managerName ? managerName.charAt(0).toUpperCase() : 'A'
 
   return (
     <div className="container-gov space-y-28">
@@ -96,15 +130,21 @@ export default function AboutSection() {
         <Reveal>
           <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-brand-green dark:text-brand-green-light mb-4">
             <span className="h-px w-8 bg-brand-green dark:bg-brand-green-light" />
-            {t.about.history}
+            {get(about?.storyBadge) || t.about.history}
           </span>
-          {/* Explicit dark text — visible on both light and dark backgrounds */}
-          <h2 className=" text-brand-blue">
-            {t.about.ourStory}
+          {/* Visible on both light and dark backgrounds */}
+          <h2 className="text-3xl md:text-4xl font-bold text-brand-blue dark:text-blue-300">
+            {get(about?.storyTitle) || t.about.ourStory}
           </h2>
-          <div className="space-y-4 text-gray-200 dark:text-gray-300 leading-relaxed text-base">
-            <p>{get(storyText.p1)}</p>
-            <p>{get(storyText.p2)}</p>
+          <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed text-base">
+            {story.length > 0 ? story.map((s, i) => (
+              <p key={s._id || i}>{get(s.paragraph)}</p>
+            )) : (
+              <>
+                <p>{get(about?.history) || ''}</p>
+                <p>{get(about?.branchIntroduction) || ''}</p>
+              </>
+            )}
           </div>
         </Reveal>
 
@@ -114,19 +154,15 @@ export default function AboutSection() {
             <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-brand-blue/10 dark:bg-brand-blue/20 rounded-full blur-2xl pointer-events-none" aria-hidden />
 
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 shadow-xl dark:shadow-black/30">
-              {[
-                { valueEn: '50+', labelEn: 'Federal Services', labelAm: 'ፌዴራሌ አገልግሎቶች', labelOr: 'Tajaajila Federaalaa', color: 'text-brand-green' },
-                { valueEn: '98%', labelEn: 'Satisfaction Rate', labelAm: 'የእርካታ ደረጃ',     labelOr: 'Sadarkaa Quufinsa',   color: 'text-brand-blue' },
-                { valueEn: '28',  labelEn: 'Partner Offices',   labelAm: 'ሸሪክ ቢሮዎች',      labelOr: 'Waajjirawwan Gamtaa', color: 'text-brand-gold' },
-              ].map((stat, i) => (
-                <motion.div key={i}
+              {stats.map((stat, i) => (
+                <motion.div key={stat._id || i}
                   className="flex items-center gap-4 py-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
                   initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }} transition={{ delay: i * 0.1, duration: 0.4 }}
                 >
-                  <span className={cn('text-3xl font-extrabold tabular-nums', stat.color)}>{stat.valueEn}</span>
+                  <span className={cn('text-3xl font-extrabold tabular-nums', getStatColor(stat.color))}>{stat.value}</span>
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300 leading-snug">
-                    {language === 'am' ? stat.labelAm : language === 'or' ? stat.labelOr : stat.labelEn}
+                    {get(stat.label)}
                   </span>
                 </motion.div>
               ))}
@@ -138,14 +174,10 @@ export default function AboutSection() {
       {/* ── Mission & Vision ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {[
-          { icon: Target, bg: 'from-brand-green to-brand-green/80', title: t.about.mission,
-            text: language === 'am' ? 'ለኢትዮጵያ ሁሉም ዜጎች ፈጣን፣ ግልጽ እና ቀላሉ ለማግኘት የሚቻሉ አገልግሎቶችን ማቅረብ።'
-                : language === 'or' ? "Lammiilee hunda tajaajila saffisaa, ifaa fi dhaqqabamaa kennuu."
-                : 'To provide fast, transparent, and accessible government services to all citizens of Ethiopia.' },
-          { icon: Eye,    bg: 'from-brand-blue to-brand-blue/80',  title: t.about.vision,
-            text: language === 'am' ? 'የዜጎችን አቅም የሚፈቱ የአፍሪካ ሞዴል አንድ-ቦታ አገልግሎት ማዕከል ማድረግ።'
-                : language === 'or' ? "Giddu-gala tajaajila bakka tokkotti mudelli Afrikaa ta'uu."
-                : "To become Africa's model one-stop government service center empowering citizens." },
+          { icon: Target, bg: 'from-brand-green to-brand-green/80', title: get(about?.missionTitle) || t.about.mission,
+            text: get(about?.mission) },
+          { icon: Eye,    bg: 'from-brand-blue to-brand-blue/80',  title: get(about?.visionTitle) || t.about.vision,
+            text: get(about?.vision) },
         ].map(({ icon: Icon, bg, title, text }, i) => (
           <Reveal key={i} delay={i * 0.12}>
             <motion.div
@@ -166,11 +198,11 @@ export default function AboutSection() {
         <Reveal className="text-center mb-12">
           <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-brand-green dark:text-brand-green-light mb-3">
             <span className="h-px w-8 bg-brand-green dark:bg-brand-green-light" />
-            {t.about.values}
+            {get(about?.valuesTitle) || t.about.values}
             <span className="h-px w-8 bg-brand-green dark:bg-brand-green-light" />
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-300 dark:text-brown">{t.about.values}</h2>
-          <p className="mt-3 text-gray-600 dark:text-gray-400 max-w-xl mx-auto italic">{valuesSubtitle}</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">{get(about?.valuesTitle) || t.about.values}</h2>
+          <p className="mt-3 text-gray-600 dark:text-gray-400 max-w-xl mx-auto italic">{get(about?.valuesSubtitle) || ''}</p>
         </Reveal>
 
         <motion.div
@@ -178,17 +210,18 @@ export default function AboutSection() {
           initial="hidden" whileInView="show" viewport={{ once: true, margin: '-50px' }} variants={stagger}
         >
           {values.map((v) => {
-            const Icon  = v.icon
-            const title = language === 'am' ? v.titleAm : language === 'or' ? v.titleOr : v.titleEn
-            const desc  = language === 'am' ? v.descAm  : language === 'or' ? v.descOr  : v.descEn
+            const Icon = getIcon(v.icon)
+            const title = get(v.title)
+            const desc = get(v.description)
+            const vc = getValueColor(v.color)
             return (
-              <motion.div key={v.titleEn} variants={cardVariant}
+              <motion.div key={v._id || v.title.en} variants={cardVariant}
                 whileHover={{ y: -6, scale: 1.02 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 className="group relative bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-xl dark:hover:shadow-black/30 transition-shadow duration-300 overflow-hidden"
               >
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-60 transition-opacity duration-300" />
-                <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-4', v.color, 'group-hover:scale-110 transition-transform duration-300 shadow-sm group-hover:shadow-lg', v.glow)}>
+                <div className={cn('w-12 h-12 rounded-xl flex items-center justify-center mb-4', vc.bg, vc.text, 'group-hover:scale-110 transition-transform duration-300 shadow-sm group-hover:shadow-lg', vc.glow)}>
                   <Icon className="h-6 w-6" aria-hidden />
                 </div>
                 <h3 className="font-bold text-gray-900 dark:text-white mb-2 text-base">{title}</h3>
@@ -200,38 +233,45 @@ export default function AboutSection() {
       </div>
 
       {/* ── Manager Message ── */}
-      <Reveal>
-        <div className="relative overflow-hidden rounded-3xl border border-gray-200 dark:border-brand-green/25 bg-white dark:bg-gray-800 p-10 md:p-14 shadow-lg dark:shadow-black/20">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/5 dark:bg-brand-gold/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" aria-hidden />
+      {managerMessage && (
+        <Reveal>
+          <div className="relative overflow-hidden rounded-3xl border border-gray-200 dark:border-brand-green/25 bg-white dark:bg-gray-800 p-10 md:p-14 shadow-lg dark:shadow-black/20">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/5 dark:bg-brand-gold/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" aria-hidden />
 
-          <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
-            <motion.div
-              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-green to-brand-green/80 flex items-center justify-center text-white text-3xl font-extrabold shrink-0 shadow-lg"
-              whileHover={{ rotate: 3, scale: 1.05 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            >
-              A
-            </motion.div>
+            <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
+              <motion.div
+                className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-green to-brand-green/80 flex items-center justify-center text-white text-3xl font-extrabold shrink-0 shadow-lg overflow-hidden"
+                whileHover={{ rotate: 3, scale: 1.05 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              >
+                {managerPhoto ? (
+                  <img src={getImageUrl(managerPhoto)} alt={managerName} className="w-full h-full object-cover" />
+                ) : (
+                  managerInitial
+                )}
+              </motion.div>
 
-            <div className="flex-1">
-              <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-brand-green dark:text-brand-green-light mb-4">
-                <span className="h-px w-6 bg-brand-green dark:bg-brand-green-light" />
-                {t.about.managerMessage}
-              </span>
-              <div className="text-6xl text-brand-green/20 dark:text-brand-green/30 font-serif leading-none mb-2 select-none" aria-hidden>"</div>
-              <blockquote className="text-gray-800 dark:text-gray-100 leading-relaxed text-lg md:text-xl font-medium mb-5 -mt-4">
-                {t.about.managerQuote}
-              </blockquote>
-              <div className="flex items-center gap-3">
-                <div className="h-px w-12 bg-brand-gold" aria-hidden />
-                <div>
-                  <p className="font-bold text-gray-900 dark:text-white">Ato Dereje debala </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{managerTitle}</p>
+              <div className="flex-1">
+                <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-brand-green dark:text-brand-green-light mb-4">
+                  <span className="h-px w-6 bg-brand-green dark:bg-brand-green-light" />
+                  {get(about?.managerMessageTitle) || t.about.managerMessage}
+                </span>
+                <div className="text-6xl text-brand-green/20 dark:text-brand-green/30 font-serif leading-none mb-2 select-none" aria-hidden>"</div>
+                <blockquote className="text-gray-800 dark:text-gray-100 leading-relaxed text-lg md:text-xl font-medium mb-5 -mt-4">
+                  {managerMessage}
+                </blockquote>
+                <div className="flex items-center gap-3">
+                  <div className="h-px w-12 bg-brand-gold" aria-hidden />
+                  <div>
+                    <p className="font-bold text-gray-900 dark:text-white">{managerName || 'Branch Manager'}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{managerTitle}</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </Reveal>
+        </Reveal>
+      )}
     </div>
   )
 }
+

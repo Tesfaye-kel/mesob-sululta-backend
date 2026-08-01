@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import ServiceCard from '@/components/tajaajila/ServiceCard'
 import Breadcrumb from '@/components/tajaajila/Breadcrumb'
@@ -24,6 +24,57 @@ const ORDINALS_EN: Record<number, string> = {
   1: 'Window 1', 2: 'Window 2', 3: 'Window 3', 4: 'Window 4',
   5: 'Window 5', 6: 'Window 6', 7: 'Window 7', 8: 'Window 8',
   9: 'Window 9', 10: 'Window 10', 11: 'Window 11',
+}
+
+// ── Simple in-memory cache ──────────────────────────────────────────────────
+const cache = new Map<string, { data: Service[]; timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+function getCached(key: string) {
+  const entry = cache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    cache.delete(key)
+    return null
+  }
+  return entry.data
+}
+
+function setCache(key: string, data: Service[]) {
+  cache.set(key, { data, timestamp: Date.now() })
+}
+
+// ── Skeleton card for loading state ──────────────────────────────────────────
+function SkeletonServiceCard() {
+  return (
+    <div className="animate-pulse bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="h-10 w-10 rounded-lg bg-gray-200 dark:bg-gray-700" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700" />
+          <div className="h-3 w-1/3 rounded bg-gray-200 dark:bg-gray-700" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-3 w-full rounded bg-gray-200 dark:bg-gray-700" />
+        <div className="h-3 w-5/6 rounded bg-gray-200 dark:bg-gray-700" />
+      </div>
+      <div className="mt-4 flex gap-2">
+        <div className="h-8 w-20 rounded-lg bg-gray-200 dark:bg-gray-700" />
+        <div className="h-8 w-20 rounded-lg bg-gray-200 dark:bg-gray-700" />
+      </div>
+    </div>
+  )
+}
+
+function LoadingServiceGrid() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <SkeletonServiceCard key={i} />
+      ))}
+    </div>
+  )
 }
 
 export default function FoddaaServicesPage() {
@@ -65,10 +116,22 @@ export default function FoddaaServicesPage() {
   useEffect(() => {
     if (!windowId) return
     document.title = `${windowLabel} | MESOB Sululta`
+
+    const cacheKey = `window-services-${windowId}`
+    const cached = getCached(cacheKey)
+    if (cached) {
+      setServices(cached)
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     setError(null)
     getWindowServices(windowId)
-      .then(setServices)
+      .then(data => {
+        setServices(data)
+        setCache(cacheKey, data)
+      })
       .catch(() => setError('error'))
       .finally(() => setLoading(false))
   }, [windowId, language])
@@ -84,11 +147,8 @@ export default function FoddaaServicesPage() {
         <AnimatedHeading as="h2" className="mb-2 mt-4">{windowLabel}</AnimatedHeading>
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-8">{subtitle}</p>
 
-        {loading && (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-green" aria-label={t.common.loading} />
-          </div>
-        )}
+        {/* Skeleton grid while loading */}
+        {loading && <LoadingServiceGrid />}
 
         {error && (
           <div className="flex flex-col items-center gap-4 py-16 text-center">

@@ -392,9 +392,23 @@ export default function Hero() {
                 transition={{ delay: 0.1, duration: 0.4 }}
                 className="mb-6 flex items-center justify-center gap-6"
               >
-                <img src="/hero-icon.jpg" alt="" width={64} height={64} className="object-contain" draggable={false} />
+                <img
+                  src="/hero-icon-left.jpeg"
+                  alt=""
+                  width={64}
+                  height={64}
+                  className="rounded-full object-cover border-2 border-white shadow-lg"
+                  draggable={false}
+                />
                 <MesobLogo size={64} />
-                <img src="/hero-icon.jpg" alt="" width={64} height={64} className="object-contain" draggable={false} />
+                <img
+                  src="/hero-icon.jpg"
+                  alt=""
+                  width={64}
+                  height={64}
+                  className="rounded-full object-cover border-2 border-white shadow-lg"
+                  draggable={false}
+                />
               </motion.div>
 
               {/* Headline */}

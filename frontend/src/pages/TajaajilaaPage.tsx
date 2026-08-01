@@ -1,11 +1,58 @@
 import { useEffect, useState } from 'react'
-import { Loader2, AlertCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { AlertCircle } from 'lucide-react'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import OfficeCard from '@/components/tajaajila/OfficeCard'
 import { CardGrid, CardItem } from '@/components/tajaajila/CardGrid'
 import { getOrganizations, type Organization } from '@/api/tajaajila'
 import { useLanguage } from '@/contexts/LanguageContext'
+
+// ── Simple in-memory cache ──────────────────────────────────────────────────
+const cache = new Map<string, { data: Organization[]; timestamp: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+function getCached(key: string) {
+  const entry = cache.get(key)
+  if (!entry) return null
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    cache.delete(key)
+    return null
+  }
+  return entry.data
+}
+
+function setCache(key: string, data: Organization[]) {
+  cache.set(key, { data, timestamp: Date.now() })
+}
+
+// ── Skeleton card for loading state ──────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className="animate-pulse bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5">
+      <div className="flex items-center gap-4">
+        <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-700" />
+          <div className="h-3 w-1/2 rounded bg-gray-200 dark:bg-gray-700" />
+        </div>
+      </div>
+      <div className="mt-4 space-y-2">
+        <div className="h-3 w-full rounded bg-gray-200 dark:bg-gray-700" />
+        <div className="h-3 w-5/6 rounded bg-gray-200 dark:bg-gray-700" />
+      </div>
+      <div className="mt-4 h-9 w-28 rounded-lg bg-gray-200 dark:bg-gray-700" />
+    </div>
+  )
+}
+
+function LoadingGrid() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <SkeletonCard key={i} />
+      ))}
+    </div>
+  )
+}
 
 export default function TajaajilaaPage() {
   const { t, language } = useLanguage()
@@ -23,10 +70,21 @@ export default function TajaajilaaPage() {
   const retryLabel     = language === 'am' ? 'እንደገና ሞክር'   : language === 'or' ? "Irra deebi'ii yaalii"           : 'Try Again'
 
   const load = () => {
+    const cacheKey = 'organizations'
+    const cached = getCached(cacheKey)
+    if (cached) {
+      setOrgs(cached)
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     setError(null)
     getOrganizations()
-      .then(setOrgs)
+      .then(data => {
+        setOrgs(data)
+        setCache(cacheKey, data)
+      })
       .catch(() => setError('error'))
       .finally(() => setLoading(false))
   }
@@ -48,11 +106,8 @@ export default function TajaajilaaPage() {
             {officeHeading}
           </AnimatedHeading>
 
-          {loading && (
-            <div className="flex justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-brand-green" aria-label={loadingLabel} />
-            </div>
-          )}
+          {/* Skeleton grid while loading */}
+          {loading && <LoadingGrid />}
 
           {error && (
             <div className="flex flex-col items-center gap-4 py-16 text-center">
