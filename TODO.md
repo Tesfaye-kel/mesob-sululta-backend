@@ -1,37 +1,20 @@
-# Tasks for News System & Gallery Fix - COMPLETED
+# About Section Dynamic Content - Implementation
 
-## Task 1: Fix Gallery Image Upload Issue
-- [x] Diagnose gallery upload flow
-- [x] Verified: Gallery upload stores to `/uploads/gallery/` and serves via `/uploads` static middleware. The `getImageUrl()` function in GallerySection correctly maps URLs. Upload directory is auto-created. No fix needed.
+## Steps
 
-## Task 2: Replace Announcement with News System
-- [x] Backend News model, controller, routes all exist (already done)
-- [x] Admin News management page (AdminNews.tsx) exists (already done)
-- [x] AnnouncementsSection already used News API
-- [x] AnnouncementsPage already used News API (renamed to NewsPage)
-- [x] Updated translations: `announcements` → `news` in nav for all 3 languages
-- [x] Updated Admin sidebar routing: `/Admin/announcements` → `/Admin/news`
-- [x] Updated Footer link
-- [x] Added new `news` translation block in all languages
+### Phase 1: Add public API endpoint
+- [x] Add `getAbout` to `frontend/src/api/tajaajila.ts`
 
-## Task 3: Built Functional News Management
-- [x] News detail page (NewsDetailPage.tsx) with full content, media, tags
-- [x] News listing page (NewsPage.tsx) with cover images, search, filter
-- [x] Added news routes to App.tsx (`/news` and `/news/:id`)
-- [x] Replaced homepage announcements section with NewsSection
-- [x] Featured news, image previews, video support
+### Phase 2: Make AboutSection.tsx dynamic
+- [x] Replace hardcoded content with API data from `getAbout()`
+- [x] Preserve ALL existing UI, styling, animations, layout, structure
+- [x] Add manager photo display (circular avatar with fallback)
+- [x] Handle loading/error states
 
-## Task 4: Frontend News Section
-- [x] Created modern NewsSection.tsx for homepage
-- [x] NewsCard style component with image/video preview
-- [x] Responsive grid layout
-- [x] Featured news hero banner
-- [x] Date display, category badges
-- [x] Media gallery in detail page
+### Phase 3: Make AdminAbout.tsx more manageable
+- [x] Add collapsible/accordion sections
+- [x] Each section (Main Content, Story, Values, Stats, Section Titles, Manager Message) is collapsible
+- [x] Default to first section open, others collapsed
 
-## Task 5: Backend & Cleanup
-- [x] Admin dashboard now counts News in stats
-- [x] Updated frontend API types for news count
-- [x] Updated SearchModal to point to /news
-- [x] Old Announcement admin page left intact (not imported)
-- [x] No broken links - verified all routes
+### Phase 4: Seed data
+- [x] Already complete - no changes needed
