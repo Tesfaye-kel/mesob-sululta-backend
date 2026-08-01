@@ -14,6 +14,7 @@ const testimonialRoutes = require('./testimonialRoutes');
 const galleryRoutes = require('./galleryRoutes');
 const contactMessageRoutes = require('./contactMessageRoutes');
 const adminRoutes = require('./adminRoutes');
+const organizationContentRoutes = require('./organizationContentRoutes');
 
 const router = express.Router();
 
@@ -31,5 +32,6 @@ router.use('/testimonials', testimonialRoutes);
 router.use('/gallery', galleryRoutes);
 router.use('/contact-messages', contactMessageRoutes);
 router.use('/admin', adminRoutes);
+router.use('/organization-content', organizationContentRoutes);
 
 module.exports = router;

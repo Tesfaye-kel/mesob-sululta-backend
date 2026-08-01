@@ -76,30 +76,18 @@ const seedAbout = async () => {
 
   await About.create({
     mission: {
-      or: 'Hawaasaaf tajaajila mootummaa qulqulluu, saffisaa fi walqixa ta\'e kennuudhaan misooma qabeenya namaa guddisuu.',
-      en: 'To deliver equitable, efficient, and quality public services that advance human resource development.',
-      am: 'እኩል፣ ቀልጣፋ እና ጥራት ያለው የመንግስት አገልግሎት በመስጠት የሰው ሀብት ልማትን ማሳደግ።',
+      en: 'To provide fast, transparent, and accessible government services to all citizens of Ethiopia.',
+      am: 'ለኢትዮጵያ ሁሉም ዜጎች ፈጣን፣ ግልጽ እና ቀላሉ ለማግኘት የሚቻሉ አገልግሎቶችን ማቅረብ።',
+      or: 'Lammiilee hunda tajaajila saffisaa, ifaa fi dhaqqabamaa kennuu.',
     },
     vision: {
-      or: 'Wiirtuu Misooma Qabeenya Namaa Oromiyaa kan teknooloojii irratti hundaa\'e fi hawaasni itti amanu ta\'uu.',
-      en: 'To become a trusted, technology-driven Oromia Human Resource Development Center.',
-      am: 'በቴክኖሎጂ ላይ የተመሰረተ እና ማህበረሰቡ የሚያምንበት የኦሮሚያ የሰው ሀብት ልማት ማዕከል መሆን።',
+      en: "To become Africa's model one-stop government service center empowering citizens.",
+      am: 'የዜጎችን አቅም የሚፈቱ የአፍሪካ ሞዴል አንድ-ቦታ አገልግሎት ማዕከል ማድረግ።',
+      or: "Giddu-gala tajaajila bakka tokkotti mudelli Afrikaa ta'uu.",
     },
-    objectives: {
-      or: 'Tajaajila foddaa tokkoffaa cimsuu, tajaajila dijitaalaa babal\'isuu, fi hojjettoota leenjisuu.',
-      en: 'Strengthen one-stop services, expand digital delivery, and build staff capacity.',
-      am: 'አንድ ማዕከል አገልግሎትን ማጠናከር፣ ዲጂታል አገልግሎትን ማስፋፋት እና የሰራተኞችን ችሎታ ማሳደግ።',
-    },
-    branchIntroduction: {
-      or: 'Damee Sulultaa Wiirtuu Misooma Qabeenya Namaa Oromiyaa hawaasa naannoo keessatti tajaajila mootummaa walitti qabuu fi saffisiisuuf hojjeta.',
-      en: 'The Sululta Branch of Oromia HRDC coordinates and streamlines public services for the local community.',
-      am: 'የኦሮሚያ የሰው ሀብት ልማት ማዕከል ሱሉልታ ቅርንጫፍ ለአካባቢው ማህበረሰብ የመንግስት አገልግሎቶችን ያስተባብራል እና ያፋጥናል።',
-    },
-    history: {
-      or: 'Dameen kun tajaajila mootummaa naannoo tokkotti walitti qabuuf ijaaramee, amma immoo tajaajila foddaa adda addaa kennuudhaan hojjeta.',
-      en: 'Established to centralize local government services, the branch now operates multiple service windows.',
-      am: 'የአካባቢው የመንግስት አገልግሎቶችን ለማዕከላዊነት የተመሠረተ ቅርንጫፍ ነው፣ አሁን በብዙ የአገልግሎት መስኮቶች ያገለግላል።',
-    },
+    objectives: { en: '', am: '', or: '' },
+    branchIntroduction: { en: '', am: '', or: '' },
+    history: { en: '', am: '', or: '' },
     // Seed story paragraphs from frontend AboutSection
     story: [
       {
@@ -141,13 +129,100 @@ const seedAbout = async () => {
       or: 'Hooggana Damee, MESOB Sululta',
     },
     managerMessage: {
-      en: 'At MESOB Sululta, we are committed to transforming public service delivery through innovation, transparency, and a citizen-first approach. Our team works tirelessly to ensure every visitor receives efficient, respectful, and timely service.',
-      am: 'በMESOB ሱሉልታ፣ የህዝብ አገልግሎት አሰጣጥን በፈጠራ፣ ግልጽነት እና ዜጎችን ቅድሚያ በሚሰጥ አቀራረብ ለመለወጥ ቆርጠን ተነስተናል።',
-      or: 'MESOB Sululta keessatti, tajaajila ummataa kennuu haaroomsaa, iftoomina fi lammiilee dursa kennuun jijjiirachuuf waadaa galleerra. Gareen keenya daaw\'ataan hundi tajaajila saffisaa, kabajaa fi yeroo isaaniif malu akka argatuuf dadhabbii hin qabne hojjeta.',
+      en: "Our mission at MESOB Sululta Branch is not just to process documents — it is to restore citizens' trust in government service delivery.",
+      am: 'በ MESOB ሱሉልታ ቅርንጫፍ ያለን ዓላማ ሰነዶችን ማስኬድ ብቻ አይደለም — ዜጎች በአገልግሎት አሰጣጥ ላይ ያላቸውን እምነት ወደ ነበረበት መመለስ ነው።',
+      or: 'Kaayyoon keenya Damee Sululta MESOB keessatti galmee qofaa hojjechuu miti — amanamummaa lammiilee tajaajila mootummaaf qaban deebisuudha.',
+    },
+    managerPhoto: '',
+    storyBadge: { en: 'History', am: 'ታሪክ', or: 'Seenaa' },
+    storyTitle: { en: 'Our Story', am: 'ታሪካችን', or: 'Seenaa Keenya' },
+    missionTitle: { en: 'Mission', am: 'ተልዕኮ', or: 'Ergama' },
+    visionTitle: { en: 'Vision', am: 'ራዕይ', or: "Mul'ata" },
+    valuesTitle: { en: 'Core Values', am: 'መሠረታዊ እሴቶች', or: 'Gatiileen Ijoo' },
+    valuesSubtitle: {
+      en: 'The principles that guide everything we do',
+      am: 'እያንዳንዱ ሥራ የሚመራበት መርህ',
+      or: 'Gatiileen hojii keenya hundaa kan qajeelchu',
+    },
+    managerMessageTitle: {
+      en: 'Message from Branch Manager',
+      am: 'የቅርንጫፍ ሥራ አስኪያጅ መልዕክት',
+      or: 'Ergaa Hooggansa Damee',
     },
   });
 
   console.log('Seed completed: about content inserted.');
+};
+
+// Backfills any About document that predates the new fields so the
+// frontend always receives complete data (runs on every server boot).
+const ensureAboutDefaults = async () => {
+  const DEFAULT = {
+    managerPhoto: '',
+    storyBadge: { en: 'History', am: 'ታሪክ', or: 'Seenaa' },
+    storyTitle: { en: 'Our Story', am: 'ታሪካችን', or: 'Seenaa Keenya' },
+    missionTitle: { en: 'Mission', am: 'ተልዕኮ', or: 'Ergama' },
+    visionTitle: { en: 'Vision', am: 'ራዕይ', or: "Mul'ata" },
+    valuesTitle: { en: 'Core Values', am: 'መሠረታዊ እሴቶች', or: 'Gatiileen Ijoo' },
+    valuesSubtitle: {
+      en: 'The principles that guide everything we do',
+      am: 'እያንዳንዱ ሥራ የሚመራበት መርህ',
+      or: 'Gatiileen hojii keenya hundaa kan qajeelchu',
+    },
+    managerMessageTitle: {
+      en: 'Message from Branch Manager',
+      am: 'የቅርንጫፍ ሥራ አስኪያጅ መልዕክት',
+      or: 'Ergaa Hooggansa Damee',
+    },
+  };
+
+  const abouts = await About.find();
+  let updated = 0;
+  for (const about of abouts) {
+    let changed = false;
+    if (about.managerPhoto === undefined) {
+      about.managerPhoto = DEFAULT.managerPhoto;
+      changed = true;
+    }
+    for (const key of Object.keys(DEFAULT)) {
+      if (key === 'managerPhoto') continue;
+      const value = DEFAULT[key];
+      const current = about[key];
+      const needsFill = !current ||
+        !current.en || !current.am || !current.or ||
+        (typeof current.en === 'string' && current.en === '' && value.en);
+      if (needsFill) {
+        about[key] = value;
+        changed = true;
+      }
+    }
+    // Backfill colors on values/stats sub-documents
+    const valueColors = ['', 'text-red-600', 'text-brand-gold', 'text-brand-blue', 'text-brand-green', 'text-purple-600', 'text-teal-600'];
+    if (about.values && about.values.length) {
+      about.values.forEach((v, idx) => {
+        if (!v.color) {
+          v.color = valueColors[(idx % (valueColors.length - 1)) + 1];
+          changed = true;
+        }
+      });
+    }
+    const statColors = ['text-brand-green', 'text-brand-blue', 'text-brand-gold'];
+    if (about.stats && about.stats.length) {
+      about.stats.forEach((s, idx) => {
+        if (!s.color) {
+          s.color = statColors[idx % statColors.length];
+          changed = true;
+        }
+      });
+    }
+    if (changed) {
+      await about.save();
+      updated += 1;
+    }
+  }
+  if (updated > 0) {
+    console.log(`Backfill completed: ${updated} About document(s) updated with new fields.`);
+  }
 };
 
 const seedContact = async () => {
@@ -465,14 +540,67 @@ const seedWindowsFromExcel = async () => {
   }
 };
 
+const seedOrganizationContent = async () => {
+  const OrganizationContent = require('./models/OrganizationContent');
+  const existing = await OrganizationContent.countDocuments();
+  if (existing > 0) return;
+
+  await OrganizationContent.create({
+    leadership: [
+      {
+        name: 'Ato Abebe Girma',
+        role: { en: 'Branch Manager', am: 'የቅርንጫፍ ሥራ አስኪያጅ', or: 'Hooggana Damee' },
+        avatar: 'A',
+        color: 'bg-brand-green',
+        order: 1,
+      },
+      {
+        name: 'W/ro Tigist Haile',
+        role: { en: 'Deputy Manager', am: 'ምክትል ሥራ አስኪያጅ', or: 'Itti Aanaa Hooggana' },
+        avatar: 'T',
+        color: 'bg-brand-blue',
+        order: 2,
+      },
+      {
+        name: 'Ato Girma Bekele',
+        role: { en: 'Head of Administration', am: 'የአስተዳደር ኃላፊ', or: 'Hogganaa Bulchiinsaa' },
+        avatar: 'G',
+        color: 'bg-brand-gold',
+        order: 3,
+      },
+      {
+        name: 'W/ro Selamawit Alemu',
+        role: { en: 'Head of Finance', am: 'የፋይናንስ ኃላፊ', or: 'Hogganaa Maallaqaa' },
+        avatar: 'S',
+        color: 'bg-purple-600',
+        order: 4,
+      },
+    ],
+    futureExpansion: {
+      en: 'MESOB Sululta Branch is expanding to include additional departments by 2026.',
+      am: 'MESOB ሱሉልታ ቅርንጫፍ እስከ 2026 ዓ.ም. ተጨማሪ ክፍሎችን ለማካተት እየሰፋ ነው።',
+      or: "Dameen Sululta MESOB kutaalee dabalataa 2026 keessa dabaluuf babal'achaa jira.",
+    },
+    hierarchyTitle: {
+      en: 'Organizational Hierarchy',
+      am: 'የድርጅት ተዋረድ',
+      or: 'Tartiiba Dhaabbata',
+    },
+  });
+
+  console.log('Seed completed: organization content inserted.');
+};
+
 const seedSiteContent = async () => {
   await seedAbout();
+  await ensureAboutDefaults();
   await seedContact();
   await seedAnnouncements();
   await seedNews();
   await seedGallery();
   await seedFAQs();
+  await seedOrganizationContent();
   await seedWindowsFromExcel();
 };
 
-module.exports = { seedAbout, seedContact, seedAnnouncements, seedNews, seedGallery, seedFAQs, seedWindowsFromExcel, seedSiteContent };
+module.exports = { seedAbout, ensureAboutDefaults, seedContact, seedAnnouncements, seedNews, seedGallery, seedFAQs, seedOrganizationContent, seedWindowsFromExcel, seedSiteContent };

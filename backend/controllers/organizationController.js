@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
 const Organization = require('../models/Organization');
 const Service = require('../models/Service');
+const Window = require('../models/Window');
 
 // POST /api/organizations
 const createOrganization = async (req, res, next) => {
@@ -27,17 +29,27 @@ const getAllOrganizations = async (req, res, next) => {
       ];
     }
 
-    const organizations = await Organization.find(filter).sort({ createdAt: -1 });
+    // Use aggregation to avoid N+1 query problem
+    const organizations = await Organization.aggregate([
+      { $match: filter },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: 'services',
+          localField: '_id',
+          foreignField: 'organization',
+          as: 'services',
+        },
+      },
+      {
+        $addFields: {
+          serviceCount: { $size: '$services' },
+        },
+      },
+      { $project: { services: 0, __v: 0 } },
+    ]);
 
-    // Attach serviceCount to each org
-    const orgsWithCount = await Promise.all(
-      organizations.map(async (org) => {
-        const serviceCount = await Service.countDocuments({ organization: org._id });
-        return { ...org.toObject(), serviceCount };
-      })
-    );
-
-    return res.json(orgsWithCount);
+    return res.json(organizations);
   } catch (err) {
     next(err);
   }
@@ -100,6 +112,69 @@ const getServicesByOrganization = async (req, res, next) => {
   }
 };
 
+// GET /api/organizations/:id/with-windows
+// Combined endpoint: returns org + windows grouped by floor in a single request
+const getOrganizationWithWindows = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    const [org, windows] = await Promise.all([
+      Organization.findById(id),
+      Window.aggregate([
+        { $match: { organization: new mongoose.Types.ObjectId(id) } },
+        { $sort: { floor: 1, number: 1 } },
+        {
+          $lookup: {
+            from: 'services',
+            localField: '_id',
+            foreignField: 'window',
+            as: 'services',
+          },
+        },
+        {
+          $addFields: {
+            serviceCount: { $size: '$services' },
+          },
+        },
+        {
+          $lookup: {
+            from: 'organizations',
+            localField: 'organization',
+            foreignField: '_id',
+            as: 'orgInfo',
+          },
+        },
+        {
+          $addFields: {
+            organization: { $arrayElemAt: ['$orgInfo', 0] },
+          },
+        },
+        { $project: { services: 0, orgInfo: 0, 'organization.createdAt': 0, 'organization.updatedAt': 0, 'organization.__v': 0 } },
+      ]),
+    ]);
+
+    if (!org) return res.status(404).json({ message: 'Organization not found' });
+
+    // Group windows by floor
+    const grouped = new Map();
+    for (const win of windows) {
+      const floor = win.floor;
+      if (!grouped.has(floor)) {
+        grouped.set(floor, []);
+      }
+      grouped.get(floor).push(win);
+    }
+
+    const windowGroups = Array.from(grouped.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([floor, wins]) => ({ floor, windows: wins }));
+
+    return res.json({ organization: org, windowGroups });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createOrganization,
   getAllOrganizations,
@@ -107,5 +182,6 @@ module.exports = {
   updateOrganization,
   deleteOrganization,
   getServicesByOrganization,
+  getOrganizationWithWindows,
 };
 

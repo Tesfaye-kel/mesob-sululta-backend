@@ -71,21 +71,42 @@ const getWindowsByOrganization = async (req, res, next) => {
   try {
     const { orgId } = req.params;
     
-    const windows = await Window.find({ organization: orgId })
-      .populate('organization', 'name logoUrl')
-      .sort({ floor: 1, number: 1 });
-
-    // Attach service count to each window
-    const windowsWithCount = await Promise.all(
-      windows.map(async (win) => {
-        const serviceCount = await Service.countDocuments({ window: win._id });
-        return { ...win.toObject(), serviceCount };
-      })
-    );
+    // Use aggregation to avoid N+1 query problem
+    const windows = await Window.aggregate([
+      { $match: { organization: new mongoose.Types.ObjectId(orgId) } },
+      { $sort: { floor: 1, number: 1 } },
+      {
+        $lookup: {
+          from: 'services',
+          localField: '_id',
+          foreignField: 'window',
+          as: 'services',
+        },
+      },
+      {
+        $addFields: {
+          serviceCount: { $size: '$services' },
+        },
+      },
+      {
+        $lookup: {
+          from: 'organizations',
+          localField: 'organization',
+          foreignField: '_id',
+          as: 'orgInfo',
+        },
+      },
+      {
+        $addFields: {
+          organization: { $arrayElemAt: ['$orgInfo', 0] },
+        },
+      },
+      { $project: { services: 0, orgInfo: 0, 'organization.createdAt': 0, 'organization.updatedAt': 0, 'organization.__v': 0 } },
+    ]);
 
     // Group by floor
     const grouped = new Map();
-    for (const win of windowsWithCount) {
+    for (const win of windows) {
       const floor = win.floor;
       if (!grouped.has(floor)) {
         grouped.set(floor, []);
