@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const Announcement = require('../models/Announcement');
 const News = require('../models/News');
 const FAQ = require('../models/FAQ');
 const Testimonial = require('../models/Testimonial');
@@ -20,7 +19,6 @@ const getDashboardStats = async (req, res, next) => {
       orgCount,
       serviceCount,
       windowCount,
-      announcementCount,
       newsCount,
       faqCount,
       testimonialCount,
@@ -30,14 +28,13 @@ const getDashboardStats = async (req, res, next) => {
       Organization.countDocuments(),
       Service.countDocuments(),
       Window.countDocuments(),
-      Announcement.countDocuments(),
       News.countDocuments(),
       FAQ.countDocuments(),
       Testimonial.countDocuments(),
       Contact.countDocuments(),
     ]);
 
-    const recentAnnouncements = await Announcement.find()
+    const recentNews = await News.find()
       .sort({ createdAt: -1 })
       .limit(5)
       .select('title category publishedAt isFeatured');
@@ -59,15 +56,14 @@ const getDashboardStats = async (req, res, next) => {
         organizations: orgCount,
         services: serviceCount,
         windows: windowCount,
-        announcements: announcementCount,
         news: newsCount,
         faqs: faqCount,
         testimonials: testimonialCount,
         contactSubmissions: contactCount,
-      total: userCount + orgCount + serviceCount + windowCount + announcementCount + newsCount + faqCount + testimonialCount,
+      total: userCount + orgCount + serviceCount + windowCount + newsCount + faqCount + testimonialCount,
       },
       recent: {
-        announcements: recentAnnouncements,
+        news: recentNews,
         services: recentServices,
         organizations: recentOrgs,
       },

@@ -104,8 +104,8 @@ export default function NewsDetailPage() {
           {/* Header */}
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-3 flex-wrap">
-              <Badge variant={categoryVariant[item.category] || 'default'} size="sm">
-                {(t.announcements.categories as Record<string, string>)[item.category] || item.category}
+<Badge variant={categoryVariant[item.category] || 'default'} size="sm">
+                {(t.news.categories as Record<string, string>)[item.category] || item.category}
               </Badge>
               {item.isFeatured && (
                 <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-green/10 text-brand-green">

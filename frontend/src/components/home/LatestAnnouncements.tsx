@@ -28,12 +28,12 @@ export default function LatestAnnouncements() {
             <span className="gov-badge bg-brand-gold/10 text-brand-gold dark:bg-brand-gold/20 mb-3">
               Latest Updates
             </span>
-            <h2 className="section-title">{t.announcements.title}</h2>
-            <p className="section-subtitle">{t.announcements.subtitle}</p>
+            <h2 className="section-title">{t.news.title}</h2>
+            <p className="section-subtitle">{t.news.subtitle}</p>
           </div>
           <Link to="/announcements">
             <Button variant="secondary" rightIcon={<ArrowRight className="h-4 w-4" />}>
-              {t.announcements.viewAll}
+              {t.news.viewAll}
             </Button>
           </Link>
         </AnimatedSection>
@@ -51,7 +51,7 @@ export default function LatestAnnouncements() {
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <Badge variant={categoryVariant[ann.category] || 'default'} size="sm">
-                      {t.announcements.categories[ann.category]}
+                      {(t.news.categories as Record<string, string>)[ann.category] || ann.category}
                     </Badge>
                     {ann.featured && (
                       <Badge variant="success" size="sm">Featured</Badge>
@@ -76,7 +76,7 @@ export default function LatestAnnouncements() {
                       className="flex items-center gap-1 text-sm font-medium text-brand-green dark:text-brand-green-light hover:gap-2 transition-all duration-200"
                       aria-label={`Read more about ${title}`}
                     >
-                      {t.announcements.readMore}
+                      {t.news.readMore}
                       <ChevronRight className="h-4 w-4" aria-hidden />
                     </Link>
                   </div>

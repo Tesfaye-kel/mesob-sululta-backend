@@ -41,7 +41,7 @@ export default function AdminNews() {
     setError('')
     const params = search ? `search=${encodeURIComponent(search)}` : ''
     getNewsList(params)
-      .then(setItems)
+      .then(res => setItems(res.news))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }

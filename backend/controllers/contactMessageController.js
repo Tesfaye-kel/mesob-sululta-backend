@@ -1,4 +1,5 @@
 const ContactMessage = require('../models/ContactMessage');
+const { sendNotifications } = require('../services/notificationService');
 
 const getContactMessages = async (req, res, next) => {
   try {
@@ -29,6 +30,19 @@ const getContactMessage = async (req, res, next) => {
 const createContactMessage = async (req, res, next) => {
   try {
     const message = await ContactMessage.create(req.body);
+
+    // Send email and SMS notifications to the admin
+    // (fire-and-forget - don't block the response if notifications fail)
+    sendNotifications({
+      name: message.name,
+      email: message.email,
+      subject: message.subject,
+      message: message.message,
+      type: message.type,
+    }).catch((err) => {
+      console.error('Notification sending failed:', err.message);
+    });
+
     res.status(201).json(message);
   } catch (err) {
     next(err);

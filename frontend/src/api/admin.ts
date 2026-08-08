@@ -50,12 +50,11 @@ export const isAuthenticated = () => !!getToken()
 
 // ─── Dashboard ──────────────────────────────────────────────────
 export interface DashboardStats {
-  stats: {
+stats: {
     users: number
     organizations: number
     services: number
     windows: number
-    announcements: number
     news: number
     faqs: number
     testimonials: number
@@ -63,7 +62,7 @@ export interface DashboardStats {
     total: number
   }
   recent: {
-    announcements: Array<{ _id: string; title: { en: string; am: string; or: string }; category: string; publishedAt: string; isFeatured: boolean }>
+    news: Array<{ _id: string; title: { en: string; am: string; or: string }; category: string; publishedAt: string; isFeatured: boolean }>
     services: Array<{ _id: string; name: { en: string; am: string; or: string }; organization: { name: { en: string } }; createdAt: string }>
     organizations: Array<{ _id: string; name: { en: string; am: string; or: string }; createdAt: string }>
   }
@@ -91,36 +90,24 @@ export const changePassword = (data: { currentPassword: string; newPassword: str
   body: JSON.stringify(data),
 })
 
-// ─── News / Announcements (both kept for backwards compat) ──────
+// ─── MultiLang ──────────────────────────────────────────────────
 export interface MultiLang {
   en: string
   am: string
   or: string
 }
 
-export interface Announcement {
-  _id: string
-  title: MultiLang
-  content: MultiLang
-  category: string
-  isFeatured: boolean
-  publishedAt: string
-  imageUrl: string
-  createdAt: string
-  updatedAt: string
-}
-
-export const getAnnouncements = (params?: string) => authFetch<Announcement[]>(`/announcements${params ? `?${params}` : ''}`)
-export const getAnnouncement = (id: string) => authFetch<Announcement>(`/announcements/${id}`)
-export const createAnnouncement = (data: Partial<Announcement>) => authFetch<Announcement>('/announcements', { method: 'POST', body: JSON.stringify(data) })
-export const updateAnnouncement = (id: string, data: Partial<Announcement>) => authFetch<Announcement>(`/announcements/${id}`, { method: 'PUT', body: JSON.stringify(data) })
-export const deleteAnnouncement = (id: string) => authFetch<{ message: string }>(`/announcements/${id}`, { method: 'DELETE' })
-
-// ─── News (replacement for Announcements) ────────────────────────
+// ─── News ────────────────────────────────────────
 export interface NewsMedia {
-  type: 'image' | 'video' | 'audio' | 'document' | 'other'
+  type: 'image' | 'video' | 'audio' | 'document' | 'other' | 'youtube'
   url: string
   caption: MultiLang
+  altText?: MultiLang
+  description?: MultiLang
+  displayOrder?: number
+  fileSize?: number
+  mimeType?: string
+  isCover?: boolean
 }
 
 export interface NewsItem {
@@ -129,23 +116,55 @@ export interface NewsItem {
   content: MultiLang
   excerpt: MultiLang
   category: string
+  author: MultiLang
   isFeatured: boolean
   isPublished: boolean
   publishedAt: string
   coverImageUrl: string
+  externalUrl: string
   media: NewsMedia[]
   tags: string[]
   createdAt: string
   updatedAt: string
 }
 
-export const getNewsList = (params?: string) => authFetch<NewsItem[]>(`/news${params ? `?${params}` : ''}`)
+export interface NewsListResponse {
+  news: NewsItem[]
+  total: number
+  page: number
+  pages: number
+}
+
+export const getNewsList = (params?: string) => authFetch<NewsListResponse>(`/news${params ? `?${params}` : ''}`)
 export const getNewsItem = (id: string) => authFetch<NewsItem>(`/news/${id}`)
+export const getRelatedNews = (id: string) => authFetch<NewsItem[]>(`/news/related/${id}`)
+export const getNewsCategories = () => authFetch<string[]>('/news/categories')
+export const getNewsTags = () => authFetch<string[]>('/news/tags')
 export const createNews = (data: Partial<NewsItem>) => authFetch<NewsItem>('/news', { method: 'POST', body: JSON.stringify(data) })
 export const updateNews = (id: string, data: Partial<NewsItem>) => authFetch<NewsItem>(`/news/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteNews = (id: string) => authFetch<{ message: string }>(`/news/${id}`, { method: 'DELETE' })
 export const getLatestNews = (since?: string) => authFetch<{ count: number; latest: { title: MultiLang; publishedAt: string } | null }>(`/news/latest${since ? `?since=${since}` : ''}`)
-// POST /news/upload handled by direct multipart upload in component
+export const deleteNewsMedia = (filename: string) => authFetch<{ message: string }>(`/news/media/${filename}`, { method: 'DELETE' })
+// POST /news/upload and /news/upload-multiple handled by direct multipart upload in component
+
+// ─── Social Media ────────────────────────────────────────
+export interface SocialMediaPlatform {
+  _id: string
+  platform: string
+  icon: string
+  url: string
+  displayOrder: number
+  isActive: boolean
+  openInNewTab: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export const getSocialMediaList = () => authFetch<SocialMediaPlatform[]>('/social-media/all')
+export const getSocialMedia = (id: string) => authFetch<SocialMediaPlatform>(`/social-media/${id}`)
+export const createSocialMedia = (data: Partial<SocialMediaPlatform>) => authFetch<SocialMediaPlatform>('/social-media', { method: 'POST', body: JSON.stringify(data) })
+export const updateSocialMedia = (id: string, data: Partial<SocialMediaPlatform>) => authFetch<SocialMediaPlatform>(`/social-media/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteSocialMedia = (id: string) => authFetch<{ message: string }>(`/social-media/${id}`, { method: 'DELETE' })
 
 // ─── FAQs ───────────────────────────────────────────────────────
 export interface FAQ {

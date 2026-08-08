@@ -8,10 +8,15 @@ const { requireAdmin } = require('../middleware/roleMiddleware');
 const {
   getNewsList,
   getNewsItem,
+  getRelatedNews,
+  getCategories,
+  getTags,
   createNews,
   updateNews,
   deleteNews,
   uploadNewsMedia,
+  uploadMultipleMedia,
+  deleteMedia,
   getLatestNews,
 } = require('../controllers/newsController');
 
@@ -33,32 +38,39 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB for media
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB for media
   fileFilter: (req, file, cb) => {
     const allowedImages = /jpeg|jpg|png|gif|webp|svg/;
-    const allowedVideos = /mp4|webm|ogg/;
-    const allowedAudio = /mp3|wav|ogg|aac/;
+    const allowedVideos = /mp4|webm|ogg|mov|avi/;
+    const allowedAudio = /mp3|wav|ogg|aac|m4a/;
+    const allowedDocs = /pdf|doc|docx|xls|xlsx|ppt|pptx|txt/;
     const ext = path.extname(file.originalname).toLowerCase();
     if (
       allowedImages.test(ext) ||
       allowedVideos.test(ext) ||
-      allowedAudio.test(ext)
+      allowedAudio.test(ext) ||
+      allowedDocs.test(ext)
     ) {
       return cb(null, true);
     }
-    cb(new Error('Only image, video, and audio files are allowed'));
+    cb(new Error('Only image, video, audio, and document files are allowed'));
   },
 });
 
 // Public routes
 router.get('/', getNewsList);
 router.get('/latest', getLatestNews);
+router.get('/categories', getCategories);
+router.get('/tags', getTags);
+router.get('/related/:id', getRelatedNews);
 router.get('/:id', getNewsItem);
 
 // Protected routes (admin only)
 router.post('/', authenticateJWT, requireAdmin, createNews);
 router.post('/upload', authenticateJWT, requireAdmin, upload.single('media'), uploadNewsMedia);
+router.post('/upload-multiple', authenticateJWT, requireAdmin, upload.array('media', 20), uploadMultipleMedia);
 router.put('/:id', authenticateJWT, requireAdmin, updateNews);
 router.delete('/:id', authenticateJWT, requireAdmin, deleteNews);
+router.delete('/media/:filename', authenticateJWT, requireAdmin, deleteMedia);
 
 module.exports = router;

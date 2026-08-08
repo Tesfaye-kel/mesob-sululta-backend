@@ -115,8 +115,8 @@ export default function NewsSection({ compact = false, showHeader = true }: News
           <span className="gov-badge bg-brand-gold/10 text-brand-gold dark:bg-brand-gold/20 mb-3">
             Latest Updates
           </span>
-          <h2 className="section-title text-center">{t.news?.title || t.announcements.title}</h2>
-          <p className="section-subtitle mx-auto text-center">{t.news?.subtitle || t.announcements.subtitle}</p>
+<h2 className="section-title text-center">{t.news.title}</h2>
+          <p className="section-subtitle mx-auto text-center">{t.news.subtitle}</p>
         </AnimatedSection>
       )}
 
@@ -177,8 +177,8 @@ export default function NewsSection({ compact = false, showHeader = true }: News
                 {/* Content */}
                 <div className="p-4">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Badge variant={categoryVariant[news.category] || 'default'} size="sm">
-                      {(t.announcements.categories as Record<string, string>)[news.category] || news.category}
+<Badge variant={categoryVariant[news.category] || 'default'} size="sm">
+                      {(t.news.categories as Record<string, string>)[news.category] || news.category}
                     </Badge>
                     {news.isFeatured && (
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-green/10 text-brand-green">
@@ -194,7 +194,7 @@ export default function NewsSection({ compact = false, showHeader = true }: News
                       {formatDate(news.publishedAt)}
                     </div>
                     <span className="text-xs font-medium text-brand-green dark:text-brand-green-light flex items-center gap-1">
-                      {t.announcements?.readMore || 'Read More'} <ChevronRight className="h-3.5 w-3.5" />
+{t.news.readMore} <ChevronRight className="h-3.5 w-3.5" />
                     </span>
                   </div>
                 </div>
@@ -244,8 +244,8 @@ export default function NewsSection({ compact = false, showHeader = true }: News
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 pt-12">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant={categoryVariant[selectedNews.category] || 'default'} size="sm">
-                        {(t.announcements.categories as Record<string, string>)[selectedNews.category] || selectedNews.category}
+<Badge variant={categoryVariant[selectedNews.category] || 'default'} size="sm">
+                        {(t.news.categories as Record<string, string>)[selectedNews.category] || selectedNews.category}
                       </Badge>
                       {selectedNews.isFeatured && (
                         <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-green/80 text-white">

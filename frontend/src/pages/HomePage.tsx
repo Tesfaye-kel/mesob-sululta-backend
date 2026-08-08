@@ -160,11 +160,11 @@ export default function HomePage() {
         </div>
       </HomeSection>
 
-      {/* News */}
+{/* News */}
       <HomeSection
-        id="announcements"
-        title={t.announcements.title}
-        subtitle={t.announcements.subtitle}
+        id="news"
+        title={t.news.title}
+        subtitle={t.news.subtitle}
         bg="bg-gray-50/50 dark:bg-gray-900/30"
       >
         <div className="section-padding pt-0">

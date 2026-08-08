@@ -5,7 +5,6 @@ const Contact = require('./models/Contact');
 const Organization = require('./models/Organization');
 const Service = require('./models/Service');
 const Window = require('./models/Window');
-const Announcement = require('./models/Announcement');
 const News = require('./models/News');
 const Gallery = require('./models/Gallery');
 const FAQ = require('./models/FAQ');
@@ -88,24 +87,34 @@ const seedAbout = async () => {
     objectives: { en: '', am: '', or: '' },
     branchIntroduction: { en: '', am: '', or: '' },
     history: { en: '', am: '', or: '' },
-    // Seed story paragraphs from frontend AboutSection
+    // Seed story paragraphs — trilingual
     story: [
       {
         paragraph: {
-          en: "MESOB Center was established as part of Ethiopia's digital transformation agenda. The name 'Mesob' refers to the traditional Ethiopian basket — a symbol of unity, sharing, and service.",
-          am: "MESOB ማዕከል የኢትዮጵያ ዲጂታል ትሩፋት አጀንዳ አካል ሆኖ ተቋቋመ። 'ሜሶብ' አሃድነትን፣ አጋርነትን እና አገልግሎትን ያሳያል።",
-          or: "Giddaan MESOB akka kutaa sagantaa jijjiirama dijitaalaa Itoophiyaatti hundaa'e. Maqaan 'Mesob' tokkummaa, qooduu fi tajaajila bakka bu'u.",
+          en: "MESOB Center was established as part of Ethiopia's digital transformation agenda. The name 'Mesob' symbolizes unity, sharing, and service — just as the traditional mesob basket brings families and communities together, this center brings multiple government services under one roof, making them easily accessible to the public.",
+          am: "MESOB ማዕከል የኢትዮጵያ ዲጂታል ትሩፋት አጀንዳ አካል ሆኖ ተቋቋመ። 'ሜሶብ' የሚለው ስም አሃድነት፣ አጋርነት እና አገልግሎትን ያሳያል — ልክ ሜሶቡ ቤተሰብና ማህበረሰብ እንዲሰባሰቡ እንደሚያደርገው፣ ይህ ማዕከልም ብዙ የመንግሥት አገልግሎቶችን ጣሪያ አንድ ያደርጋቸዋል።",
+          or: "Giddaan MESOB akka kutaa sagantaa jijjiirama dijitaalaa Itoophiyaatti hundaa'e. Maqaan 'Mesob' tokkummaa, qooduu fi tajaajila bakka bu'a — akkuma mesobni maatii fi hawaasa walitti fiduuf itti fayyadamu, giddaan kunis tajaajiloota mootummaa adda addaa walitti qabee, salphaatti ummataaf dhiyeessa.",
         },
         order: 1,
       },
       {
         paragraph: {
-          en: "The Sululta Branch brings over 50 federal government services under one roof — making government accessible, efficient, and transparent for every citizen.",
-          am: "ሱሉልታ ቅርንጫፍ ከ50 በላይ የፌዴራሌ አገልግሎቶችን ለሁሉም ዜጋ ቀላሉ፣ ቀልጣፋ እና ግልጽ ማድረግ ጀምሯል።",
-          or: "Dameen Sululta tajaajila federaalaa 50+ ol takka jalatti argamsiisa — mootummaa dhaqqabamaa, saffisaa fi ifaa taasisuu.",
+          en: "The Sululta Branch brings over 50 federal government services under one roof — making government accessible, fast, and transparent for every citizen. Our core goal is to ensure citizens no longer waste time and resources visiting multiple offices to access government services.",
+          am: "ሱሉልታ ቅርንጫፍ ከ50 በላይ የፌዴራሌ አገልግሎቶችን ጣሪያ አንድ ያደርጋቸዋል — መንግሥት ለሁሉም ዜጋ ቀላሉ፣ ቀልጣፋ እና ግልጽ ያደርጋቸዋል። ዋና ዓላማችን ዜጎች ለአገልግሎት ፍለጋ ወደ ብዙ ቢሮዎች ሲሄዱ ጊዜ እና ሀብት እንዳያጠፉ ማረጋገጥ ነው።",
+          or: "Dameen Sululta tajaajila federaalaa 50 ol ta'an takka jalatti argamsiisa — kanaanis mootummaa dhaqqabamaa, saffisaa fi ifa ta'e ummataaf kennuuf hojjeta. Kaayyoon keenya inni guddaan, lammiileen tajaajila mootummaa argachuuf yeroo fi qabeenya baay'ee akka hin balleessine gochuudha.",
         },
         order: 2,
       },
+    ],
+    // Seed highlights — "Waan Nu Addeessu" bullet list
+    highlights: [
+      { text: { en: 'Bring over 50 federal services under one roof', am: 'ከ50 በላይ ፌዴራሌ አገልግሎቶችን አንድ ጣሪያ ስር ማምጣት', or: 'Tajaajila federaalaa 50 ol bakka tokkotti argamsiisuu' }, order: 1 },
+      { text: { en: 'Speed up service delivery through electronic systems', am: 'የኤሌክትሮኒክስ ስርዓትን ተጠቅሞ አገልግሎትን ማፋጠን', or: 'Sirna elektirooniksii fayyadamuun tajaajila saffisiisuu' }, order: 2 },
+      { text: { en: 'Maintain transparency and accountability', am: 'ግልጽነት እና ተጠያቂነት ማቆየት', or: 'Ifa ta\'uu fi itti gaafatamummaa qabaachuu' }, order: 3 },
+      { text: { en: 'Serve citizens in Afaan Oromo, Amharic and English', am: 'ዜጎችን በአፋን ኦሮሞ፣ አማርኛ እና እንግሊዝኛ ማገልገል', or: 'Afaan Oromoo, Amaariffaa fi Ingiliffaan tajaajiluu' }, order: 4 },
+      { text: { en: 'Ensure good governance and public accessibility', am: 'ጥሩ አስተዳደር እና ለህዝብ ተደራሽነት ማረጋገጥ', or: 'Bulchiinsa gaarii fi dhaqqabamummaa uummataaf mirkaneessuu' }, order: 5 },
+      { text: { en: 'Improve service using modern technology', am: 'ዘመናዊ ቴክኖሎጂን ተጠቅሞ አገልግሎትን ማሻሻል', or: 'Teeknooloojii ammayyaa fayyadamuun tajaajila fooyyessuu' }, order: 6 },
+      { text: { en: 'Prioritize respect and service quality above all', am: 'ከሁሉ በላይ ክብርን እና የአገልግሎት ጥራትን ቅድሚያ መስጠት', or: 'Kabajaa fi qulqullina tajaajilaa duraan dursuu' }, order: 7 },
     ],
     // Seed core values from frontend
     values: [
@@ -246,62 +255,6 @@ const seedContact = async () => {
   });
 
   console.log('Seed completed: contact content inserted.');
-};
-
-const seedAnnouncements = async () => {
-  const existing = await Announcement.countDocuments();
-  if (existing > 0) {
-    console.log('Seed skipped: announcements already exist.');
-    return;
-  }
-
-  const announcements = [
-    {
-      title: { en: 'MESOB Sululta Branch Celebrates 2nd Anniversary', am: 'MESOB ሱሉልታ ቅርንጫፍ 2ኛ ዓመት ምስረታ አከበረ', or: 'Dameen MESOB Sululta Guyyaa Dhalootaa 2ffaa Kabaje' },
-      content: { en: 'The MESOB Sululta Branch proudly celebrates its second anniversary, having served over 50,000 citizens with excellence and efficiency. The branch has significantly reduced waiting times and improved service delivery across all departments.', am: 'MESOB ሱሉልታ ቅርንጫፍ ከ50,000 በላይ ዜጎችን በማገልገል 2ኛ ዓመቱን በኩራት አከበረ።', or: 'Dameen MESOB Sululta waggaa 2ffaa isaa lammiilee 50,000 ol tajaajiluun kabaje.' },
-      category: 'news',
-      isFeatured: true,
-      publishedAt: new Date('2024-12-15'),
-    },
-    {
-      title: { en: 'Extended Service Hours During Ethiopian Christmas', am: 'በኢትዮጵያ ገናን ምክንያት የተዘረጋ የአገልግሎት ሰዓት', or: 'Sa\'aatii Tajaajilaa Diriirfame Yeroo Booraa Itoophiyaa' },
-      content: { en: 'Dear Citizens, we are pleased to announce extended working hours from January 7–10 during the Ethiopian Christmas holiday. National ID and Passport services will operate from 8:00 AM to 7:00 PM.', am: 'ውድ ዜጎች፣ በኢትዮጵያ ገና በዓል ምክንያት ከጥር 7–10 የተዘረጋ የሥራ ሰዓት ማወጃችንን እንገልጻለን።', or: 'Lammiilee kabajamoo, sa\'aatii hojii diriirfame Amajjii 7–10 guyyaa boqonnaa Booraa Itoophiyaa beeksisna.' },
-      category: 'notice',
-      isFeatured: true,
-      publishedAt: new Date('2024-12-28'),
-    },
-    {
-      title: { en: 'Digital Literacy Workshop for Elderly Citizens', am: 'ለሽማግሌ ዜጎች ዲጂታል ትምህርት ወርክሾፕ', or: 'Workshopii Barnoota Dijitaalaa Lammiilee Maanguddoodhaaf' },
-      content: { en: 'MESOB Sululta is hosting a free digital literacy workshop for elderly citizens every Saturday morning. Learn how to access government services from home using smartphones and computers.', am: 'MESOB ሱሉልታ ለሽማግሌ ዜጎች በየቅዳሜ ማለዳ ነፃ የዲጂታል ትምህርት ወርክሾፕ ያካሂዳል።', or: 'MESOB Sululta lammiilee maanguddoodhaaf guyyaa Sanbata ganama worshoopii barnoota dijitaalaa bilisaa qopheessiti.' },
-      category: 'event',
-      isFeatured: false,
-      publishedAt: new Date('2025-01-10'),
-    },
-    {
-      title: { en: 'Office Closure – Ethiopian Epiphany (Timkat)', am: 'ጽሕፈት ቤት መዘጋት – ጥምቀት', or: 'Cufamuu Waajjiraa – Timkat' },
-      content: { en: 'Dear Citizens, please note that all MESOB Center offices will be closed on January 19–20, 2025 for the Ethiopian Epiphany (Timkat) public holiday. Normal operations resume on January 21.', am: 'ውድ ዜጎች፣ ሁሉም MESOB ማዕከል ቢሮዎች ጥር 11–12 ለጥምቀት በዓል ዝግ እንደሚሆኑ እንገልጻለን።', or: 'Lammiilee kabajamoo, waajjiraalee MESOB hundi Amajjii 19–20 Timkataaf cufamuu isaanii beeksisna.' },
-      category: 'holiday',
-      isFeatured: false,
-      publishedAt: new Date('2025-01-15'),
-    },
-    {
-      title: { en: 'MESOB Launches New Digital Payment Integration', am: 'MESOB አዲስ ዲጂታል ክፍያ ዝምህርና ጀመረ', or: 'MESOB Walitti Hidhinsa Kaffaltii Dijitaalaa Haaraa Jalqabe' },
-      content: { en: 'MESOB Center proudly announces the launch of comprehensive digital payment integration. Citizens can now pay for all government services through MESOB Mobile App, CBE Birr, and TeleBirr platforms.', am: 'MESOB ማዕከል አጠቃላይ የዲጂታል ክፍያ ውህደት መጀመሩን በኩራት ያስታውቃል።', or: 'Giddaan MESOB walitti hidhinsa kaffaltii dijitaalaa guutuu jalqabu isaa beeksisa.' },
-      category: 'press',
-      isFeatured: true,
-      publishedAt: new Date('2025-01-05'),
-    },
-    {
-      title: { en: 'New Document Requirements for Passport Applications', am: 'ለፓስፖርት ማመልከቻ አዲስ ሰነዶች ማስፈለጊያ', or: 'Gaaffii Paasipoortiif Gaaffii Galmee Haaraa' },
-      content: { en: 'Starting February 1, 2025, all new passport applications must include an updated national ID card issued within the last 5 years. Please ensure your national ID is current before applying.', am: 'ከየካቲት 1, 2025 ጀምሮ ሁሉም አዲስ የፓስፖርት ማመልከቻዎች የተሻሻለ ብሔራዊ መታወቂያ ማካተት አለባቸው።', or: 'Gurraandhala 1, 2025 irraa jalqabee, gaaffii paasipoortii haaraa hundi kaardii ID biyyoolessa haaromsame of keessaa qabaachuu qaba.' },
-      category: 'notice',
-      isFeatured: false,
-      publishedAt: new Date('2025-01-20'),
-    },
-  ];
-
-  await Announcement.insertMany(announcements);
-  console.log(`Seed completed: ${announcements.length} announcements inserted.`);
 };
 
 const seedFAQs = async () => {
@@ -595,7 +548,6 @@ const seedSiteContent = async () => {
   await seedAbout();
   await ensureAboutDefaults();
   await seedContact();
-  await seedAnnouncements();
   await seedNews();
   await seedGallery();
   await seedFAQs();
@@ -603,4 +555,4 @@ const seedSiteContent = async () => {
   await seedWindowsFromExcel();
 };
 
-module.exports = { seedAbout, ensureAboutDefaults, seedContact, seedAnnouncements, seedNews, seedGallery, seedFAQs, seedOrganizationContent, seedWindowsFromExcel, seedSiteContent };
+module.exports = { seedAbout, ensureAboutDefaults, seedContact, seedNews, seedGallery, seedFAQs, seedOrganizationContent, seedWindowsFromExcel, seedSiteContent };

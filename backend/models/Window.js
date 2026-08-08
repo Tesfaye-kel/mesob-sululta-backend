@@ -2,21 +2,28 @@ const mongoose = require('mongoose');
 
 const windowSchema = new mongoose.Schema(
   {
-    // e.g. "Foddaa 1", "Window 1" -- label shown to citizens
-    number: { type: String, required: true, trim: true },
+    // Window number (1, 2, 3...)
+    number: { type: Number, required: true },
 
-    // The floor (1-5) this window belongs to
+    // Bilingual display name
+    name: {
+      en: { type: String, default: '' },
+      am: { type: String, default: '' },
+      or: { type: String, default: '' },
+    },
+
+    // The floor this window belongs to
     floor: {
       type: Number,
       required: true,
+      default: 1,
       min: 1,
-      max: 5,
     },
 
     organization: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Organization',
-      required: true,
+      default: null,
     },
 
     description: {
@@ -28,7 +35,7 @@ const windowSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Ensure unique window name per organization
-windowSchema.index({ organization: 1, number: 1 }, { unique: true });
+// Unique window number per organization (sparse allows multiple nulls)
+windowSchema.index({ organization: 1, number: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Window', windowSchema);

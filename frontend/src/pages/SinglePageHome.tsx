@@ -4,18 +4,17 @@ import { useLanguage } from '@/contexts/LanguageContext'
 // Import all home sections
 import Hero from '@/components/home/Hero'
 import QuickServices from '@/components/home/QuickServices'
-import LatestAnnouncements from '@/components/home/LatestAnnouncements'
 import WhyMesob from '@/components/home/WhyMesob'
 import Testimonials from '@/components/home/Testimonials'
 import Partners from '@/components/home/Partners'
 import OfficeHours from '@/components/home/OfficeHours'
 import HomeFAQPreview from '@/components/home/HomeFAQPreview'
 
-// Import section components from other pages (we'll convert them)
+// Import section components from other pages
 import AboutSection from '@/components/sections/AboutSection'
 import ServicesSection from '@/components/sections/ServicesSection'
 import OrganizationSection from '@/components/sections/OrganizationSection'
-import AnnouncementsSection from '@/components/sections/AnnouncementsSection'
+import NewsSection from '@/components/sections/NewsSection'
 import GallerySection from '@/components/sections/GallerySection'
 import FAQSection from '@/components/sections/FAQSection'
 import ContactSection from '@/components/sections/ContactSection'
@@ -34,7 +33,6 @@ export default function SinglePageHome() {
       <section id="home">
         <Hero />
         <QuickServices />
-        <LatestAnnouncements />
         <WhyMesob />
         <Testimonials />
         <Partners />
@@ -55,9 +53,9 @@ export default function SinglePageHome() {
         <OrganizationSection />
       </section>
 
-      {/* Announcements Section */}
-      <section id="announcements">
-        <AnnouncementsSection />
+      {/* News Section (replaces Announcements) */}
+      <section id="news">
+        <NewsSection />
       </section>
 
       {/* Gallery Section */}
@@ -81,4 +79,3 @@ export default function SinglePageHome() {
     </>
   )
 }
-

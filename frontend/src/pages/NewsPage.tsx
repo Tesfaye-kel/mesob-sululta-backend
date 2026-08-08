@@ -39,7 +39,7 @@ export default function NewsPage() {
   const [page, setPage] = useState(1)
 
   useEffect(() => {
-    document.title = `${t.news?.title || t.announcements.title} | MESOB Center`
+document.title = `${t.news.title} | MESOB Center`
     fetch(`${BASE}/news?published=true`)
       .then(res => res.json())
       .then(data => { if (Array.isArray(data)) setItems(data) })
@@ -67,7 +67,7 @@ export default function NewsPage() {
   return (
     <div className="section-padding">
       <div className="container-gov">
-        <AnimatedHeading as="h1" className="text-center mb-8">{t.news?.title || t.announcements.title}</AnimatedHeading>
+<AnimatedHeading as="h1" className="text-center mb-8">{t.news.title}</AnimatedHeading>
 
         {/* Featured banner */}
         {featured && (
@@ -118,14 +118,14 @@ export default function NewsPage() {
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <div className="flex-1 max-w-xs">
                 <Input
-                  placeholder={`${t.common.search} ${(t.news?.title || t.announcements.title).toLowerCase()}...`}
+placeholder={`${t.common.search} ${t.news.title.toLowerCase()}...`}
                   value={search}
                   onChange={e => { setSearch(e.target.value); setPage(1) }}
                   leftIcon={<Search className="h-4 w-4" />}
                 />
               </div>
               <div className="flex flex-wrap gap-2">
-                {Object.entries(t.announcements.categories).map(([key, label]) => (
+{Object.entries(t.news.categories).map(([key, label]) => (
                   <button
                     key={key}
                     onClick={() => { setCategory(key); setPage(1) }}
@@ -179,7 +179,7 @@ export default function NewsPage() {
                           )}
                           <div className="absolute top-2 left-2">
                             <Badge variant={categoryVariant[ann.category] || 'default'} size="sm">
-                              {(t.announcements.categories as Record<string, string>)[ann.category] || ann.category}
+{(t.news.categories as Record<string, string>)[ann.category] || ann.category}
                             </Badge>
                           </div>
                         </div>
@@ -194,7 +194,7 @@ export default function NewsPage() {
                               {formatDate(ann.publishedAt)}
                             </div>
                             <span className="flex items-center gap-1 text-sm font-medium text-brand-green dark:text-brand-green-light group-hover:gap-2 transition-all duration-200">
-                              {t.announcements.readMore}
+{t.news.readMore}
                               <ChevronRight className="h-4 w-4" aria-hidden />
                             </span>
                           </div>

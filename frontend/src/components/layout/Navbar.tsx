@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   { key: 'about', path: '/about', anchor: 'about' },
   { key: 'services', path: '/tajaajila', anchor: 'services' },
   { key: 'organization', path: '/organization', anchor: 'organization' },
-  { key: 'news', path: '/news', anchor: 'announcements' },
+{ key: 'news', path: '/news', anchor: 'news' },
   { key: 'gallery', path: '/gallery', anchor: 'gallery' },
   { key: 'faq', path: '/faq', anchor: 'faq' },
   { key: 'contact', path: '/contact', anchor: 'contact' },

@@ -1,20 +1,23 @@
-# About Section Dynamic Content - Implementation
+# Fix Black Screen – Remove stale "Announcements" references
 
 ## Steps
 
-### Phase 1: Add public API endpoint
-- [x] Add `getAbout` to `frontend/src/api/tajaajila.ts`
+- [x] Investigate root cause (stale `t.announcements.*` after migration to News)
+- [x] Fix `frontend/src/components/home/Hero.tsx` — replace `t.announcements.*` with `t.news.*`
+- [x] Fix `frontend/src/components/home/LatestAnnouncements.tsx` — replace `t.announcements.*` with `t.news.*`
+- [x] Fix `frontend/src/pages/SinglePageHome.tsx` — remove deleted `AnnouncementsSection` import, use `NewsSection`
+- [x] Verify no remaining `t.announcements` references in `frontend/src`
+- [x] Build/typecheck the frontend (`npm run build`) and confirm success
 
-### Phase 2: Make AboutSection.tsx dynamic
-- [x] Replace hardcoded content with API data from `getAbout()`
-- [x] Preserve ALL existing UI, styling, animations, layout, structure
-- [x] Add manager photo display (circular avatar with fallback)
-- [x] Handle loading/error states
+## Why today's changes were not applied
 
-### Phase 3: Make AdminAbout.tsx more manageable
-- [x] Add collapsible/accordion sections
-- [x] Each section (Main Content, Story, Values, Stats, Section Titles, Manager Message) is collapsible
-- [x] Default to first section open, others collapsed
+1. **Changes were never committed** — All 30+ modified files, deleted Announcements files, and the new Social Media feature are still uncommitted working-tree changes. The latest commit (`d53c659`) only contains asset/image additions.
+2. **TypeScript build error blocked deployment** — `frontend/src/pages/admin/AdminNews.tsx` used `.then(setItems)` but the refactored `getNewsList` API now returns `{ news: NewsItem[] }` instead of a plain array. This caused `tsc -b` to fail, blocking the Vercel build. **FIXED** by changing to `.then(res => setItems(res.news))`.
+3. **Deployment was aborted** — `frontend/deploy-log.txt` shows the `vercel` install/deploy was terminated ("Terminate batch job (Y/N)?").
 
-### Phase 4: Seed data
-- [x] Already complete - no changes needed
+## How to apply the changes
+
+1. Build succeeded locally — the fix is verified.
+2. Commit all changes: `git add -A && git commit -m "fix: remove Announcements, complete News migration, add Social Media admin"`
+3. Push to remote: `git push origin master`
+4. Redeploy the frontend and backend.

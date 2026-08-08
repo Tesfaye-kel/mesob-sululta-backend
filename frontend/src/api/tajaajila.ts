@@ -70,13 +70,40 @@ export interface NewsItem {
   content: MultiLang
   excerpt: MultiLang
   category: string
+  author: MultiLang
   isFeatured: boolean
   isPublished: boolean
   publishedAt: string
   coverImageUrl: string
-  media: Array<{ type: string; url: string; caption: MultiLang }>
+  externalUrl: string
+  media: Array<{
+    type: string
+    url: string
+    caption: MultiLang
+    altText?: MultiLang
+    description?: MultiLang
+    displayOrder?: number
+    isCover?: boolean
+  }>
   tags: string[]
   createdAt: string
+}
+
+export interface SocialMediaPlatform {
+  _id: string
+  platform: string
+  icon: string
+  url: string
+  displayOrder: number
+  isActive: boolean
+  openInNewTab: boolean
+}
+
+export interface NewsListResponse {
+  news: NewsItem[]
+  total: number
+  page: number
+  pages: number
 }
 
 async function get<T>(path: string): Promise<T> {
@@ -151,5 +178,10 @@ export interface AboutContent {
 
 export const getAbout = () => get<AboutContent>('/about')
 
-export const getNewsList = (params?: string) => get<NewsItem[]>(`/news${params ? `?${params}` : ''}`)
+export const getNewsList = (params?: string) => get<NewsListResponse>(`/news${params ? `?${params}` : ''}`)
+export const getNewsItem = (id: string) => get<NewsItem>(`/news/${id}`)
+export const getRelatedNews = (id: string) => get<NewsItem[]>(`/news/related/${id}`)
+export const getNewsCategories = () => get<string[]>('/news/categories')
+export const getNewsTags = () => get<string[]>('/news/tags')
 export const getLatestNews = (since?: string) => get<{ count: number; latest: { title: MultiLang; publishedAt: string } | null }>(`/news/latest${since ? `?since=${since}` : ''}`)
+export const getSocialMedia = () => get<SocialMediaPlatform[]>('/social-media')

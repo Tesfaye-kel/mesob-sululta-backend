@@ -48,12 +48,7 @@ export const translations = {
       orgHierarchy: 'Organizational Hierarchy',
       managerQuote: "Our mission at MESOB Sululta Branch is not just to process documents — it is to restore citizens' trust in government service delivery.",
     },
-    announcements: {
-      title: 'Latest News', subtitle: 'Latest news and official updates',
-      viewAll: 'View All', readMore: 'Read More',
-      categories: { all: 'All', notice: 'Notice', event: 'Event', news: 'News', holiday: 'Holiday', press: 'Press Release' },
-    },
-    news: {
+news: {
       title: 'Latest News', subtitle: 'Latest news and official updates',
       viewAll: 'View All', readMore: 'Read More',
       categories: { all: 'All', notice: 'Notice', event: 'Event', news: 'News', holiday: 'Holiday', press: 'Press Release', update: 'Update' },
@@ -386,12 +381,7 @@ export const translations = {
       orgHierarchy: 'የድርጅት ተዋረድ',
       managerQuote: 'በ MESOB ሱሉልታ ቅርንጫፍ ያለን ዓላማ ሰነዶችን ማስኬድ ብቻ አይደለም — ዜጎች በአገልግሎት አሰጣጥ ላይ ያላቸውን እምነት ወደ ነበረበት መመለስ ነው።',
     },
-    announcements: {
-      title: 'ዜና', subtitle: 'የቅርብ ጊዜ ዜናዎች እና ኦፊሴላዊ መረጃዎች',
-      viewAll: 'ሁሉንም ይመልከቱ', readMore: 'ተጨማሪ ያንብቡ',
-      categories: { all: 'ሁሉም', notice: 'ማስታወቂያ', event: 'ዝግጅት', news: 'ዜና', holiday: 'ዕረፍት', press: 'ፕሬስ ተሰጥዎ' },
-    },
-    news: {
+news: {
       title: 'ዜና', subtitle: 'የቅርብ ጊዜ ዜናዎች እና ኦፊሴላዊ መረጃዎች',
       viewAll: 'ሁሉንም ይመልከቱ', readMore: 'ተጨማሪ ያንብቡ',
       categories: { all: 'ሁሉም', notice: 'ማስታወቂያ', event: 'ዝግጅት', news: 'ዜና', holiday: 'ዕረፍት', press: 'ፕሬስ ተሰጥዎ', update: 'ዝማኔ' },
@@ -716,12 +706,7 @@ export const translations = {
       orgHierarchy: 'Caasaa Dhaabbata',
       managerQuote: "Kaayyoon keenya Damee Sululta MESOB keessatti galmee qofaa hojjechuu miti — amanamummaa lammiilee tajaajila mootummaaf qaban deebisuudha.",
     },
-    announcements: {
-      title: 'Oduu', subtitle: 'Oduu fi beeksisa rasmi haaraa',
-      viewAll: 'Hunda Ilaali', readMore: 'Dabalata Dubbisi',
-      categories: { all: 'Hunda', notice: 'Beeksisa', event: 'Sochii', news: 'Oduu', holiday: 'Boqonnaa', press: 'Ibsa Pireesii' },
-    },
-    news: {
+news: {
       title: 'Beeksisaalee', subtitle: 'Oduu fi beeksisa rasmi haaraa',
       viewAll: 'Hunda Ilaali', readMore: 'Dabalata Dubbisi',
       categories: { all: 'Hunda', notice: 'Beeksisa', event: 'Sochii', news: 'Oduu', holiday: 'Boqonnaa', press: 'Ibsa Pireesii', update: 'Haaromsa' },

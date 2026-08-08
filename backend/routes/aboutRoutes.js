@@ -8,15 +8,10 @@ const {
   getAbout,
   upsertAbout,
   uploadManagerPhoto,
-  addStory,
-  updateStory,
-  deleteStory,
-  addValue,
-  updateValue,
-  deleteValue,
-  addStat,
-  updateStat,
-  deleteStat,
+  addStory, updateStory, deleteStory,
+  addHighlight, updateHighlight, deleteHighlight,
+  addValue, updateValue, deleteValue,
+  addStat, updateStat, deleteStat,
 } = require('../controllers/aboutController');
 
 const router = express.Router();
@@ -70,6 +65,11 @@ router.delete('/values/:valueId', authenticateJWT, requireAdmin, deleteValue);
 router.post('/stats', authenticateJWT, requireAdmin, addStat);
 router.put('/stats/:statId', authenticateJWT, requireAdmin, updateStat);
 router.delete('/stats/:statId', authenticateJWT, requireAdmin, deleteStat);
+
+// Highlights sub-documents
+router.post('/highlights', authenticateJWT, requireAdmin, addHighlight);
+router.put('/highlights/:highlightId', authenticateJWT, requireAdmin, updateHighlight);
+router.delete('/highlights/:highlightId', authenticateJWT, requireAdmin, deleteHighlight);
 
 module.exports = router;
 

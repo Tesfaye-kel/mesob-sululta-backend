@@ -202,17 +202,23 @@ async function findServiceByName(name, allServices) {
 }
 
 async function run() {
-  await mongoose.connect(process.env.MONGO_URI);
+  await mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI);
   console.log('Connected to MongoDB');
 
-  // Wipe existing windows
+  // Wipe existing windows AND unlink any services that were assigned to them
+  const oldWindows = await Window.find();
+  const oldWindowIds = oldWindows.map(w => w._id);
+  if (oldWindowIds.length > 0) {
+    await Service.updateMany({ window: { $in: oldWindowIds } }, { $set: { window: null } });
+  }
   await Window.deleteMany({});
-  console.log('Cleared existing windows');
+  console.log('Cleared existing windows (and unlinked their services)');
 
   const allServices = await Service.find().populate('organization', 'name');
   console.log(`Loaded ${allServices.length} services from DB`);
 
-  const results = [];
+  let windowsCreated = 0;
+  let servicesAssigned = 0;
 
   // Floor mapping for each window number
   const FLOOR_MAP = {
@@ -244,27 +250,27 @@ async function run() {
       }
     }
 
-    // Group by organization — one Window doc per org per window number
-    const byOrg = new Map();
-    for (const id of matchedIds) {
-      const svc = allServices.find(s => s._id.toString() === id);
-      if (!svc) continue;
-      const orgId = svc.organization?._id?.toString() ?? 'unknown';
-      if (!byOrg.has(orgId)) byOrg.set(orgId, { orgId: svc.organization?._id, services: [] });
-      byOrg.get(orgId).services.push(svc._id);
-    }
+    // ── Create ONE window per number (11 total), link ALL matched services ──
+    const win = await Window.create({ number: num, floor, organization: null });
 
-    for (const { orgId, services } of byOrg.values()) {
-      if (orgId) {
-        results.push({ number: num, floor, organization: orgId, services });
-      }
-    }
+    // CRITICAL FIX: Assign the `window` field on each Service document
+    // so the frontend can fetch services via GET /api/windows/:id/services
+    const res = await Service.updateMany(
+      { _id: { $in: Array.from(matchedIds) } },
+      { $set: { window: win._id } }
+    );
 
-    console.log(`Foddaa ${num} (Floor ${floor}): matched ${matchedIds.size}/${serviceNames.length}${missed.length ? ', missed: ' + missed.slice(0,3).join('; ') : ''}`);
+    windowsCreated++;
+    servicesAssigned += res.modifiedCount || 0;
+    console.log(`Foddaa ${num} (Floor ${floor}): window ${win._id} ← ${matchedIds.size} services`);
+
+    if (missed.length) {
+      console.log(`Foddaa ${num}: missed ${missed.length}: ${missed.slice(0, 3).join('; ')}`);
+    }
   }
 
-  await Window.insertMany(results);
-  console.log(`\nInserted ${results.length} window documents across 11 windows.`);
+  console.log(`\nCreated ${windowsCreated} window documents across 11 windows.`);
+  console.log(`Linked ${servicesAssigned} services to their windows.`);
   await mongoose.disconnect();
   console.log('Done.');
 }

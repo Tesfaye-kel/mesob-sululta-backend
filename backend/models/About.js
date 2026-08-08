@@ -26,6 +26,11 @@ const aboutStorySchema = new mongoose.Schema({
   order: { type: Number, default: 0 },
 }, { timestamps: true });
 
+const aboutHighlightSchema = new mongoose.Schema({
+  text: localizedString,
+  order: { type: Number, default: 0 },
+}, { timestamps: true });
+
 const aboutSchema = new mongoose.Schema(
   {
     mission: localizedString,
@@ -35,6 +40,7 @@ const aboutSchema = new mongoose.Schema(
     history: localizedString,
     // New fields for comprehensive About management
     story: [aboutStorySchema],
+    highlights: [aboutHighlightSchema],
     values: [aboutValueSchema],
     stats: [aboutStatSchema],
     managerMessage: localizedString,
@@ -44,6 +50,7 @@ const aboutSchema = new mongoose.Schema(
     // Localized section titles (editable in admin panel)
     storyBadge: localizedString,
     storyTitle: localizedString,
+    highlightsTitle: localizedString,
     missionTitle: localizedString,
     visionTitle: localizedString,
     valuesTitle: localizedString,

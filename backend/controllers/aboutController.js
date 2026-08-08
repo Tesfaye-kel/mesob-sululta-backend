@@ -2,20 +2,11 @@ const About = require('../models/About');
 
 // ─── Sanitizer helpers ──────────────────────────────────────────
 const localizedFields = [
-  'mission',
-  'vision',
-  'objectives',
-  'branchIntroduction',
-  'history',
-  'managerMessage',
-  'managerTitle',
-  'storyBadge',
-  'storyTitle',
-  'missionTitle',
-  'visionTitle',
-  'valuesTitle',
-  'valuesSubtitle',
-  'managerMessageTitle',
+  'mission', 'vision', 'objectives', 'branchIntroduction', 'history',
+  'managerMessage', 'managerTitle',
+  'storyBadge', 'storyTitle', 'highlightsTitle',
+  'missionTitle', 'visionTitle',
+  'valuesTitle', 'valuesSubtitle', 'managerMessageTitle',
 ];
 
 const cleanLocalized = (value) => {
@@ -224,18 +215,53 @@ const deleteStat = async (req, res, next) => {
   }
 };
 
+// ─── Highlights sub-document CRUD ───────────────────────────────
+const addHighlight = async (req, res, next) => {
+  try {
+    const about = await About.findOne();
+    if (!about) return res.status(404).json({ message: 'About not found' });
+    const clean = {};
+    if (req.body.text && typeof req.body.text === 'object') {
+      const t = cleanLocalized(req.body.text);
+      if (t) clean.text = t;
+    }
+    if (req.body.order !== undefined) clean.order = Number(req.body.order) || 0;
+    about.highlights.push(clean);
+    await about.save();
+    res.status(201).json(about);
+  } catch (err) { next(err); }
+};
+
+const updateHighlight = async (req, res, next) => {
+  try {
+    const about = await About.findOne();
+    if (!about) return res.status(404).json({ message: 'About not found' });
+    const highlight = about.highlights.id(req.params.highlightId);
+    if (!highlight) return res.status(404).json({ message: 'Highlight not found' });
+    if (req.body.text) { const t = cleanLocalized(req.body.text); if (t) highlight.text = t; }
+    if (req.body.order !== undefined) highlight.order = Number(req.body.order) || 0;
+    await about.save();
+    res.json(about);
+  } catch (err) { next(err); }
+};
+
+const deleteHighlight = async (req, res, next) => {
+  try {
+    const about = await About.findOne();
+    if (!about) return res.status(404).json({ message: 'About not found' });
+    about.highlights.pull({ _id: req.params.highlightId });
+    await about.save();
+    res.json(about);
+  } catch (err) { next(err); }
+};
+
 module.exports = {
   getAbout,
   upsertAbout,
   uploadManagerPhoto,
-  addStory,
-  updateStory,
-  deleteStory,
-  addValue,
-  updateValue,
-  deleteValue,
-  addStat,
-  updateStat,
-  deleteStat,
+  addStory, updateStory, deleteStory,
+  addHighlight, updateHighlight, deleteHighlight,
+  addValue, updateValue, deleteValue,
+  addStat, updateStat, deleteStat,
 };
 

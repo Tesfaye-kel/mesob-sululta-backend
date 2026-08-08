@@ -61,7 +61,7 @@ const getRouteConfig = (t: ReturnType<typeof useLanguage>['t']) => ({
   },
   '/announcements': {
     gradient: 'linear-gradient(135deg,rgba(230,81,0,0.88) 0%,rgba(21,101,192,0.88) 100%)',
-    heading: t.announcements.title, subheading: t.announcements.subtitle, showSlideshow: false, showServiceGrid: false,
+    heading: t.news.title, subheading: t.news.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/gallery': {
     gradient: 'linear-gradient(135deg,rgba(74,20,140,0.88) 0%,rgba(21,101,192,0.88) 100%)',

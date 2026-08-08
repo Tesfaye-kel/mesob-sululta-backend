@@ -19,7 +19,7 @@ import AdminLayout from '@/pages/admin/AdminLayout'
 import AdminDashboard from '@/pages/admin/AdminDashboard'
 import AdminAbout from '@/pages/admin/AdminAbout'
 import AdminLeadership from '@/pages/admin/AdminLeadership'
-import AdminAnnouncements from '@/pages/admin/AdminAnnouncements'
+
 import AdminNews from '@/pages/admin/AdminNews'
 import AdminServices from '@/pages/admin/AdminServices'
 import AdminFAQs from '@/pages/admin/AdminFAQs'
@@ -31,6 +31,7 @@ import AdminContactMessages from '@/pages/admin/AdminContactMessages'
 import AdminUsers from '@/pages/admin/AdminUsers'
 import AdminProfile from '@/pages/admin/AdminProfile'
 import AdminSettings from '@/pages/admin/AdminSettings'
+import AdminSocialMedia from '@/pages/admin/AdminSocialMedia'
 import AdminRoute from '@/components/admin/AdminRoute'
 
 import ScrollToTop from '@/components/common/ScrollToTop'
@@ -86,6 +87,7 @@ export default function App() {
                       <Route path="contact-messages" element={<AdminContactMessages />} />
                       <Route path="users" element={<AdminUsers />} />
                       <Route path="profile" element={<AdminProfile />} />
+<Route path="social-media" element={<AdminSocialMedia />} />
                       <Route path="settings" element={<AdminSettings />} />
                     </Route>
                   </Route>

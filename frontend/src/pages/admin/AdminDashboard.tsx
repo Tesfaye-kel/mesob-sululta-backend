@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
-  LayoutDashboard, Megaphone, HelpCircle, Building2,
+  LayoutDashboard, Newspaper, HelpCircle, Building2,
   Users, MessageSquareQuote, Activity, Clock, ArrowUpRight,
 } from 'lucide-react'
 import { getDashboardStats, type DashboardStats } from '@/api/admin'
@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 const statCards = [
   { key: 'organizations', label: 'Organizations', icon: Building2, color: 'blue' },
   { key: 'services', label: 'Services', icon: Activity, color: 'green' },
-  { key: 'announcements', label: 'Announcements', icon: Megaphone, color: 'purple' },
+  { key: 'news', label: 'News', icon: Newspaper, color: 'purple' },
   { key: 'faqs', label: 'FAQs', icon: HelpCircle, color: 'amber' },
   { key: 'testimonials', label: 'Testimonials', icon: MessageSquareQuote, color: 'rose' },
   { key: 'users', label: 'Users', icon: Users, color: 'indigo' },
@@ -114,17 +114,17 @@ export default function AdminDashboard() {
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Items managed</p>
         </motion.div>
 
-        {/* Recent Announcements */}
+{/* Recent News */}
         <motion.div variants={item} className="lg:col-span-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
           <div className="flex items-center gap-3 mb-4">
-            <Megaphone className="h-5 w-5 text-purple-500" />
-            <h2 className="font-semibold text-gray-900 dark:text-white">Recent Announcements</h2>
+            <Newspaper className="h-5 w-5 text-purple-500" />
+            <h2 className="font-semibold text-gray-900 dark:text-white">Recent News</h2>
           </div>
           <div className="space-y-3">
-            {data.recent.announcements.length === 0 && (
-              <p className="text-sm text-gray-400">No announcements yet</p>
+            {data.recent.news.length === 0 && (
+              <p className="text-sm text-gray-400">No news yet</p>
             )}
-            {data.recent.announcements.slice(0, 4).map(a => (
+            {data.recent.news.slice(0, 4).map(a => (
               <div key={a._id} className="flex items-start gap-2">
                 <Clock className="h-3 w-3 text-gray-400 mt-1 shrink-0" />
                 <div className="min-w-0">

@@ -14,7 +14,7 @@ const sections = [
   { id: 'about',         labelKey: 'about'         as const },
   { id: 'services',      labelKey: 'services'      as const },
   { id: 'organization',  labelKey: 'organization'  as const },
-  { id: 'announcements', labelKey: 'announcements' as const },
+{ id: 'news', labelKey: 'news' as const },
   { id: 'gallery',       labelKey: 'gallery'       as const },
   { id: 'downloads',     labelKey: 'downloads'     as const },
   { id: 'faq',           labelKey: 'faq'           as const },

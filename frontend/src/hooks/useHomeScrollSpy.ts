@@ -12,7 +12,7 @@ export type HomeSectionId =
   | 'about'
   | 'services'
   | 'organization'
-  | 'announcements'
+  | 'news'
   | 'gallery'
   | 'faq'
   | 'contact'
