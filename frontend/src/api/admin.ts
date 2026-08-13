@@ -59,6 +59,7 @@ stats: {
     faqs: number
     testimonials: number
     contactSubmissions: number
+    unreadMessages: number
     total: number
   }
   recent: {
@@ -222,6 +223,12 @@ export const updateOrganization = (id: string, data: Partial<OrganizationSummary
 export const deleteOrganization = (id: string) => authFetch<{ message: string }>(`/organizations/${id}`, { method: 'DELETE' })
 
 // ─── About ──────────────────────────────────────────────────────
+export interface AboutHighlight {
+  _id?: string
+  text: MultiLang
+  order: number
+}
+
 export interface AboutValue {
   _id?: string
   icon: string
@@ -286,6 +293,28 @@ export const addAboutStat = (data: Partial<AboutStat>) => authFetch<AboutContent
 export const updateAboutStat = (id: string, data: Partial<AboutStat>) => authFetch<AboutContent>(`/about/stats/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteAboutStat = (id: string) => authFetch<{ message: string }>(`/about/stats/${id}`, { method: 'DELETE' })
 
+// ─── Generic file upload helper (uses auth token, no double /api) ────────────
+export const uploadFile = async (path: string, fieldName: string, file: File): Promise<{ imageUrl: string; url?: string; filename?: string }> => {
+  const token = getToken()
+  const formData = new FormData()
+  formData.append(fieldName, file)
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  })
+  if (res.status === 401) {
+    localStorage.removeItem('admin-token')
+    localStorage.removeItem('admin-user')
+    throw new Error('Session expired — please log in again')
+  }
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: `Upload failed (${res.status})` }))
+    throw new Error(err.message || 'Upload failed')
+  }
+  return res.json()
+}
+
 // About manager photo upload
 export const uploadManagerPhoto = async (file: File): Promise<{ imageUrl: string }> => {
   const token = getToken()
@@ -338,18 +367,34 @@ export const createGalleryItem = (data: Partial<GalleryItem>) => authFetch<Galle
 export const updateGalleryItem = (id: string, data: Partial<GalleryItem>) => authFetch<GalleryItem>(`/gallery/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteGalleryItem = (id: string) => authFetch<{ message: string }>(`/gallery/${id}`, { method: 'DELETE' })
 
+// ─── Floors (admin) ─────────────────────────────────────────────
+export interface FloorAdmin {
+  _id: string
+  floorNumber: number
+  name: { en: string; am: string; or: string }
+  description: { en: string; am: string; or: string }
+}
+
+export const getFloorsAdmin = () => authFetch<FloorAdmin[]>('/floors')
+export const createFloor = (data: Partial<FloorAdmin>) => authFetch<FloorAdmin>('/floors', { method: 'POST', body: JSON.stringify(data) })
+export const updateFloor = (id: string, data: Partial<FloorAdmin>) => authFetch<FloorAdmin>(`/floors/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteFloor = (id: string) => authFetch<{ message: string }>(`/floors/${id}`, { method: 'DELETE' })
+
 // ─── Windows (admin) ────────────────────────────────────────────
 export interface WindowAdmin {
   _id: string
-  number: number
+  number: string
+  name?: { en?: string; am?: string; or?: string }
+  floor: number
   organization: { _id: string; name: MultiLang }
-  services: Array<{ _id: string; name: MultiLang }>
+  serviceCount?: number
+  description?: { en: string; am: string; or: string }
   createdAt: string
 }
 
 export const getWindowsAdmin = () => authFetch<WindowAdmin[]>('/windows')
-export const createWindow = (data: { number: number; organization: string; services?: string[] }) => authFetch<WindowAdmin>('/windows', { method: 'POST', body: JSON.stringify(data) })
-export const updateWindow = (id: string, data: { number?: number; organization?: string; services?: string[] }) => authFetch<WindowAdmin>(`/windows/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const createWindow = (data: { number: string; name?: { en: string; am: string; or: string }; floor: number; organization: string; description?: { en: string; am: string; or: string } }) => authFetch<WindowAdmin>('/windows', { method: 'POST', body: JSON.stringify(data) })
+export const updateWindow = (id: string, data: Partial<WindowAdmin & { organization: string }>) => authFetch<WindowAdmin>(`/windows/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteWindow = (id: string) => authFetch<{ message: string }>(`/windows/${id}`, { method: 'DELETE' })
 
 // Assign services to a window
@@ -404,6 +449,7 @@ export interface ContactMessage {
   _id: string
   name: string
   email: string
+  phone: string
   subject: string
   message: string
   type: 'contact' | 'feedback'

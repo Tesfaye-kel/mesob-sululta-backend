@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Calendar, ArrowLeft, Loader2, Music, FileText, ExternalLink, Tag } from 'lucide-react'
+import { Calendar, ArrowLeft, Loader2, Music, FileText, ExternalLink, Tag, Youtube, Link2, Download } from 'lucide-react'
 import { getImageUrl } from '@/lib/images'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { formatDate } from '@/lib/utils'
@@ -25,8 +25,8 @@ interface NewsDetail {
   updatedAt: string
 }
 
-const categoryVariant: Record<string, 'default' | 'notice' | 'event' | 'holiday' | 'press'> = {
-  news: 'default', notice: 'notice', event: 'event', holiday: 'holiday', press: 'press',
+const categoryVariant: Record<string, 'default' | 'notice' | 'event' | 'holiday' | 'document'> = {
+  news: 'default', notice: 'notice', event: 'event', holiday: 'holiday', document: 'document',
 }
 
 export default function NewsDetailPage() {
@@ -57,6 +57,33 @@ export default function NewsDetailPage() {
     if (language === 'am' && obj.am) return obj.am
     if (language === 'or' && obj.or) return obj.or
     return obj.en || ''
+  }
+
+  const handleDownloadAll = async () => {
+    if (!item) return
+    const downloadable = (item.media || []).filter(m =>
+      ['image', 'video', 'audio', 'document'].includes(m.type)
+    )
+    // Also include cover image
+    const allUrls = [
+      ...(item.coverImageUrl ? [{ url: item.coverImageUrl, name: `cover-${item._id}` }] : []),
+      ...downloadable.map(m => ({ url: getImageUrl(m.url), name: m.url.split('/').pop() || 'media' })),
+    ]
+    for (const { url, name } of allUrls) {
+      try {
+        const res = await fetch(url)
+        const blob = await res.blob()
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = name
+        a.click()
+        URL.revokeObjectURL(a.href)
+        // Small delay between downloads
+        await new Promise(r => setTimeout(r, 300))
+      } catch {
+        window.open(url, '_blank')
+      }
+    }
   }
 
   if (loading) {
@@ -158,8 +185,9 @@ export default function NewsDetailPage() {
                 {item.media.map((m, i) => {
                   const mediaUrl = getImageUrl(m.url)
                   const caption = getLocalized(m.caption)
+                  const isYoutube = m.type === 'youtube'
                   return (
-                    <div key={i} className="relative group rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700">
+                    <div key={i} className={`relative group rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 ${isYoutube ? 'col-span-2 md:col-span-3' : ''}`}>
                       {m.type === 'image' && (
                         <a href={mediaUrl} target="_blank" rel="noopener noreferrer" className="block">
                           <img src={mediaUrl} alt={caption || 'Media'} className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -191,6 +219,40 @@ export default function NewsDetailPage() {
                           {caption && <p className="text-xs text-gray-500 mt-1">{caption}</p>}
                         </a>
                       )}
+                      {m.type === 'youtube' && (() => {
+                        // Extract YouTube video ID from various URL formats
+                        const ytMatch = m.url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/)
+                        const videoId = ytMatch?.[1]
+                        return videoId ? (
+                          <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                            <iframe
+                              src={`https://www.youtube.com/embed/${videoId}`}
+                              title={caption || 'YouTube video'}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              className="absolute inset-0 w-full h-full rounded-xl"
+                            />
+                            {caption && <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 rounded-b-xl">
+                              <p className="text-white text-xs">{caption}</p>
+                            </div>}
+                          </div>
+                        ) : (
+                          <a href={m.url} target="_blank" rel="noopener noreferrer"
+                            className="p-4 flex flex-col items-center justify-center h-40 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+                            <Youtube className="h-8 w-8 text-red-500 mb-2" />
+                            <span className="text-xs text-gray-500 truncate max-w-full text-center">{m.url}</span>
+                          </a>
+                        )
+                      })()}
+                      {(m.type === 'other' || (!['image','video','audio','document','youtube'].includes(m.type))) && (
+                        <a href={m.url} target="_blank" rel="noopener noreferrer"
+                          className="p-4 flex flex-col items-center justify-center h-40 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                          <Link2 className="h-8 w-8 text-brand-blue mb-2" />
+                          <span className="text-xs text-gray-500 truncate max-w-full text-center break-all">{m.url}</span>
+                          <ExternalLink className="h-3 w-3 text-gray-400 mt-1" />
+                          {caption && <p className="text-xs text-gray-500 mt-1 text-center">{caption}</p>}
+                        </a>
+                      )}
                     </div>
                   )
                 })}
@@ -216,6 +278,15 @@ export default function NewsDetailPage() {
               <ArrowLeft className="h-4 w-4" />
               {language === 'am' ? 'ሌሎች ዜናዎች' : language === 'or' ? 'Oduuwwan biroo' : 'More News'}
             </Link>
+            {((item.media && item.media.length > 0) || item.coverImageUrl) && (
+              <button
+                onClick={handleDownloadAll}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-green text-white text-sm font-semibold hover:bg-brand-green/90 transition-colors"
+              >
+                <Download className="h-4 w-4" />
+                {language === 'am' ? 'ሁሉንም አውርድ' : language === 'or' ? 'Hunda Buusi' : 'Download All'}
+              </button>
+            )}
           </div>
         </motion.article>
       </div>

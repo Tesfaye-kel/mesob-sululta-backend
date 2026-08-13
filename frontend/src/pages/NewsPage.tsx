@@ -13,8 +13,8 @@ import { Link } from 'react-router-dom'
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 const ITEMS_PER_PAGE = 9
-const categoryVariant: Record<string, 'default' | 'notice' | 'event' | 'holiday' | 'press'> = {
-  news: 'default', notice: 'notice', event: 'event', holiday: 'holiday', press: 'press',
+const categoryVariant: Record<string, 'default' | 'notice' | 'event' | 'holiday' | 'document'> = {
+  news: 'default', notice: 'notice', event: 'event', holiday: 'holiday', document: 'document',
 }
 
 interface NewsItem {
@@ -42,7 +42,10 @@ export default function NewsPage() {
 document.title = `${t.news.title} | MESOB Center`
     fetch(`${BASE}/news?published=true`)
       .then(res => res.json())
-      .then(data => { if (Array.isArray(data)) setItems(data) })
+      .then(data => {
+        const newsList = Array.isArray(data) ? data : (data?.news || [])
+        setItems(newsList)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [t])

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar, Loader2, X, ChevronRight, Megaphone } from 'lucide-react'
+import { Calendar, Loader2, X, ChevronRight, Megaphone, Music, FileText, ExternalLink, Youtube, Link2, Download } from 'lucide-react'
 import { getImageUrl } from '@/lib/images'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Badge } from '@/components/ui/Badge'
@@ -19,7 +19,7 @@ interface NewsData {
   isFeatured: boolean
   publishedAt: string
   coverImageUrl?: string
-  media?: Array<{ type: string; url: string }>
+  media?: Array<{ type: string; url: string; caption?: { en: string; am: string; or: string } }>
 }
 
 interface NewsSectionProps {
@@ -27,19 +27,30 @@ interface NewsSectionProps {
   showHeader?: boolean
 }
 
-const categories = ['All', 'News', 'Notice', 'Event', 'Holiday', 'Press', 'Update']
+const categories = ['All', 'News', 'Notice', 'Event', 'Holiday', 'Document', 'Update']
+
+// Trilingual category labels
+const CATEGORY_LABELS: Record<string, { en: string; am: string; or: string }> = {
+  All:     { en: 'All',     am: 'ሁሉም',    or: 'Hunda'    },
+  News:    { en: 'News',    am: 'ዜና',      or: 'Oduu'     },
+  Notice:  { en: 'Notice',  am: 'ማስታወቂያ',  or: 'Beeksisa' },
+  Event:   { en: 'Event',   am: 'ዝግጅት',    or: 'Goosaa'   },
+  Holiday: { en: 'Holiday', am: 'ዕረፍት',    or: 'Boqonnaa' },
+  Document: { en: 'Document', am: 'ሰነድ',    or: 'Dokumentii' },
+  Update:  { en: 'Update',  am: 'ዝማኔ',     or: 'Haaromsa' },
+}
 
 const categoryImages: Record<string, string> = {
   news: 'https://picsum.photos/seed/news1/800/600',
   notice: 'https://picsum.photos/seed/news2/800/600',
   event: 'https://picsum.photos/seed/news3/800/600',
   holiday: 'https://picsum.photos/seed/news4/800/600',
-  press: 'https://picsum.photos/seed/news5/800/600',
+  document: 'https://picsum.photos/seed/news5/800/600',
   update: 'https://picsum.photos/seed/news6/800/600',
 }
 
-const categoryVariant: Record<string, 'default' | 'notice' | 'event' | 'holiday' | 'press'> = {
-  news: 'default', notice: 'notice', event: 'event', holiday: 'holiday', press: 'press',
+const categoryVariant: Record<string, 'default' | 'notice' | 'event' | 'holiday' | 'document'> = {
+  news: 'default', notice: 'notice', event: 'event', holiday: 'holiday', document: 'document',
 }
 
 // Handles image load errors by hiding the broken img and showing fallback
@@ -63,8 +74,9 @@ export default function NewsSection({ compact = false, showHeader = true }: News
     fetch(`${BASE}/news?published=true`)
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data)) {
-          const sorted = [...data].sort((a, b) => {
+        const newsList = Array.isArray(data) ? data : (data?.news || [])
+        if (newsList.length > 0) {
+          const sorted = [...newsList].sort((a, b) => {
             if (a.isFeatured && !b.isFeatured) return -1
             if (!a.isFeatured && b.isFeatured) return 1
             return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
@@ -98,14 +110,11 @@ export default function NewsSection({ compact = false, showHeader = true }: News
     return news.excerpt?.en || ''
   }
 
-  const categoryLabels: Record<string, string> = {
-    All: t.gallery?.all || 'All',
-    News: 'News',
-    Notice: 'Notice',
-    Event: 'Event',
-    Holiday: 'Holiday',
-    Press: 'Press',
-    Update: 'Update',
+  // Use CATEGORY_LABELS with current language
+  const getCatLabel = (cat: string) => {
+    const entry = CATEGORY_LABELS[cat]
+    if (!entry) return cat
+    return language === 'am' ? entry.am : language === 'or' ? entry.or : entry.en
   }
 
   const content = (
@@ -120,7 +129,7 @@ export default function NewsSection({ compact = false, showHeader = true }: News
         </AnimatedSection>
       )}
 
-      {/* Filter tabs - same as gallery */}
+      {/* Filter tabs */}
       <div className="flex flex-wrap gap-2 mb-8 justify-center">
         {categories.map(cat => (
           <button key={cat} onClick={() => setActiveCategory(cat)}
@@ -128,7 +137,7 @@ export default function NewsSection({ compact = false, showHeader = true }: News
               activeCategory === cat
                 ? 'bg-brand-green text-white shadow-gov'
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-brand-green hover:text-brand-green')}>
-            {categoryLabels[cat] ?? cat}
+            {getCatLabel(cat)}
           </button>
         ))}
       </div>
@@ -268,6 +277,117 @@ export default function NewsSection({ compact = false, showHeader = true }: News
                   {getContent(selectedNews)}
                 </div>
               </div>
+
+              {/* Media gallery */}
+              {selectedNews.media && selectedNews.media.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl mt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                      {language === 'or' ? 'Miidiyaa' : language === 'am' ? 'ሚዲያ' : 'Media'}
+                      <span className="ml-1.5 text-xs font-normal text-gray-400">({selectedNews.media.length})</span>
+                    </h3>
+                    <button
+                      onClick={async () => {
+                        const items = selectedNews.media!.filter(m =>
+                          ['image','video','audio','document'].includes(m.type)
+                        )
+                        const cover = selectedNews.coverImageUrl
+                          ? [{ url: getImageUrl(selectedNews.coverImageUrl), name: `cover` }]
+                          : []
+                        const all = [
+                          ...cover,
+                          ...items.map(m => ({ url: getImageUrl(m.url), name: m.url.split('/').pop() || 'media' })),
+                        ]
+                        for (const { url, name } of all) {
+                          try {
+                            const res = await fetch(url)
+                            const blob = await res.blob()
+                            const a = document.createElement('a')
+                            a.href = URL.createObjectURL(blob)
+                            a.download = name
+                            a.click()
+                            URL.revokeObjectURL(a.href)
+                            await new Promise(r => setTimeout(r, 300))
+                          } catch { window.open(url, '_blank') }
+                        }
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand-green text-white text-xs font-semibold hover:bg-brand-green/90 transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      {language === 'am' ? 'ሁሉንም አውርድ' : language === 'or' ? 'Hunda Buusi' : 'Download All'}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedNews.media.map((m, i) => {
+                      const mediaUrl = getImageUrl(m.url)
+                      const caption = m.caption
+                        ? (language === 'am' && m.caption.am ? m.caption.am : language === 'or' && m.caption.or ? m.caption.or : m.caption.en)
+                        : ''
+                      const isYoutube = m.type === 'youtube'
+                      return (
+                        <div key={i} className={`relative rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 ${isYoutube ? 'col-span-2' : ''}`}>
+                          {m.type === 'image' && (
+                            <a href={mediaUrl} target="_blank" rel="noopener noreferrer" className="block">
+                              <img src={mediaUrl} alt={caption || 'Media'} className="w-full h-36 object-cover hover:scale-105 transition-transform duration-300" />
+                              {caption && <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p className="text-white text-xs">{caption}</p>
+                              </div>}
+                            </a>
+                          )}
+                          {m.type === 'video' && (
+                            <video src={mediaUrl} controls className="w-full h-36 object-cover" />
+                          )}
+                          {m.type === 'audio' && (
+                            <div className="p-4 flex flex-col items-center justify-center h-36 bg-gray-50 dark:bg-gray-800">
+                              <Music className="h-7 w-7 text-brand-green mb-2" />
+                              <audio src={mediaUrl} controls className="w-full" />
+                              {caption && <p className="text-xs text-gray-500 mt-1">{caption}</p>}
+                            </div>
+                          )}
+                          {m.type === 'document' && (
+                            <a href={mediaUrl} target="_blank" rel="noopener noreferrer"
+                              className="p-4 flex flex-col items-center justify-center h-36 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                              <FileText className="h-7 w-7 text-amber-500 mb-2" />
+                              <span className="text-xs text-gray-500 truncate max-w-full">{m.url.split('/').pop()}</span>
+                              <ExternalLink className="h-3 w-3 text-gray-400 mt-1" />
+                              {caption && <p className="text-xs text-gray-500 mt-1">{caption}</p>}
+                            </a>
+                          )}
+                          {m.type === 'youtube' && (() => {
+                            const ytMatch = m.url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/)
+                            const videoId = ytMatch?.[1]
+                            return videoId ? (
+                              <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+                                <iframe
+                                  src={`https://www.youtube.com/embed/${videoId}`}
+                                  title={caption || 'YouTube video'}
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  className="absolute inset-0 w-full h-full"
+                                />
+                              </div>
+                            ) : (
+                              <a href={m.url} target="_blank" rel="noopener noreferrer"
+                                className="p-4 flex flex-col items-center justify-center h-36 bg-red-50 dark:bg-red-900/20">
+                                <Youtube className="h-7 w-7 text-red-500 mb-2" />
+                                <span className="text-xs text-gray-500 truncate max-w-full text-center">{m.url}</span>
+                              </a>
+                            )
+                          })()}
+                          {(m.type === 'other' || !['image','video','audio','document','youtube'].includes(m.type)) && (
+                            <a href={m.url} target="_blank" rel="noopener noreferrer"
+                              className="p-4 flex flex-col items-center justify-center h-36 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 transition-colors">
+                              <Link2 className="h-7 w-7 text-brand-blue mb-2" />
+                              <span className="text-xs text-gray-500 truncate max-w-full text-center break-all">{m.url}</span>
+                              <ExternalLink className="h-3 w-3 text-gray-400 mt-1" />
+                            </a>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

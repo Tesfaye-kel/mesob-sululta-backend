@@ -15,7 +15,7 @@ const badgeVariants = cva(
         notice: 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400',
         event: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
         holiday: 'bg-pink-100 text-pink-700 dark:bg-pink-900/20 dark:text-pink-400',
-        press: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+        document: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
         success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400',
         new: 'bg-brand-green text-white',
       },

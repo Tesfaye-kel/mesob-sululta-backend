@@ -23,6 +23,7 @@ export interface OrgRef {
 export interface WindowSummary {
   _id: string
   number: string
+  name?: { en?: string; am?: string; or?: string }
   floor: number
   serviceCount: number
   description: MultiLang
@@ -112,7 +113,23 @@ async function get<T>(path: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
+// ─── Floor ──────────────────────────────────────────────────────
+export interface FloorData {
+  _id: string
+  floorNumber: number
+  name: { en: string; am: string; om: string }
+  description: { en: string; am: string; om: string }
+}
+
+export interface WindowGroupedByFloorWithName {
+  floor: number
+  floorName: { en: string; am: string; or: string }
+  windows: WindowSummary[]
+}
+
+export const getFloors = () => get<FloorData[]>('/floors')
 export const getWindows = () => get<WindowSummary[]>('/windows')
+export const getWindowsGroupedByFloor = () => get<WindowGroupedByFloorWithName[]>('/windows/grouped-by-floor')
 export const getWindowsByOrganization = (orgId: string) => get<WindowGroupedByFloor[]>(`/windows/by-organization/${orgId}`)
 export const getWindowServices = (id: string) => get<Service[]>(`/windows/${id}/services`)
 
@@ -131,6 +148,12 @@ export const getContact = () => get<ContactContent>('/contact')
 export interface AboutStory {
   _id?: string
   paragraph: MultiLang
+  order: number
+}
+
+export interface AboutHighlight {
+  _id?: string
+  text: MultiLang
   order: number
 }
 
@@ -160,6 +183,7 @@ export interface AboutContent {
   history: MultiLang
   storyBadge: MultiLang
   storyTitle: MultiLang
+  highlightsTitle: MultiLang
   missionTitle: MultiLang
   visionTitle: MultiLang
   valuesTitle: MultiLang
@@ -167,6 +191,7 @@ export interface AboutContent {
   managerMessageTitle: MultiLang
   managerPhoto: string
   story: AboutStory[]
+  highlights: AboutHighlight[]
   values: AboutValue[]
   stats: AboutStat[]
   managerMessage: MultiLang

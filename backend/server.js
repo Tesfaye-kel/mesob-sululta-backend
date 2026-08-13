@@ -13,8 +13,6 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const apiRoutes = require('./routes');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
-const { seedOrganizations} = require('./seed');
-const { seedSiteContent } = require('./seedContent');
 
 const app = express();
 
@@ -85,10 +83,7 @@ async function connectWithRetry(retries = 5, delay = 3000) {
   }
 }
 
-connectWithRetry().then(async () => {
-  await seedOrganizations();
-  await seedSiteContent();
-
+connectWithRetry().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });

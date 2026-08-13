@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+
+  <!-- Circular clip -->
+  <defs>
+    <clipPath id="circle">
+      <circle cx="100" cy="100" r="98"/>
+    </clipPath>
+  </defs>
+
+  <!-- White circular background -->
+  <circle cx="100" cy="100" r="99" fill="white"/>
+  <circle cx="100" cy="100" r="98" fill="white" stroke="#ddd" stroke-width="1"/>
+
+  <!-- Everything clipped to circle -->
+  <g clip-path="url(#circle)">
+
+    <!-- ── OVAL EMBLEM (shifted up to fit with text below) ── -->
+    <!-- Black outer oval -->
+    <ellipse cx="100" cy="82" rx="90" ry="52" fill="#0a0a0a"/>
+    <!-- Red oval fill -->
+    <ellipse cx="100" cy="80" rx="87" ry="49" fill="#CC1111"/>
+    <!-- White inner eye-shape -->
+    <ellipse cx="100" cy="80" rx="52" ry="38" fill="white"/>
+
+    <!-- Tree trunk -->
+    <rect x="96" y="98" width="8" height="16" rx="1" fill="#1a6b1a"/>
+    <!-- Root left -->
+    <path d="M96 110 Q87 116 82 119" stroke="#1a6b1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- Root right -->
+    <path d="M104 110 Q113 116 118 119" stroke="#1a6b1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- Root center -->
+    <path d="M100 112 L100 120" stroke="#1a6b1a" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- Tree canopy -->
+    <ellipse cx="100" cy="76" rx="36" ry="24" fill="#1a6b1a"/>
+    <ellipse cx="74"  cy="85" rx="22" ry="16" fill="#1a6b1a"/>
+    <ellipse cx="126" cy="85" rx="22" ry="16" fill="#1a6b1a"/>
+    <ellipse cx="100" cy="56" rx="22" ry="18" fill="#1a6b1a"/>
+    <ellipse cx="87"  cy="80" rx="18" ry="14" fill="#1a6b1a"/>
+    <ellipse cx="113" cy="80" rx="18" ry="14" fill="#1a6b1a"/>
+
+    <!-- Hatching on canopy -->
+    <clipPath id="tree">
+      <ellipse cx="100" cy="76" rx="36" ry="24"/>
+      <ellipse cx="74"  cy="85" rx="22" ry="16"/>
+      <ellipse cx="126" cy="85" rx="22" ry="16"/>
+      <ellipse cx="100" cy="56" rx="22" ry="18"/>
+      <ellipse cx="87"  cy="80" rx="18" ry="14"/>
+      <ellipse cx="113" cy="80" rx="18" ry="14"/>
+    </clipPath>
+    <g clip-path="url(#tree)">
+      <line x1="64"  y1="34" x2="64"  y2="114" stroke="#2e8c2e" stroke-width="2.2"/>
+      <line x1="72"  y1="32" x2="72"  y2="116" stroke="#2e8c2e" stroke-width="2.2"/>
+      <line x1="80"  y1="31" x2="80"  y2="117" stroke="#2e8c2e" stroke-width="2.2"/>
+      <line x1="88"  y1="30" x2="88"  y2="118" stroke="#2e8c2e" stroke-width="2.2"/>
+      <line x1="96"  y1="30" x2="96"  y2="118" stroke="#2e8c2e" stroke-width="2.2"/>
+      <line x1="104" y1="30" x2="104" y2="118" stroke="#2e8c2e" stroke-width="2.2"/>
+      <line x1="112" y1="30" x2="112" y2="118" stroke="#2e8c2e" stroke-width="2.2"/>
+      <line x1="120" y1="31" x2="120" y2="117" stroke="#2e8c2e" stroke-width="2.2"/>
+      <line x1="128" y1="32" x2="128" y2="116" stroke="#2e8c2e" stroke-width="2.2"/>
+      <line x1="136" y1="34" x2="136" y2="114" stroke="#2e8c2e" stroke-width="2.2"/>
+    </g>
+
+    <!-- SHAGGAR text inside circle -->
+    <text
+      x="100"
+      y="168"
+      text-anchor="middle"
+      font-family="'Arial Black', Impact, 'Franklin Gothic Heavy', Arial, sans-serif"
+      font-weight="900"
+      font-size="34"
+      fill="#0a0a0a"
+      letter-spacing="-0.5"
+    >SHAGGAR</text>
+
+  </g>
+
+  <!-- Circle border -->
+  <circle cx="100" cy="100" r="98" fill="none" stroke="#ccc" stroke-width="1.5"/>
+
+</svg>

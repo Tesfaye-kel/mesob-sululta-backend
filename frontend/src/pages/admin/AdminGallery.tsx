@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Image, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Upload } from 'lucide-react'
-import { getGalleryItemsList, createGalleryItem, updateGalleryItem, deleteGalleryItem, type GalleryItem } from '@/api/admin'
+import { getGalleryItemsList, createGalleryItem, updateGalleryItem, deleteGalleryItem, uploadFile, type GalleryItem } from '@/api/admin'
 import { cn } from '@/lib/utils'
 import { getImageUrl } from '@/lib/images'
 
@@ -41,24 +41,11 @@ export default function AdminGallery() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     setUploading(true)
     setError('')
     try {
-      const token = localStorage.getItem('admin-token')
-      const formData = new FormData()
-      formData.append('image', file)
-
-      const res = await fetch(`${BASE}/gallery/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      })
-
-      if (!res.ok) throw new Error('Upload failed')
-
-      const data = await res.json()
-      setForm(f => ({ ...f, imageUrl: data.imageUrl }))
+      const data = await uploadFile('/gallery/upload', 'image', file)
+      setForm(f => ({ ...f, imageUrl: data.imageUrl || data.url || '' }))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload image')
     } finally {

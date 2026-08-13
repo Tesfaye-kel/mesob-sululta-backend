@@ -1,0 +1,200 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+
+  <!-- ══════════════════════════════════════════
+       RING: r=190, stroke=52
+       Gaps at top(0°), right(90°), bottom(180°), left(270°)
+       Each gap = 18°, each arc = 72°
+
+       Arc endpoints: x=250+190·sin(θ), y=250−190·cos(θ)
+
+       sin/cos values:
+         9°:  sin=0.1564, cos=0.9877  → x=279.7, y=62.3
+         81°: sin=0.9877, cos=0.1564  → x=437.7, y=220.3
+         99°: sin=0.9877, cos=-0.1564 → x=437.7, y=279.7
+        171°: sin=0.1564, cos=-0.9877 → x=279.7, y=437.7
+        189°: sin=-0.1564,cos=-0.9877 → x=220.3, y=437.7
+        261°: sin=-0.9877,cos=-0.1564 → x=62.3,  y=279.7
+        279°: sin=-0.9877,cos=0.1564  → x=62.3,  y=220.3
+        351°: sin=-0.1564,cos=0.9877  → x=220.3, y=62.3
+       ══════════════════════════════════════════ -->
+
+  <!-- Arc 1: top-right (9° → 81°) -->
+  <path d="M 279.7 62.3 A 190 190 0 0 1 437.7 220.3"
+        stroke="#F5B800" stroke-width="52" fill="none" stroke-linecap="butt"/>
+
+  <!-- Arc 2: bottom-right (99° → 171°) -->
+  <path d="M 437.7 279.7 A 190 190 0 0 1 279.7 437.7"
+        stroke="#F5B800" stroke-width="52" fill="none" stroke-linecap="butt"/>
+
+  <!-- Arc 3: bottom-left (189° → 261°) -->
+  <path d="M 220.3 437.7 A 190 190 0 0 1 62.3 279.7"
+        stroke="#F5B800" stroke-width="52" fill="none" stroke-linecap="butt"/>
+
+  <!-- Arc 4: top-left (279° → 351°) -->
+  <path d="M 62.3 220.3 A 190 190 0 0 1 220.3 62.3"
+        stroke="#F5B800" stroke-width="52" fill="none" stroke-linecap="butt"/>
+
+  <!-- ══════════════════════════════════════════
+       GREEK KEY ORNAMENTS
+       Each ornament sits in a gap, centered on the ring at r=190
+       Gap centers: Top(250,60), Right(440,250), Bottom(250,440), Left(60,250)
+       
+       The ornament = a row of 3 Greek meander cells
+       Each cell = nested squares open on one side (like 回)
+       Cell size = 30×30, row width = 96, height = 30
+       Stroke white, no fill
+       ══════════════════════════════════════════ -->
+
+  <!-- reusable meander cell definition: outer 26×26 square, inner lines forming spiral -->
+  <!-- 3-cell meander strip centered at origin, facing up -->
+
+  <!-- TOP gap ornament, centered at (250, 60) -->
+  <g transform="translate(250,60)" stroke="white" fill="none" stroke-width="3.5" stroke-linejoin="miter" stroke-linecap="square">
+    <!-- cell 1 (left) centered at (-33,0) -->
+    <g transform="translate(-33,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+    <!-- cell 2 (center) centered at (0,0) -->
+    <g transform="translate(0,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+    <!-- cell 3 (right) centered at (33,0) -->
+    <g transform="translate(33,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+  </g>
+
+  <!-- RIGHT gap ornament, centered at (440, 250), rotated 90° -->
+  <g transform="translate(440,250) rotate(90)" stroke="white" fill="none" stroke-width="3.5" stroke-linejoin="miter" stroke-linecap="square">
+    <g transform="translate(-33,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+    <g transform="translate(0,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+    <g transform="translate(33,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+  </g>
+
+  <!-- BOTTOM gap ornament, centered at (250, 440) -->
+  <g transform="translate(250,440)" stroke="white" fill="none" stroke-width="3.5" stroke-linejoin="miter" stroke-linecap="square">
+    <g transform="translate(-33,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+    <g transform="translate(0,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+    <g transform="translate(33,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+  </g>
+
+  <!-- LEFT gap ornament, centered at (60, 250), rotated -90° -->
+  <g transform="translate(60,250) rotate(-90)" stroke="white" fill="none" stroke-width="3.5" stroke-linejoin="miter" stroke-linecap="square">
+    <g transform="translate(-33,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+    <g transform="translate(0,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+    <g transform="translate(33,0)">
+      <rect x="-13" y="-13" width="26" height="26"/>
+      <polyline points="-13,0 -5,0 -5,-13"/>
+      <polyline points="0,13 0,5 13,5"/>
+    </g>
+  </g>
+
+  <!-- ══════════════════════════════════════════
+       CENTER CONTENT: fingerprint + circuit lines
+       All centered at (250,250)
+       ══════════════════════════════════════════ -->
+
+  <!-- Circuit/PCB radiating lines with dot terminals -->
+  <g stroke="white" stroke-width="4" fill="white" stroke-linecap="round">
+    <!-- Top straight up -->
+    <line x1="250" y1="178" x2="250" y2="135"/>
+    <circle cx="250" cy="132" r="6"/>
+
+    <!-- Top-right: diagonal then horizontal branch -->
+    <line x1="271" y1="184" x2="300" y2="155"/>
+    <line x1="300" y1="155" x2="335" y2="155"/>
+    <circle cx="338" cy="155" r="6"/>
+    <line x1="300" y1="155" x2="300" y2="130"/>
+    <circle cx="300" cy="127" r="6"/>
+
+    <!-- Right straight -->
+    <line x1="322" y1="250" x2="368" y2="250"/>
+    <circle cx="371" cy="250" r="6"/>
+
+    <!-- Bottom-right -->
+    <line x1="271" y1="316" x2="300" y2="345"/>
+    <line x1="300" y1="345" x2="335" y2="345"/>
+    <circle cx="338" cy="345" r="6"/>
+    <line x1="300" y1="345" x2="300" y2="370"/>
+    <circle cx="300" cy="373" r="6"/>
+
+    <!-- Bottom straight down -->
+    <line x1="250" y1="322" x2="250" y2="365"/>
+    <circle cx="250" cy="368" r="6"/>
+
+    <!-- Bottom-left -->
+    <line x1="229" y1="316" x2="200" y2="345"/>
+    <line x1="200" y1="345" x2="165" y2="345"/>
+    <circle cx="162" cy="345" r="6"/>
+    <line x1="200" y1="345" x2="200" y2="370"/>
+    <circle cx="200" cy="373" r="6"/>
+
+    <!-- Left straight -->
+    <line x1="178" y1="250" x2="132" y2="250"/>
+    <circle cx="129" cy="250" r="6"/>
+
+    <!-- Top-left -->
+    <line x1="229" y1="184" x2="200" y2="155"/>
+    <line x1="200" y1="155" x2="165" y2="155"/>
+    <circle cx="162" cy="155" r="6"/>
+    <line x1="200" y1="155" x2="200" y2="130"/>
+    <circle cx="200" cy="127" r="6"/>
+  </g>
+
+  <!-- Fingerprint arcs centered at (250,250), radius ~65 -->
+  <g fill="none" stroke="white" stroke-linecap="round">
+    <!-- arc 1 outermost r≈72 -->
+    <path d="M 195 295 Q 172 258 183 221 Q 196 172 250 166 Q 308 161 333 205 Q 358 248 345 292 Q 330 340 285 350" stroke-width="7.5"/>
+    <!-- arc 2 -->
+    <path d="M 203 289 Q 183 255 193 221 Q 205 178 250 173 Q 299 169 322 210 Q 345 251 333 291 Q 319 335 279 344" stroke-width="6.5"/>
+    <!-- arc 3 -->
+    <path d="M 211 283 Q 194 252 203 221 Q 214 184 250 180 Q 290 177 311 215 Q 332 253 321 289 Q 308 330 274 338" stroke-width="5.5"/>
+    <!-- arc 4 -->
+    <path d="M 219 277 Q 205 249 213 221 Q 222 191 250 187 Q 281 185 300 219 Q 319 252 309 284 Q 297 320 270 327" stroke-width="4.8"/>
+    <!-- arc 5 -->
+    <path d="M 228 270 Q 217 246 224 222 Q 231 199 250 195 Q 272 194 288 223 Q 305 252 296 278" stroke-width="4"/>
+    <!-- arc 6 innermost -->
+    <path d="M 237 263 Q 229 243 235 224 Q 241 207 250 204 Q 262 203 272 222 Q 282 242 278 261" stroke-width="3.2"/>
+    <!-- center dot -->
+    <circle cx="252" cy="250" r="10" fill="white" stroke="none"/>
+  </g>
+
+</svg>

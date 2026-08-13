@@ -1,28 +1,17 @@
-import { useEffect, useState } from 'react'
-import { AlertCircle } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
+import { AlertCircle, ArrowLeft, Loader2, X, CheckCircle2, Circle, Building2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import OfficeCard from '@/components/tajaajila/OfficeCard'
 import { CardGrid, CardItem } from '@/components/tajaajila/CardGrid'
-import { getOrganizations, type Organization } from '@/api/tajaajila'
+import { getOrganizations, getServiceRequirements, type Organization, type Service, type Requirement } from '@/api/tajaajila'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { cn } from '@/lib/utils'
 
-// ── Simple in-memory cache ──────────────────────────────────────────────────
-const cache = new Map<string, { data: Organization[]; timestamp: number }>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-function getCached(key: string) {
-  const entry = cache.get(key)
-  if (!entry) return null
-  if (Date.now() - entry.timestamp > CACHE_TTL) {
-    cache.delete(key)
-    return null
-  }
-  return entry.data
-}
 
-function setCache(key: string, data: Organization[]) {
-  cache.set(key, { data, timestamp: Date.now() })
-}
 
 // ── Skeleton card for loading state ──────────────────────────────────────────
 function SkeletonCard() {
@@ -54,36 +43,150 @@ function LoadingGrid() {
   )
 }
 
+// ── Office Services Modal — inline, no navigation ────────────────────────────
+function OrgModal({ id, name, language, onClose }: {
+  id: string
+  name: { en: string; am: string; or: string }
+  language: string
+  onClose: () => void
+}) {
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [expandedSvc, setExpandedSvc] = useState<string | null>(null)
+  const [reqs, setReqs] = useState<Record<string, Requirement[]>>({})
+  const [loadingReqs, setLoadingReqs] = useState<Record<string, boolean>>({})
+
+  const orgName = language === 'am' ? (name.am || name.or || name.en) : language === 'or' ? (name.or || name.en) : name.en
+  const reqLabel = language === 'or' ? 'Wantoota Barbaachisoo' : language === 'am' ? 'ያስፈልጋሉ ሰነዶች' : 'Requirements'
+  const hintLabel = language === 'or' ? 'Tajaajila kamiyyuu cuqaasuun wantoota barbaachisoo argadhaa' : language === 'am' ? 'ያስፈልጉ ሰነዶችን ለማየት ማናቸውንም አገልግሎት ጠቅ ያድርጉ' : 'Click any service to see requirements'
+  const noSvc = language === 'or' ? 'Tajaajilli hin jiru' : language === 'am' ? 'ምንም አገልግሎቶች የሉም' : 'No services available'
+  const noReq = language === 'or' ? 'Barbaachisoonni hin jiran' : language === 'am' ? 'ምንም መስፈርቶች የሉም' : 'No requirements listed'
+
+  useEffect(() => {
+    fetch(`${BASE}/services/by-organization/${id}`)
+      .then(r => r.json())
+      .then(d => setServices(Array.isArray(d) ? d : []))
+      .catch(() => setServices([]))
+      .finally(() => setLoading(false))
+  }, [id])
+
+  const handleSvc = useCallback(async (svcId: string) => {
+    if (expandedSvc === svcId) { setExpandedSvc(null); return }
+    setExpandedSvc(svcId)
+    if (reqs[svcId] !== undefined) return
+    setLoadingReqs(p => ({ ...p, [svcId]: true }))
+    try {
+      const data = await getServiceRequirements(svcId)
+      setReqs(p => ({ ...p, [svcId]: Array.isArray(data) ? data : [] }))
+    } catch { setReqs(p => ({ ...p, [svcId]: [] })) }
+    finally { setLoadingReqs(p => ({ ...p, [svcId]: false })) }
+  }, [expandedSvc, reqs])
+
+  const svcCount = language === 'or' ? `Tajaajila ${services.length}` : language === 'am' ? `${services.length} አገልግሎቶች` : `${services.length} Services`
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}>
+      <motion.div initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.94, y: 20 }} transition={{ duration: 0.22 }}
+        onClick={e => e.stopPropagation()}
+        className="w-full max-w-xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="bg-[#1a2744] dark:bg-gray-800 px-6 pt-5 pb-4 shrink-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl flex items-center justify-center bg-white/10 shrink-0">
+                <Building2 className="h-7 w-7 text-white" />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-0.5">
+                  {language === 'or' ? 'WAAJJIRA' : language === 'am' ? 'ቢሮ' : 'OFFICE'}
+                </p>
+                <h2 className="text-lg font-bold text-white">{orgName}</h2>
+                <span className="text-sm text-gray-300">{svcCount}</span>
+              </div>
+            </div>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-white/10 text-gray-300 hover:text-white shrink-0 mt-0.5">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <p className="mt-3 text-xs text-yellow-300/80 flex items-center gap-1.5"><span>👆</span>{hintLabel}</p>
+        </div>
+        {/* Services */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {loading && <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-brand-green" /></div>}
+          {!loading && services.length === 0 && <div className="text-center py-10 text-gray-400 text-sm">{noSvc}</div>}
+          {!loading && services.map(svc => {
+            const svcName = language === 'am' ? (svc.name.am || svc.name.or || svc.name.en) : language === 'or' ? (svc.name.or || svc.name.en) : svc.name.en
+            const isOpen = expandedSvc === svc._id
+            const rList = reqs[svc._id]
+            return (
+              <div key={svc._id} className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <button onClick={() => handleSvc(svc._id)}
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="h-7 w-7 rounded-full bg-[#1a2744] dark:bg-brand-green/20 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="h-4 w-4 text-white dark:text-brand-green" />
+                    </div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{svcName}</span>
+                  </div>
+                  <span className="text-xs font-semibold text-brand-green shrink-0">{reqLabel} →</span>
+                </button>
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+                      <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40">
+                        {loadingReqs[svc._id] ? <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-brand-green" /></div>
+                          : !rList || rList.length === 0 ? <p className="text-sm text-gray-400 py-3 text-center">{noReq}</p>
+                          : <div className="space-y-2 mt-2">
+                              {[...rList].sort((a, b) => a.sequenceNo - b.sequenceNo).map(req => {
+                                const txt = language === 'am' ? (req.requirementText.am || req.requirementText.or || req.requirementText.en) : language === 'or' ? (req.requirementText.or || req.requirementText.en) : req.requirementText.en
+                                return (
+                                  <div key={req._id} className={cn('flex items-start gap-3 p-3 rounded-lg', req.isMandatory ? 'bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/20' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700')}>
+                                    {req.isMandatory ? <CheckCircle2 className="h-4 w-4 text-brand-green mt-0.5 shrink-0" /> : <Circle className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />}
+                                    <p className="text-sm text-gray-800 dark:text-gray-200">{txt}</p>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                        }
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )
+          })}
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
 export default function TajaajilaaPage() {
   const { t, language } = useLanguage()
   const [orgs, setOrgs] = useState<Organization[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [orgModal, setOrgModal] = useState<{ id: string; name: { en: string; am: string; or: string } } | null>(null)
 
   // ── Localized strings ──────────────────────────────────────────────────────
-  const pageTitle    = language === 'am' ? 'አገልግሎቶች'      : language === 'or' ? 'Tajaajiloota'      : 'Services'
+  const pageTitle    = language === 'am' ? 'አገልግሎት በቢሮ'      : language === 'or' ? 'Tajaajila Waajjiraatiin'      : 'Service by Office'
   const pageSubtitle = language === 'am' ? 'አገልግሎቶችን በቢሮ/ድርጅት ያስሱ' : language === 'or' ? 'Tajaajiloota waajjiraan/orgaanizaashiniin barbaadi' : 'Browse services by office/organization'
   const officeHeading = language === 'am' ? 'አገልግሎቶች በቢሮ' : language === 'or' ? 'Tajaajiloota Waajjiraa'       : 'Services by Office'
   const loadingLabel  = language === 'am' ? 'በመጫን ላይ...'   : language === 'or' ? "Fe'aa jira..."                  : 'Loading...'
   const serverErrTitle = language === 'am' ? 'ሰርቨር ጋር ማገናኘት አልተቻለም' : language === 'or' ? 'Server waliin walqunnamuu hin dandeenye' : 'Could not connect to server'
   const serverErrDesc  = language === 'am' ? 'ሰርቨሩ ቆሟል። ሙሉ አስተዳዳሪ ሰርቨሩን ያስጀምር።' : language === 'or' ? 'Backend server dhaabatee jira. Bulchiinsi server jalqabsiisuu qaba.' : 'The backend server is stopped. An admin needs to start the server.'
   const retryLabel     = language === 'am' ? 'እንደገና ሞክር'   : language === 'or' ? "Irra deebi'ii yaalii"           : 'Try Again'
+  const backLabel      = language === 'or' ? 'Foddaadhaan Deebi\'i' : language === 'am' ? 'በፎዳ ወደ ሌሎቹ ተመለስ' : 'Back to Service by Window'
 
   const load = () => {
-    const cacheKey = 'organizations'
-    const cached = getCached(cacheKey)
-    if (cached) {
-      setOrgs(cached)
-      setLoading(false)
-      return
-    }
-
     setLoading(true)
     setError(null)
     getOrganizations()
       .then(data => {
         setOrgs(data)
-        setCache(cacheKey, data)
       })
       .catch(() => setError('error'))
       .finally(() => setLoading(false))
@@ -97,14 +200,21 @@ export default function TajaajilaaPage() {
   return (
     <div className="section-padding">
       <div className="container-gov">
+
+        {/* Back to Service by Window */}
+        <Link
+          to="/tajaajila"
+          className="inline-flex items-center gap-2 text-sm text-brand-green hover:text-brand-green/80 font-medium mb-6 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {backLabel}
+        </Link>
+
         <AnimatedHeading as="h1" className="text-center mb-2">{pageTitle}</AnimatedHeading>
         <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-8">{pageSubtitle}</p>
 
         {/* ── Office section ── */}
         <section aria-label={officeHeading}>
-          <AnimatedHeading as="h2" className="mb-6 text-center" delay={0}>
-            {officeHeading}
-          </AnimatedHeading>
 
           {/* Skeleton grid while loading */}
           {loading && <LoadingGrid />}
@@ -127,12 +237,14 @@ export default function TajaajilaaPage() {
 
           {!loading && !error && (
             <CardGrid>
-              {orgs.map(org => (
+              {orgs.map((org, idx) => (
                 <CardItem key={org._id}>
                   <OfficeCard
                     id={org._id}
                     name={org.name}
                     serviceCount={org.serviceCount}
+                    index={idx}
+                    onClick={() => setOrgModal({ id: org._id, name: org.name })}
                   />
                 </CardItem>
               ))}
@@ -141,12 +253,24 @@ export default function TajaajilaaPage() {
 
           {!loading && !error && orgs.length === 0 && (
             <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-              <p>{language === 'am' ? 'ምንም ድርጅቶች አልተገኙም' : language === 'or' ? 'Dhaabbattoonni hin argamne' : 'No organizations found'}</p>
+              <p>{language === 'am' ? 'ምንም ቢሮዎች አልተገኙም' : language === 'or' ? 'Waajjiraaleen hin argamne' : 'No offices found'}</p>
             </div>
           )}
         </section>
 
       </div>
+
+      {/* Inline office services modal — no navigation */}
+      <AnimatePresence>
+        {orgModal && (
+          <OrgModal
+            id={orgModal.id}
+            name={orgModal.name}
+            language={language}
+            onClose={() => setOrgModal(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

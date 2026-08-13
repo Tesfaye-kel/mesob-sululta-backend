@@ -251,9 +251,9 @@ const assignServicesToWindow = async (req, res, next) => {
 
     const toAdd = targetIds.filter(tid => !currentIds.includes(tid));
     if (toAdd.length > 0) {
-      await Service.updateMany({ _id: { $in: toAdd } }, { window: null });
+      // Assign window to all target services (no organization filter needed)
       await Service.updateMany(
-        { _id: { $in: toAdd }, organization: win.organization },
+        { _id: { $in: toAdd } },
         { window: id }
       );
     }

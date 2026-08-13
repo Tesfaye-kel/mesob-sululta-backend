@@ -1,9 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
-import { getOfficeIcon } from './officeIconMap'
-import { getOfficePhoto } from './officeImageMap'
+import { Building2 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
 
@@ -18,81 +14,58 @@ const OFFICE_COLORS: Record<number, { bg: string; text: string }> = {
 
 interface OfficeCardProps {
   id: string
-  /** Accept full multilingual name object */
   name: MultiLang
   serviceCount: number
   index?: number
+  onClick?: () => void
 }
 
-export default function OfficeCard({ id, name, serviceCount, index = 0 }: OfficeCardProps) {
+export default function OfficeCard({ id, name, serviceCount, index = 0, onClick }: OfficeCardProps) {
   const { language } = useLanguage()
-  const navigate = useNavigate()
-  const [isAnimating, setIsAnimating] = useState(false)
 
   const displayName =
     language === 'am' ? (name.am || name.or || name.en) :
-    language === 'or' ? (name.or || name.en) :
-                         name.en
+    language === 'or' ? (name.or || name.en) : name.en
 
   const countLabel =
     language === 'am' ? `አገልግሎት ${serviceCount}` :
     language === 'or' ? `Tajaajila ${serviceCount}` :
-                        `${serviceCount} service${serviceCount !== 1 ? 's' : ''}`
+    `${serviceCount} service${serviceCount !== 1 ? 's' : ''}`
 
-  const ctaLabel =
-    language === 'am' ? 'አገልግሎቶች' :
-    language === 'or' ? 'Tajaajiloota' :
-                        'View Services'
-
-  const Icon = getOfficeIcon(name.or || name.en)
-  const photo = getOfficePhoto(`${name.or} ${name.en} ${name.am}`)
-  const colorIndex = index % 4
-  const { bg, text } = OFFICE_COLORS[colorIndex]
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setIsAnimating(true)
-    setTimeout(() => {
-      navigate(`/tajaajila/office/${id}`)
-    }, 500)
-  }
+  const { bg, text } = OFFICE_COLORS[index % 4]
 
   return (
-    <motion.div
-      onClick={handleCardClick}
-      animate={isAnimating ? { scale: 1.5, opacity: 0 } : { scale: 1, opacity: 1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.97 }}
+      transition={{ duration: 0.18 }}
       className={cn(
-        'group block rounded-xl shadow-md hover:shadow-lg hover:-translate-y-2',
+        'w-full rounded-xl shadow-md hover:shadow-lg',
         'flex flex-col items-center justify-center gap-3 p-6',
-        'transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-green/50',
-        'h-48',
-        'cursor-pointer',
+        'transition-shadow duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50',
+        'h-48 cursor-pointer',
         bg
       )}
-      aria-label={`${displayName} — ${ctaLabel}`}
+      aria-label={`${displayName}`}
     >
-      {photo ? (
-        <div className="h-20 w-20 rounded-full overflow-hidden shrink-0 shadow-md border-2 border-white dark:border-gray-900 transition-transform duration-300 group-hover:scale-110">
-          <img
-            src={photo}
-            alt={displayName}
-            className="h-full w-full object-cover"
-            loading="lazy"
-          />
-        </div>
-      ) : (
-        <div className={cn('h-20 w-20 rounded-full flex items-center justify-center bg-white dark:bg-gray-900 shadow-md', text)}>
-          <Icon className="h-10 w-10" aria-hidden />
-        </div>
+      {/* Icon — same style as home page */}
+      <div className={cn('h-20 w-20 rounded-full flex items-center justify-center bg-white/70 dark:bg-black/20 shadow-md', text)}>
+        <Building2 className="h-10 w-10 opacity-80" aria-hidden />
+      </div>
+
+      {/* Service count */}
+      {serviceCount > 0 && (
+        <span className={cn('text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/70 dark:bg-black/20', text)}>
+          {countLabel}
+        </span>
       )}
 
-      <div className="text-center flex-1 flex flex-col justify-center">
-        <h3 className="font-bold text-gray-900 dark:text-white text-base leading-snug line-clamp-3">
-          {displayName}
-        </h3>
-      </div>
-    </motion.div>
+      {/* Name */}
+      <h3 className="font-bold text-gray-900 dark:text-white text-base leading-snug line-clamp-2 text-center">
+        {displayName}
+      </h3>
+    </motion.button>
   )
 }
-

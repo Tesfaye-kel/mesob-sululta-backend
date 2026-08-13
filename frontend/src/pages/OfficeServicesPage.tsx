@@ -67,23 +67,7 @@ const floorLabels = {
   or: ['Darbii 1ffaa', 'Darbii 2ffaa', 'Darbii 3ffaa', 'Darbii 4ffaa', 'Darbii 5ffaa'],
 }
 
-// ── Simple in-memory cache ──────────────────────────────────────────────────
-const cache = new Map<string, { data: { organization: Organization; windowGroups: WindowGroup[] }; timestamp: number }>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-
-function getCached(key: string) {
-  const entry = cache.get(key)
-  if (!entry) return null
-  if (Date.now() - entry.timestamp > CACHE_TTL) {
-    cache.delete(key)
-    return null
-  }
-  return entry.data
-}
-
-function setCache(key: string, data: { organization: Organization; windowGroups: WindowGroup[] }) {
-  cache.set(key, { data, timestamp: Date.now() })
-}
+// ── Simple in-memory cache removed — always fetch fresh data ────────────────
 
 // ── Skeleton Loader ──────────────────────────────────────────────────────────
 function SkeletonRow({ colorClass }: { colorClass: string }) {
@@ -122,6 +106,99 @@ function LoadingSkeleton() {
   )
 }
 
+// ── Flat Services List (for offices with no windows) ─────────────────────────
+function FlatServicesList({ officeId, language }: { officeId: string; language: string }) {
+  const [services, setServices] = useState<Service[]>([])
+  const [loading, setLoading] = useState(true)
+  const [expandedSvc, setExpandedSvc] = useState<string | null>(null)
+  const [requirements, setRequirements] = useState<Record<string, Requirement[]>>({})
+  const [loadingReqs, setLoadingReqs] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    fetch(`${BASE}/services/by-organization/${officeId}`)
+      .then(r => r.json())
+      .then(d => setServices(Array.isArray(d) ? d : []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [officeId])
+
+  const handleToggle = useCallback(async (svcId: string) => {
+    if (expandedSvc === svcId) { setExpandedSvc(null); return }
+    setExpandedSvc(svcId)
+    if (requirements[svcId] !== undefined) return
+    setLoadingReqs(p => ({ ...p, [svcId]: true }))
+    try {
+      const res = await fetch(`${BASE}/services/${svcId}/requirements`)
+      const data = await res.json()
+      setRequirements(p => ({ ...p, [svcId]: Array.isArray(data) ? data : [] }))
+    } catch { setRequirements(p => ({ ...p, [svcId]: [] })) }
+    finally { setLoadingReqs(p => ({ ...p, [svcId]: false })) }
+  }, [expandedSvc, requirements])
+
+  const reqLabel = language === 'or' ? 'Wantoota Barbaachisoo' : language === 'am' ? 'ያስፈልጋሉ ሰነዶች' : 'Requirements'
+  const noReqLabel = language === 'or' ? 'Barbaachisoonni hin jiran' : language === 'am' ? 'ምንም መስፈርቶች የሉም' : 'No requirements listed'
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-7 w-7 animate-spin text-brand-green" /></div>
+  if (services.length === 0) return (
+    <div className="text-center py-16 text-gray-500 dark:text-gray-400">
+      <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
+      <p>{language === 'or' ? 'Tajaajilli hin argamne' : language === 'am' ? 'ምንም አገልግሎቶች አልተገኙም' : 'No services found'}</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-2 mt-4">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 flex items-center gap-1.5">
+        <span>👆</span>
+        {language === 'or' ? 'Tajaajila kamiyyuu cuqaasuun wantoota barbaachisoo argadhaa' : language === 'am' ? 'ያስፈልጉ ሰነዶችን ለማየት ማናቸውንም አገልግሎት ጠቅ ያድርጉ' : 'Click any service to see requirements'}
+      </p>
+      {services.map(svc => {
+        const name = language === 'am' ? (svc.name.am || svc.name.or || svc.name.en) : language === 'or' ? (svc.name.or || svc.name.en) : svc.name.en
+        const isOpen = expandedSvc === svc._id
+        const reqs = requirements[svc._id]
+        return (
+          <div key={svc._id} className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <button
+              onClick={() => handleToggle(svc._id)}
+              className="w-full flex items-center justify-between px-4 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left gap-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-7 w-7 rounded-full bg-[#1a2744] dark:bg-brand-green/20 flex items-center justify-center shrink-0">
+                  <CheckCircle2 className="h-4 w-4 text-white dark:text-brand-green" />
+                </div>
+                <span className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{name}</span>
+              </div>
+              <span className="text-xs font-semibold text-brand-green shrink-0">{reqLabel} →</span>
+            </button>
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }} className="overflow-hidden">
+                  <div className="px-4 pb-4 pt-2 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40">
+                    {loadingReqs[svc._id] ? <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-brand-green" /></div>
+                      : !reqs || reqs.length === 0 ? <p className="text-sm text-gray-400 py-3 text-center">{noReqLabel}</p>
+                      : <div className="space-y-2 mt-2">
+                          {[...reqs].sort((a, b) => a.sequenceNo - b.sequenceNo).map(req => {
+                            const txt = language === 'am' ? (req.requirementText.am || req.requirementText.or || req.requirementText.en) : language === 'or' ? (req.requirementText.or || req.requirementText.en) : req.requirementText.en
+                            return (
+                              <div key={req._id} className={cn('flex items-start gap-3 p-3 rounded-lg', req.isMandatory ? 'bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/20' : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700')}>
+                                {req.isMandatory ? <CheckCircle2 className="h-4 w-4 text-brand-green mt-0.5 shrink-0" /> : <Circle className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />}
+                                <p className="text-sm text-gray-800 dark:text-gray-200">{txt}</p>
+                              </div>
+                            )
+                          })}
+                        </div>
+                    }
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Page Component ───────────────────────────────────────────────────────────
 export default function OfficeServicesPage() {
   const { officeId } = useParams<{ officeId: string }>()
@@ -152,16 +229,6 @@ export default function OfficeServicesPage() {
   useEffect(() => {
     if (!officeId) return
 
-    const cacheKey = `org-windows-${officeId}`
-    const cached = getCached(cacheKey)
-    if (cached) {
-      setOrg(cached.organization)
-      setWindowGroups(cached.windowGroups)
-      setLoading(false)
-      document.title = `${cached.organization.name?.or || cached.organization.name?.en} | MESOB`
-      return
-    }
-
     setLoading(true)
     setError(null)
     
@@ -173,7 +240,6 @@ export default function OfficeServicesPage() {
       .then((data: { organization: Organization; windowGroups: WindowGroup[] }) => {
         setOrg(data.organization)
         setWindowGroups(data.windowGroups)
-        setCache(cacheKey, data)
         document.title = `${data.organization.name?.or || data.organization.name?.en} | MESOB`
       })
       .catch(() => setError('error'))
@@ -200,7 +266,6 @@ export default function OfficeServicesPage() {
         .then(data => {
           const services = Array.isArray(data) ? data : []
           setWindowServices(prev => ({ ...prev, [targetWindowId]: services }))
-          setCache(`window-services-${targetWindowId}`, { windowGroups: services as unknown as WindowGroup[], organization: {} as Organization })
 
           // If there's a target service, expand it after services load
           if (targetServiceId && services.some((s: Service) => s._id === targetServiceId)) {
@@ -239,17 +304,10 @@ export default function OfficeServicesPage() {
     
     if (!windowServices[windowId]) {
       try {
-        const cacheKey = `window-services-${windowId}`
-        const cached = getCached(cacheKey)
-        if (cached) {
-          setWindowServices(prev => ({ ...prev, [windowId]: cached.windowGroups as unknown as Service[] }))
-          return
-        }
         const res = await fetch(`${BASE}/windows/${windowId}/services`)
         const data = await res.json()
         const services = Array.isArray(data) ? data : []
         setWindowServices(prev => ({ ...prev, [windowId]: services }))
-        setCache(cacheKey, { windowGroups: services as unknown as WindowGroup[], organization: {} as Organization })
       } catch {
         setWindowServices(prev => ({ ...prev, [windowId]: [] }))
       }
@@ -266,17 +324,10 @@ export default function OfficeServicesPage() {
     
     if (!serviceRequirements[serviceId]) {
       try {
-        const cacheKey = `service-requirements-${serviceId}`
-        const cached = getCached(cacheKey)
-        if (cached) {
-          setServiceRequirements(prev => ({ ...prev, [serviceId]: cached.windowGroups as unknown as Requirement[] }))
-          return
-        }
         const res = await fetch(`${BASE}/services/${serviceId}/requirements`)
         const data = await res.json()
         const reqs = Array.isArray(data) ? data : []
         setServiceRequirements(prev => ({ ...prev, [serviceId]: reqs }))
-        setCache(cacheKey, { windowGroups: reqs as unknown as WindowGroup[], organization: {} as Organization })
       } catch {
         setServiceRequirements(prev => ({ ...prev, [serviceId]: [] }))
       }
@@ -470,15 +521,7 @@ export default function OfficeServicesPage() {
               ))}
 
               {windowGroups.length === 0 && (
-                <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                  <Layers className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                  <p className="text-lg font-medium">
-                    {language === 'am' ? 'ምንም ፎዳዎች አልተገኙም' : language === 'or' ? 'Foddaawwan hin argamne' : 'No windows found'}
-                  </p>
-                  <p className="text-sm mt-1">
-                    {language === 'am' ? 'እባክዎ አስተዳዳሪው ፎዳዎችን እስኪፈጥር ይጠብቁ' : language === 'or' ? 'Maaloo bulchiinsi foddaawwan uumuu hanga isaatti eegaa' : 'Please wait for the admin to create windows'}
-                  </p>
-                </div>
+                <FlatServicesList officeId={officeId!} language={language} />
               )}
             </div>
           </>

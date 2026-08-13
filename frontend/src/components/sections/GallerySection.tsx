@@ -27,12 +27,15 @@ function handleImgError(e: React.SyntheticEvent<HTMLImageElement>) {
   if (fallback) (fallback as HTMLElement).style.display = 'flex'
 }
 
-export default function GallerySection() {
+export default function GallerySection({ compact = false }: { compact?: boolean }) {
   const { t, language } = useLanguage()
   const [items, setItems] = useState<GalleryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
+
+  // On homepage (compact=true) show max 8 photos; on full gallery page show all
+  const PREVIEW_LIMIT = 8
 
   const categoryLabels: Record<string, string> = {
     All: t.gallery.all,
@@ -45,14 +48,22 @@ export default function GallerySection() {
   useEffect(() => {
     fetch(`${BASE}/gallery`)
       .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) setItems(data)
-      })
+      .then(data => { if (Array.isArray(data)) setItems(data) })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
   const filtered = items.filter(g => activeCategory === 'All' || g.category.toLowerCase() === activeCategory.toLowerCase())
+  // Limit photos shown in compact/homepage mode
+  const displayed = compact ? filtered.slice(0, PREVIEW_LIMIT) : filtered
+  // Always show "View All" link in compact mode (even if <= 8 photos)
+  const showViewAll = compact && !loading
+
+  // "View All" label in selected language
+  const viewAllLabel =
+    language === 'or' ? 'Hunda Ilaaluu' :
+    language === 'am' ? 'ሁሉንም ሥዕሎች ተመልከት' :
+    'View All Photos'
 
   const getCaption = (item: GalleryItem) => {
     if (language === 'am' && item.caption?.am) return item.caption.am
@@ -69,10 +80,10 @@ export default function GallerySection() {
   return (
     <div className="container-gov">
       {/* Filter tabs */}
-      <div className="flex flex-wrap gap-2 mb-8 justify-center">
+      <div className="flex flex-wrap gap-2 mb-6 justify-center">
         {categories.map(cat => (
           <button key={cat} onClick={() => setActiveCategory(cat)}
-            className={cn('px-5 py-2 rounded-full text-sm font-medium transition-all duration-200',
+            className={cn('px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200',
               activeCategory === cat
                 ? 'bg-brand-green text-white shadow-gov'
                 : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-brand-green hover:text-brand-green')}>
@@ -86,59 +97,82 @@ export default function GallerySection() {
       {!loading && filtered.length === 0 && (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Image className="h-12 w-12 mx-auto mb-3 opacity-40" />
-          <p>No gallery images found</p>
+          <p>
+            {language === 'or' ? 'Suuraan hin argamne' : language === 'am' ? 'ምንም ፎቶ አልተገኘም' : 'No gallery images found'}
+          </p>
         </div>
       )}
 
-      <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Photo grid — smaller aspect ratio in compact mode */}
+      <motion.div layout className={cn(
+        'grid gap-3',
+        compact
+          ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+          : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+      )}>
         <AnimatePresence>
-          {filtered.map((item, i) => {
+          {displayed.map((item, i) => {
             const caption = getCaption(item)
-            const imgUrl = getImageUrl(item.imageUrl)
+            const imgUrl  = getImageUrl(item.imageUrl)
             return (
               <motion.div key={item._id} layout
-                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ delay: i * 0.04, duration: 0.3 }}
+                initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ delay: i * 0.03, duration: 0.25 }}
                 onClick={() => setLightbox(item)}
-                className="group relative rounded-xl overflow-hidden cursor-pointer aspect-square bg-gray-100 dark:bg-gray-700"
+                className={cn(
+                  'group relative overflow-hidden cursor-pointer bg-gray-100 dark:bg-gray-700',
+                  // Balanced aspect ratio - not too tall
+                  compact ? 'aspect-[4/3]' : 'aspect-[4/3]'
+                )}
                 role="button" tabIndex={0} aria-label={`View ${getTitle(item)}`}
                 onKeyDown={e => e.key === 'Enter' && setLightbox(item)}>
                 {imgUrl ? (
                   <div className="relative w-full h-full">
-                    <img
-                      src={imgUrl}
-                      alt={getTitle(item)}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      onError={handleImgError}
-                    />
+                    <img src={imgUrl} alt={getTitle(item)}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={handleImgError} loading="lazy" />
                     <div className="img-fallback absolute inset-0 bg-gradient-to-br from-brand-green to-brand-blue opacity-80" aria-hidden style={{ display: 'none' }} />
                   </div>
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-brand-green to-brand-blue opacity-80" aria-hidden />
                 )}
-                {/* Caption overlay - centered on image */}
                 {caption && (
-                  <div className="absolute inset-0 flex items-center justify-center p-4">
-                    <div className="bg-black/50 backdrop-blur-sm px-4 py-2.5 rounded-xl text-center max-w-[90%] opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-100 scale-95">
-                      <p className="text-white text-sm font-medium leading-snug">{caption}</p>
+                  <div className="absolute inset-0 flex items-end p-2">
+                    <div className="bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg w-full opacity-0 group-hover:opacity-100 transition-all duration-300">
+                      <p className="text-white text-xs font-medium leading-snug line-clamp-2">{caption}</p>
                     </div>
                   </div>
                 )}
-                {/* Category badge */}
                 <div className="absolute top-2 left-2">
                   <span className="px-2 py-0.5 bg-black/40 text-white text-xs rounded-full backdrop-blur-sm">
-                    {categoryLabels[item.category.charAt(0).toUpperCase() + item.category.slice(1)] ?? item.category}
+                    {categoryLabels[item.category?.charAt(0).toUpperCase() + item.category?.slice(1)] ?? item.category}
                   </span>
                 </div>
-                {/* Hover zoom icon */}
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
-                  <ZoomIn className="h-8 w-8 text-white/70" aria-hidden />
+                  <ZoomIn className="h-6 w-6 text-white/80" aria-hidden />
                 </div>
               </motion.div>
             )
           })}
         </AnimatePresence>
       </motion.div>
+
+      {/* "View All" link — always shown in compact/homepage mode */}
+      {showViewAll && (
+        <div className="mt-8 text-center relative z-20 pointer-events-auto">
+          <a
+            href="/gallery"
+            className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-brand-green text-white text-sm font-semibold hover:bg-brand-green-dark hover:shadow-lg transition-all duration-200 cursor-pointer relative z-20"
+          >
+            {viewAllLabel}
+            {filtered.length > 0 && (
+              <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {filtered.length}
+              </span>
+            )}
+          </a>
+        </div>
+      )}
 
       {/* Lightbox */}
       <AnimatePresence>

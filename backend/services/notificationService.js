@@ -23,6 +23,7 @@ const sendEmailNotification = async ({ name, email, to, subject, message, html, 
       return { success: false, reason: 'smtp-not-configured' };
     }
 
+    // Force IPv4 (family=4) to avoid IPv6 ENETUNREACH, and set sane timeouts
     const transporter = nodemailer.createTransport({
       host:   process.env.SMTP_HOST,
       port:   Number(process.env.SMTP_PORT) || 587,
@@ -31,6 +32,13 @@ const sendEmailNotification = async ({ name, email, to, subject, message, html, 
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
       },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 20000,
+      // Prefer IPv4 over IPv6 (fixes ENETUNREACH on some networks)
+      tls: { rejectUnauthorized: false },
+      // Force IPv4 lookups
+      lookup: require('dns').lookup,
     });
 
     const mailOptions = {

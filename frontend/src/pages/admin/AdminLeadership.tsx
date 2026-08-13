@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Upload, Building2, Rocket } from 'lucide-react'
-import { getOrganizationContent, updateOrganizationContent, addOrgContentLeadership, updateOrgContentLeadership, deleteOrgContentLeadership, type OrganizationContent, type OrgContentLeadership } from '@/api/admin'
+import { getOrganizationContent, updateOrganizationContent, addOrgContentLeadership, updateOrgContentLeadership, deleteOrgContentLeadership, uploadFile, type OrganizationContent, type OrgContentLeadership } from '@/api/admin'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'

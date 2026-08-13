@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, HelpCircle, MessageSquareQuote,
-  Building2, Users, UserCircle, Settings, LogOut,
+  LayoutDashboard, HelpCircle,
+  Users, UserCircle, Settings, LogOut,
   ChevronLeft, Menu, X, Shield, Sun, Moon, Globe,
-  Info, Image, Phone, Wrench, MessageSquare, Crown, Newspaper, Share2,
+  Info, Image, Phone, Wrench, MessageSquare, Newspaper,
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -16,18 +16,14 @@ import { cn } from '@/lib/utils'
 const sidebarLinks = [
   { to: '/Admin/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
   { to: '/Admin/about', labelKey: 'about', icon: Info },
-  { to: '/Admin/leadership', labelKey: 'leadership', icon: Crown },
   { to: '/Admin/news', labelKey: 'news', icon: Newspaper },
   { to: '/Admin/services', labelKey: 'services', icon: Wrench },
-  { to: '/Admin/organizations', labelKey: 'organizations', icon: Building2 },
   { to: '/Admin/gallery', labelKey: 'gallery', icon: Image },
   { to: '/Admin/faqs', labelKey: 'faqs', icon: HelpCircle },
   { to: '/Admin/contact', labelKey: 'contact', icon: Phone },
   { to: '/Admin/contact-messages', labelKey: 'messages', icon: MessageSquare },
-  { to: '/Admin/testimonials', labelKey: 'testimonials', icon: MessageSquareQuote },
   { to: '/Admin/users', labelKey: 'users', icon: Users },
   { to: '/Admin/profile', labelKey: 'profile', icon: UserCircle },
-{ to: '/Admin/social-media', labelKey: 'socialMedia', icon: Share2 },
   { to: '/Admin/settings', labelKey: 'settings', icon: Settings },
 ]
 

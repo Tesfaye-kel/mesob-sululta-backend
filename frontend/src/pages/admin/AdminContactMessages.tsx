@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, Mail, Trash2, Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
+import { MessageSquare, Mail, Phone, Trash2, Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { getContactMessages, markContactMessageRead, deleteContactMessage, type ContactMessage } from '@/api/admin'
 import { cn } from '@/lib/utils'
 
@@ -150,6 +150,12 @@ export default function AdminContactMessages() {
                     <Mail className="h-4 w-4 text-gray-400" />
                     <a href={`mailto:${selected.email}`} className="text-brand-green hover:underline">{selected.email}</a>
                   </div>
+                  {selected.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <a href={`tel:${selected.phone.replace(/[^+\d]/g, '')}`} className="text-brand-green hover:underline">{selected.phone}</a>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <span className={cn('px-2 py-0.5 rounded text-xs font-medium',
                       selected.type === 'feedback' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700')}>

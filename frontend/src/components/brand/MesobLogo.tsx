@@ -3,14 +3,13 @@ import { motion } from 'framer-motion'
 interface MesobLogoProps {
   size?: number
   className?: string
-  /** When true the logo has a subtle continuous slow rotation. Default: true */
   animate?: boolean
 }
 
 export default function MesobLogo({ size = 48, className = '', animate = true }: MesobLogoProps) {
   const img = (
     <img
-      src="https://mesobcenter.et/Companies/Logo.png"
+      src="/mesob-logo-new.png"
       alt="MESOB Center Logo"
       width={size}
       height={size}
@@ -25,11 +24,7 @@ export default function MesobLogo({ size = 48, className = '', animate = true }:
   return (
     <motion.div
       animate={{ rotate: 360 }}
-      transition={{
-        duration: 30,       // very slow gentle spin — subtle and professional
-        repeat: Infinity,
-        ease: 'linear',
-      }}
+      transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
       style={{ display: 'inline-flex', willChange: 'transform' }}
       aria-hidden
     >

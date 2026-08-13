@@ -2,17 +2,18 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Newspaper, HelpCircle, Building2,
-  Users, MessageSquareQuote, Activity, Clock, ArrowUpRight,
+  Users, Activity, Clock, ArrowUpRight,
 } from 'lucide-react'
 import { getDashboardStats, type DashboardStats } from '@/api/admin'
 import { cn } from '@/lib/utils'
 
 const statCards = [
-  { key: 'organizations', label: 'Organizations', icon: Building2, color: 'blue' },
+  { key: 'organizations', label: 'Offices', icon: Building2, color: 'blue' },
   { key: 'services', label: 'Services', icon: Activity, color: 'green' },
+  { key: 'windows', label: 'Windows', icon: LayoutDashboard, color: 'rose' },
   { key: 'news', label: 'News', icon: Newspaper, color: 'purple' },
   { key: 'faqs', label: 'FAQs', icon: HelpCircle, color: 'amber' },
-  { key: 'testimonials', label: 'Testimonials', icon: MessageSquareQuote, color: 'rose' },
+  { key: 'unreadMessages', label: 'Unread Messages', icon: Clock, color: 'indigo' },
   { key: 'users', label: 'Users', icon: Users, color: 'indigo' },
 ]
 
@@ -22,6 +23,7 @@ const colorMap: Record<string, { bg: string; text: string; iconBg: string }> = {
   purple: { bg: 'bg-purple-50 dark:bg-purple-900/20', text: 'text-purple-600 dark:text-purple-400', iconBg: 'bg-purple-100 dark:bg-purple-900/40' },
   amber: { bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600 dark:text-amber-400', iconBg: 'bg-amber-100 dark:bg-amber-900/40' },
   rose: { bg: 'bg-rose-50 dark:bg-rose-900/20', text: 'text-rose-600 dark:text-rose-400', iconBg: 'bg-rose-100 dark:bg-rose-900/40' },
+  teal: { bg: 'bg-teal-50 dark:bg-teal-900/20', text: 'text-teal-600 dark:text-teal-400', iconBg: 'bg-teal-100 dark:bg-teal-900/40' },
   indigo: { bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600 dark:text-indigo-400', iconBg: 'bg-indigo-100 dark:bg-indigo-900/40' },
 }
 
@@ -144,7 +146,7 @@ export default function AdminDashboard() {
         <motion.div variants={item} className="lg:col-span-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
           <div className="flex items-center gap-3 mb-4">
             <Building2 className="h-5 w-5 text-blue-500" />
-            <h2 className="font-semibold text-gray-900 dark:text-white">Organizations</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white">Offices</h2>
           </div>
           <div className="space-y-3">
             {data.recent.organizations.length === 0 && (

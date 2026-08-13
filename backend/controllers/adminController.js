@@ -7,6 +7,7 @@ const Service = require('../models/Service');
 const Window = require('../models/Window');
 const About = require('../models/About');
 const Contact = require('../models/Contact');
+const ContactMessage = require('../models/ContactMessage');
 const Requirement = require('../models/Requirement');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -23,6 +24,7 @@ const getDashboardStats = async (req, res, next) => {
       faqCount,
       testimonialCount,
       contactCount,
+      unreadContactCount,
     ] = await Promise.all([
       User.countDocuments(),
       Organization.countDocuments(),
@@ -31,7 +33,8 @@ const getDashboardStats = async (req, res, next) => {
       News.countDocuments(),
       FAQ.countDocuments(),
       Testimonial.countDocuments(),
-      Contact.countDocuments(),
+      ContactMessage.countDocuments(),
+      ContactMessage.countDocuments({ isRead: false }),
     ]);
 
     const recentNews = await News.find()
@@ -60,6 +63,7 @@ const getDashboardStats = async (req, res, next) => {
         faqs: faqCount,
         testimonials: testimonialCount,
         contactSubmissions: contactCount,
+        unreadMessages: unreadContactCount,
       total: userCount + orgCount + serviceCount + windowCount + newsCount + faqCount + testimonialCount,
       },
       recent: {

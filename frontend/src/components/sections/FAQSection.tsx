@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import AnimatedSection from '@/components/common/AnimatedSection'
+import { saveCache, loadCache } from '@/lib/cache'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
@@ -37,16 +38,24 @@ export default function FAQSection({ compact = false, showHeader = true }: FAQSe
   const [isOffline, setIsOffline] = useState(false)
 
   useEffect(() => {
+    // Load cache immediately so FAQs show offline
+    const cached = loadCache<FAQData[]>('faqs')
+    if (cached && cached.length > 0) {
+      setItems(cached.slice(0, 6))
+      setLoading(false)
+    }
+
     fetch(`${BASE}/faqs`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
+          saveCache('faqs', data)
           setItems(data.slice(0, 6))
-        } else {
+        } else if (!cached) {
           setIsOffline(true)
         }
       })
-      .catch(() => { setIsOffline(true) })
+      .catch(() => { if (!cached) setIsOffline(true) })
       .finally(() => setLoading(false))
   }, [])
 

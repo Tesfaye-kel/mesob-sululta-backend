@@ -57,6 +57,7 @@ export default function FeedbackSection() {
   const submitAnother     = language === 'am' ? 'ሌላ አስተያየት ያስገቡ' : language === 'or' ? 'Yaada Biraa Galchi' : 'Submit Another Feedback'
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [hoveredStar, setHoveredStar] = useState(0)
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
@@ -68,11 +69,29 @@ export default function FeedbackSection() {
   const currentRating = watch('rating')
   const isAnonymous = watch('anonymous')
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: FormData) => {
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1500))
-    setLoading(false)
-    setSubmitted(true)
+    setError('')
+    try {
+      const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+      const res = await fetch(`${BASE}/contact-messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.anonymous ? 'Anonymous' : data.name || 'Anonymous',
+          email: data.anonymous ? '' : data.email || '',
+          subject: `Feedback: ${data.service} (${data.type})`,
+          message: `Type: ${data.type}\nService: ${data.service}\nRating: ${data.rating}/5\n\n${data.message}`,
+          type: 'feedback',
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to send feedback')
+      setSubmitted(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send feedback')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -155,6 +174,13 @@ export default function FeedbackSection() {
                 label={t.feedback.title}
                 placeholder={language === 'am' ? 'ልምድዎን ያጋሩ...' : language === 'or' ? "Muuxannoo kee qoodi..." : 'Please share your experience...'}
                 rows={5} error={errors.message?.message} {...register('message')} />
+
+              {error && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
 
               <Button type="submit" size="lg" className="w-full" loading={loading} leftIcon={<MessageSquare className="h-4 w-4" aria-hidden />}>
                 {t.feedback.submit}

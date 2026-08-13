@@ -7,7 +7,6 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useActiveRoute } from '@/contexts/ActiveRouteContext'
 import { cn } from '@/lib/utils'
-import MesobLogo from '@/components/brand/MesobLogo'
 import { getLatestNews } from '@/api/tajaajila'
 import type { Language } from '@/i18n/translations'
 import { HOME_ANCHORS, type HomeAnchorId } from '@/lib/anchors'
@@ -20,14 +19,14 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { key: 'home', path: '/', anchor: 'home' },
-  { key: 'about', path: '/about', anchor: 'about' },
-  { key: 'services', path: '/tajaajila', anchor: 'services' },
-  { key: 'organization', path: '/organization', anchor: 'organization' },
-{ key: 'news', path: '/news', anchor: 'news' },
-  { key: 'gallery', path: '/gallery', anchor: 'gallery' },
-  { key: 'faq', path: '/faq', anchor: 'faq' },
-  { key: 'contact', path: '/contact', anchor: 'contact' },
+  { key: 'home',     path: '/',        anchor: 'home'     },
+  { key: 'about',    path: '/about',   anchor: 'about'    },
+  { key: 'services', path: '/',        anchor: 'services' },
+  { key: 'offices',  path: '/',        anchor: 'services' },
+  { key: 'news',     path: '/news',    anchor: 'news'     },
+  { key: 'gallery',  path: '/gallery', anchor: 'gallery'  },
+  { key: 'faq',      path: '/faq',     anchor: 'faq'      },
+  { key: 'contact',  path: '/contact', anchor: 'contact'  },
 ]
 
 function USFlag({ size = 16 }: { size?: number }) {
@@ -98,7 +97,7 @@ interface NavbarProps {
 }
 
 const scrollableOnHomeKeys: NavItem['key'][] = [
-  'about', 'services', 'organization', 'news',
+  'about', 'services', 'news',
   'gallery', 'faq', 'contact',
 ]
 
@@ -180,7 +179,6 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
     if (isHome) {
       scrollToHomeSection(item.anchor)
     } else {
-      // Navigate to homepage with scroll-to-section state
       navigate('/', { state: { scrollTo: item.anchor }, replace: true })
     }
   }, [isHome, navigate])
@@ -209,13 +207,20 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
           animate={{ opacity: scrolled ? 1 : 0.92 }}
           transition={{ duration: 0.25, ease: 'easeInOut' }}
         >
-            <div className="container-gov grid grid-cols-[auto_1fr_auto] items-center h-16">
+            <div className="container-gov grid grid-cols-[auto_1fr_auto] items-center h-[72px]">
               <NavLink
                 to="/"
                 className="flex items-center gap-2 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg"
                 aria-label="MESOB Center Home"
               >
-                <MesobLogo size={32} />
+                <img
+                  src="/hero-icon.jpg"
+                  alt="MESOB Center Logo"
+                  width={43}
+                  height={43}
+                  className="rounded-full object-cover border-2 border-white shadow-lg"
+                  draggable={false}
+                />
                 <div className="hidden sm:block">
                   <p className="font-bold text-white text-xs leading-tight tracking-wide">{t.siteName}</p>
                   <p className="text-[9px] text-white/60 leading-tight">{t.siteTagline}</p>
@@ -283,7 +288,7 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                             role="option"
                             aria-selected={language === lang.code}
-                            onClick={() => { setLanguage(lang.code); setLangOpen(false); window.location.reload() }}
+                            onClick={() => { setLanguage(lang.code); setLangOpen(false) }}
                             className={cn(
                               'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-150',
                               language === lang.code

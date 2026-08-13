@@ -80,8 +80,6 @@ export default function Testimonials() {
           <span className="gov-badge bg-brand-green/10 text-brand-green dark:bg-brand-green/20 dark:text-brand-green-light mb-3">
             {t.common.testimonials}
           </span>
-          <h2 className="section-title text-center">{t.common.whatCitizensSay}</h2>
-          <p className="section-subtitle mx-auto text-center">{t.common.whatCitizensSaySubtitle}</p>
         </AnimatedSection>
 
         <div className="relative">

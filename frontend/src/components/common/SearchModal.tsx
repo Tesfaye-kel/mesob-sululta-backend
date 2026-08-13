@@ -1,19 +1,30 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, ArrowRight } from 'lucide-react'
+import { Search, X, ArrowRight, Loader2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { services } from '@/data/services'
-import { announcements } from '@/data/announcements'
 import { faqs } from '@/data/faqs'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { searchServices } from '@/api/tajaajila'
+
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 interface SearchModalProps {
   onClose: () => void
 }
 
+interface Result {
+  title: string
+  subtitle?: string
+  path: string
+  type: string
+}
+
 export default function SearchModal({ onClose }: SearchModalProps) {
-  const [query, setQuery] = useState('')
+  const [query, setQuery]       = useState('')
+  const [results, setResults]   = useState<Result[]>([])
+  const [searching, setSearching] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { language } = useLanguage()
 
   useEffect(() => {
@@ -23,22 +34,61 @@ export default function SearchModal({ onClose }: SearchModalProps) {
     return () => window.removeEventListener('keydown', handleEsc)
   }, [onClose])
 
-  const q = query.toLowerCase().trim()
+  // Debounced search across services (API) + FAQs (static) + news (API)
+  useEffect(() => {
+    const q = query.trim()
+    if (q.length < 2) { setResults([]); return }
 
-  const results = q.length < 2 ? [] : [
-    ...services
-      .filter(s => s.titleEn.toLowerCase().includes(q) || s.descriptionEn.toLowerCase().includes(q))
-      .slice(0, 3)
-      .map(s => ({ title: s.titleEn, path: '/services', type: 'Service' })),
-    ...announcements
-      .filter(a => a.titleEn.toLowerCase().includes(q))
-      .slice(0, 2)
-      .map(a => ({ title: a.titleEn, path: '/news', type: 'Announcement' })),
-    ...faqs
-      .filter(f => f.questionEn.toLowerCase().includes(q))
-      .slice(0, 2)
-      .map(f => ({ title: f.questionEn, path: '/faq', type: 'FAQ' })),
-  ]
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true)
+      try {
+        const combined: Result[] = []
+
+        // 1. Services from API
+        try {
+          const svcData = await searchServices(q)
+          svcData.slice(0, 3).forEach(svc => {
+            const name =
+              language === 'or' ? (svc.name.or || svc.name.en) :
+              language === 'am' ? (svc.name.am || svc.name.en) :
+              svc.name.en
+            combined.push({ title: name, path: '/tajaajila', type: 'Service' })
+          })
+        } catch {}
+
+        // 2. News from API
+        try {
+          const res = await fetch(`${BASE}/news?search=${encodeURIComponent(q)}&published=true&limit=3`)
+          const data = await res.json()
+          const newsList = Array.isArray(data) ? data : (data?.news || [])
+          newsList.slice(0, 2).forEach((n: any) => {
+            const title =
+              language === 'or' ? (n.title?.or || n.title?.en) :
+              language === 'am' ? (n.title?.am || n.title?.en) :
+              n.title?.en
+            combined.push({ title, path: `/news/${n._id}`, type: 'News' })
+          })
+        } catch {}
+
+        // 3. FAQs from static data
+        const ql = q.toLowerCase()
+        faqs
+          .filter(f =>
+            f.questionEn.toLowerCase().includes(ql) ||
+            f.answerEn.toLowerCase().includes(ql)
+          )
+          .slice(0, 2)
+          .forEach(f => combined.push({ title: f.questionEn, path: '/faq', type: 'FAQ' }))
+
+        setResults(combined)
+      } finally {
+        setSearching(false)
+      }
+    }, 300)
+  }, [query, language])
+
+  const q = query.trim()
 
   return (
     <motion.div
@@ -61,11 +111,18 @@ export default function SearchModal({ onClose }: SearchModalProps) {
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-          <Search className="h-5 w-5 text-gray-400 shrink-0" aria-hidden />
+          {searching
+            ? <Loader2 className="h-5 w-5 text-brand-green animate-spin shrink-0" aria-hidden />
+            : <Search className="h-5 w-5 text-gray-400 shrink-0" aria-hidden />
+          }
           <input
             ref={inputRef}
             type="text"
-            placeholder="Search services, FAQs, announcements..."
+            placeholder={
+              language === 'or' ? 'Tajaajila, oduu, gaaffilee barbaadi...' :
+              language === 'am' ? 'አገልግሎቶችን፣ ዜና፣ ጥያቄዎችን ፈልግ...' :
+              'Search services, news, FAQs...'
+            }
             value={query}
             onChange={e => setQuery(e.target.value)}
             className="flex-1 text-gray-900 dark:text-white bg-transparent outline-none text-base placeholder-gray-400"
@@ -85,7 +142,9 @@ export default function SearchModal({ onClose }: SearchModalProps) {
           {q.length < 2 ? (
             <div className="p-6 text-center">
               <p className="text-gray-500 dark:text-gray-400 text-sm">
-                Type at least 2 characters to search
+                {language === 'or' ? 'Barbaaduu jalqabuuf qubee 2 ol barreessi' :
+                 language === 'am' ? 'ለፍለጋ ቢያንስ 2 ፊደሎች ያስፈልጋሉ' :
+                 'Type at least 2 characters to search'}
               </p>
               <div className="mt-4 flex flex-wrap gap-2 justify-center">
                 {['National ID', 'Passport', 'Business', 'Working Hours'].map(s => (
@@ -99,9 +158,13 @@ export default function SearchModal({ onClose }: SearchModalProps) {
                 ))}
               </div>
             </div>
-          ) : results.length === 0 ? (
+          ) : results.length === 0 && !searching ? (
             <div className="p-8 text-center">
-              <p className="text-gray-500 dark:text-gray-400">No results found for "{query}"</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                {language === 'or' ? `"${query}" hin argamne` :
+                 language === 'am' ? `"${query}" አልተገኘም` :
+                 `No results found for "${query}"`}
+              </p>
             </div>
           ) : (
             <ul className="p-2">
@@ -113,10 +176,14 @@ export default function SearchModal({ onClose }: SearchModalProps) {
                     className="flex items-center justify-between px-4 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
                   >
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">{r.title}</p>
-                      <span className="text-xs text-brand-green dark:text-brand-green-light">{r.type}</span>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">{r.title}</p>
+                      <span className={`text-xs font-medium ${
+                        r.type === 'Service' ? 'text-brand-green' :
+                        r.type === 'News'    ? 'text-blue-500' :
+                        'text-amber-500'
+                      }`}>{r.type}</span>
                     </div>
-                    <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-brand-green transition-colors" />
+                    <ArrowRight className="h-4 w-4 text-gray-300 group-hover:text-brand-green transition-colors shrink-0" />
                   </Link>
                 </li>
               ))}

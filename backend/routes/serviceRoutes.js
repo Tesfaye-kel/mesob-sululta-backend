@@ -20,8 +20,6 @@ router.get('/', getAllServices);
 router.get('/search', searchServices);
 router.get('/by-organization/:organizationId', getServicesByOrganization);
 router.get('/by-window/:windowId', getServicesByWindow);
-
-// GET /api/services/:id/requirements  — public shortcut
 router.get('/:id/requirements', async (req, res, next) => {
   try {
     const requirements = await Requirement.find({ service: req.params.id })
@@ -31,7 +29,6 @@ router.get('/:id/requirements', async (req, res, next) => {
     next(err);
   }
 });
-
 router.get('/:id', getServiceById);
 
 router.post('/', authenticateJWT, requireAdmin, createService);

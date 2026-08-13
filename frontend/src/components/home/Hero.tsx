@@ -1,87 +1,54 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, Search, ChevronLeft, ChevronRight, Loader2, X, ArrowRight } from 'lucide-react'
+import { Star, Search, ChevronLeft, ChevronRight, Loader2, ArrowRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useActiveRoute } from '@/contexts/ActiveRouteContext'
 import { Badge } from '@/components/ui/Badge'
-import AnimatedCounter from './AnimatedCounter'
 import MesobLogo from '@/components/brand/MesobLogo'
 import { searchServices, Service } from '@/api/tajaajila'
-
-// ─── Photos from /public ──────────────────────────────────────────────────────
-const slides = [
-  {
-    src: '/photo_2026-07-03_10-14-43.jpg',
-    caption: 'Serving Citizens with Excellence',
-  },
-  {
-    src: '/photo_2026-07-03_10-15-02.jpg',
-    caption: 'Modern One-Stop Service Center',
-  },
-  {
-    src: '/photo_2026-07-03_10-15-08.jpg',
-    caption: 'Digital Government for Every Citizen',
-  },
-  {
-    src: '/photo_2026-07-03_10-15-14.jpg',
-    caption: 'Transparent & Efficient Services',
-  },
-  {
-    src: '/photo_2026-07-03_10-15-27.jpg',
-    caption: 'Community-Centered Government',
-  },
-  {
-    src: '/photo_2026-07-03_10-15-38.jpg',
-    caption: "Ethiopia's Digital Transformation",
-  },
-]
 
 // ─── Per-route background gradients ──────────────────────────────────────────
 const getRouteConfig = (t: ReturnType<typeof useLanguage>['t']) => ({
   '/': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.82) 0%,rgba(21,101,192,0.82) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.45) 0%,rgba(21,101,192,0.45) 100%)',
     heading: '', subheading: '', showSlideshow: true, showServiceGrid: false,
   },
   '/about': {
-    gradient: 'linear-gradient(135deg,rgba(13,71,161,0.88) 0%,rgba(26,107,60,0.88) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(13,71,161,0.96) 0%,rgba(26,107,60,0.96) 100%)',
     heading: t.about.title, subheading: t.about.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/services': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.88) 0%,rgba(13,71,161,0.88) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.96) 0%,rgba(13,71,161,0.96) 100%)',
     heading: t.services.title, subheading: t.services.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/tajaajila': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.88) 0%,rgba(13,71,161,0.88) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.96) 0%,rgba(13,71,161,0.96) 100%)',
     heading: t.nav.services, subheading: t.services.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/organization': {
-    gradient: 'linear-gradient(135deg,rgba(21,101,192,0.88) 0%,rgba(106,27,154,0.88) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(21,101,192,0.96) 0%,rgba(106,27,154,0.96) 100%)',
     heading: t.organization.title, subheading: t.organization.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/announcements': {
-    gradient: 'linear-gradient(135deg,rgba(230,81,0,0.88) 0%,rgba(21,101,192,0.88) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(230,81,0,0.97) 0%,rgba(21,101,192,0.97) 100%)',
     heading: t.news.title, subheading: t.news.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/gallery': {
-    gradient: 'linear-gradient(135deg,rgba(74,20,140,0.88) 0%,rgba(21,101,192,0.88) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(74,20,140,0.97) 0%,rgba(21,101,192,0.97) 100%)',
     heading: t.gallery.title, subheading: t.gallery.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/faq': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.88) 0%,rgba(0,131,143,0.88) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.97) 0%,rgba(0,131,143,0.97) 100%)',
     heading: t.faq.title, subheading: t.faq.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/contact': {
-    gradient: 'linear-gradient(135deg,rgba(183,28,28,0.88) 0%,rgba(21,101,192,0.88) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(183,28,28,0.97) 0%,rgba(21,101,192,0.97) 100%)',
     heading: t.contact.title, subheading: t.contact.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/feedback': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.88) 0%,rgba(183,28,28,0.88) 100%)',
+    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.97) 0%,rgba(183,28,28,0.97) 100%)',
     heading: t.feedback.title, subheading: t.feedback.subtitle, showSlideshow: false, showServiceGrid: false,
-  },
-  '/downloads': {
-    gradient: 'linear-gradient(135deg,rgba(21,101,192,0.88) 0%,rgba(0,131,143,0.88) 100%)',
-    heading: t.downloads.title, subheading: t.downloads.subtitle, showSlideshow: false, showServiceGrid: false,
   },
 })
 
@@ -97,9 +64,9 @@ const quickServices = [
 // ── Cinematic burst slide variants ────────────────────────────────────────────
 const slideVariants = {
   enter: {
-    opacity: 0,
-    scale: 1.08,
-    filter: 'brightness(1.35) blur(6px)',
+    opacity: 0.35,
+    scale: 1.04,
+    filter: 'brightness(0.8) blur(3px)',
   },
   center: {
     opacity: 1,
@@ -107,9 +74,9 @@ const slideVariants = {
     filter: 'brightness(1) blur(0px)',
   },
   exit: {
-    opacity: 0,
-    scale: 1.18,
-    filter: 'brightness(1.6) blur(4px)',
+    opacity: 0.25,
+    scale: 1.08,
+    filter: 'brightness(0.65) blur(5px)',
   },
 }
 
@@ -257,16 +224,18 @@ export default function Hero() {
   const handleSelectService = useCallback((service: Service) => {
     setShowDropdown(false)
     setQuery('')
-    const orgId = service.organization?._id
     const windowId = service.window?._id
-    const serviceId = service._id
-    if (orgId && windowId) {
-      navigate(`/tajaajila/office/${orgId}?window=${windowId}&service=${serviceId}`)
-    } else if (orgId) {
-      navigate(`/tajaajila/office/${orgId}`)
-    } else {
-      navigate(`/services?q=${encodeURIComponent(getLocalizedName(service))}`)
-    }
+    const orgId = typeof service.organization === 'object' && service.organization
+      ? String((service.organization as any)._id || '')
+      : typeof service.organization === 'string' ? service.organization : ''
+    // Navigate home (cards live on the home page) and auto-open the correct card
+    navigate('/', {
+      state: {
+        openWindowId: windowId || undefined,
+        openOrgId: orgId || undefined,
+        openServiceId: service._id,
+      },
+    })
   }, [navigate, language])
 
   const getLocalizedName = (service: Service): string => {
@@ -357,7 +326,7 @@ export default function Hero() {
       {/* ── Layer 3: subtle vignette ─────────────────────────────── */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.45) 100%)' }}
+        style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)' }}
         aria-hidden
       />
 

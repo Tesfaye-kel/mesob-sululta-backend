@@ -1,13 +1,21 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Megaphone, Plus, Search, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Upload, Image as ImageIcon, Video, Music, FileText } from 'lucide-react'
+import {
+  Megaphone, Plus, Search, Edit3, Trash2, X, Loader2, AlertCircle,
+  CheckCircle, Upload, Image as ImageIcon, Video, Music, FileText,
+  Newspaper, Share2, Link as LinkIcon, FolderOpen,
+} from 'lucide-react'
 import type { NewsMedia } from '@/api/admin'
-import { getNewsList, createNews, updateNews, deleteNews, type NewsItem } from '@/api/admin'
+import {
+  getNewsList, createNews, updateNews, deleteNews, type NewsItem,
+  getSocialMediaList, createSocialMedia, updateSocialMedia, deleteSocialMedia,
+  type SocialMediaPlatform,
+} from '@/api/admin'
 import { cn } from '@/lib/utils'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-const categories = ['news', 'notice', 'event', 'holiday', 'press', 'update']
+const categories = ['news', 'notice', 'event', 'holiday', 'document', 'update']
 
 const emptyForm = {
   title: { en: '', am: '', or: '' },
@@ -21,7 +29,222 @@ const emptyForm = {
   tags: [] as string[],
 }
 
-export default function AdminNews() {
+// ── Social Media Tab ─────────────────────────────────────────────────────────
+const emptySMForm = {
+  platform: '',
+  icon: '',
+  url: '',
+  displayOrder: 0,
+  isActive: true,
+  openInNewTab: true,
+}
+
+const PLATFORM_PRESETS = [
+  { name: 'Facebook',  icon: 'Facebook',  placeholder: 'https://facebook.com/...' },
+  { name: 'X (Twitter)', icon: 'Twitter', placeholder: 'https://x.com/...' },
+  { name: 'Instagram', icon: 'Instagram', placeholder: 'https://instagram.com/...' },
+  { name: 'LinkedIn',  icon: 'Linkedin',  placeholder: 'https://linkedin.com/...' },
+  { name: 'Telegram',  icon: 'Send',      placeholder: 'https://t.me/...' },
+  { name: 'YouTube',   icon: 'Youtube',   placeholder: 'https://youtube.com/...' },
+  { name: 'TikTok',    icon: 'TikTok',    placeholder: 'https://tiktok.com/...' },
+  { name: 'WhatsApp',  icon: 'MessageCircle', placeholder: 'https://wa.me/...' },
+]
+
+function SocialMediaTab() {
+  const [items, setItems] = useState<SocialMediaPlatform[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<SocialMediaPlatform | null>(null)
+  const [form, setForm] = useState(emptySMForm)
+  const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+
+  const load = () => {
+    setLoading(true); setError('')
+    getSocialMediaList()
+      .then(data => setItems(data))
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false))
+  }
+  useEffect(() => { load() }, [])
+
+  const handleSave = async () => {
+    setSaving(true); setError('')
+    try {
+      if (editing) {
+        const updated = await updateSocialMedia(editing._id, form)
+        setItems(prev => prev.map(i => i._id === editing._id ? updated : i))
+        setSuccess('Platform updated!')
+      } else {
+        const created = await createSocialMedia(form)
+        setItems(prev => [...prev, created].sort((a, b) => a.displayOrder - b.displayOrder))
+        setSuccess('Platform added!')
+      }
+      setShowForm(false); setEditing(null); setForm(emptySMForm)
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed to save') }
+    finally { setSaving(false) }
+  }
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteSocialMedia(id)
+      setItems(prev => prev.filter(i => i._id !== id))
+      setSuccess('Platform deleted!'); setTimeout(() => setSuccess(''), 3000)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed') }
+    setConfirmDelete(null)
+  }
+
+  const toggleActive = async (item: SocialMediaPlatform) => {
+    try {
+      const updated = await updateSocialMedia(item._id, { isActive: !item.isActive })
+      setItems(prev => prev.map(i => i._id === item._id ? updated : i))
+    } catch {}
+  }
+
+  const applyPreset = (preset: typeof PLATFORM_PRESETS[0]) => {
+    setForm(f => ({ ...f, platform: preset.name, icon: preset.icon }))
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Social Media Platforms</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Manage social media icons displayed on news and other pages</p>
+        </div>
+        <button onClick={() => { setEditing(null); setForm(emptySMForm); setShowForm(true) }}
+          className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green/90">
+          <Plus className="h-4 w-4" /> Add Platform
+        </button>
+      </div>
+
+      <AnimatePresence>{success && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 text-sm"><CheckCircle className="h-4 w-4" />{success}</motion.div>}</AnimatePresence>
+      {error && <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 text-sm"><AlertCircle className="h-4 w-4" />{error}</div>}
+
+      {loading ? <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-brand-green" /></div> : (
+        <div className="space-y-2">
+          {items.length === 0 && <p className="text-center text-gray-400 py-8 text-sm">No social media platforms yet.</p>}
+          {items.sort((a, b) => a.displayOrder - b.displayOrder).map(item => (
+            <div key={item._id} className="flex items-center gap-4 p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+              <div className="w-9 h-9 rounded-lg bg-brand-green/10 flex items-center justify-center text-brand-green font-bold text-sm shrink-0">
+                {item.displayOrder}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 dark:text-white text-sm">{item.platform}</p>
+                <p className="text-xs text-gray-500 truncate">{item.url}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => toggleActive(item)}
+                  className={cn('px-2 py-0.5 rounded-full text-xs font-semibold transition-colors',
+                    item.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800')}
+                >
+                  {item.isActive ? 'Active' : 'Inactive'}
+                </button>
+                <button onClick={() => { setEditing(item); setForm({ platform: item.platform, icon: item.icon, url: item.url, displayOrder: item.displayOrder, isActive: item.isActive, openInNewTab: item.openInNewTab }); setShowForm(true) }}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600"><Edit3 className="h-3.5 w-3.5" /></button>
+                <button onClick={() => setConfirmDelete(item._id)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Form Modal */}
+      <AnimatePresence>{showForm && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowForm(false)}>
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }}
+            onClick={e => e.stopPropagation()}
+            className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? 'Edit Platform' : 'Add Platform'}</h3>
+              <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
+            </div>
+            <div className="space-y-4">
+              {/* Quick presets */}
+              {!editing && (
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">Quick Select</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PLATFORM_PRESETS.map(p => (
+                      <button key={p.name} onClick={() => applyPreset(p)}
+                        className={cn('px-2.5 py-1 text-xs rounded-full border transition-colors',
+                          form.platform === p.name ? 'bg-brand-green text-white border-brand-green' : 'border-gray-300 dark:border-gray-600 hover:border-brand-green hover:text-brand-green')}>
+                        {p.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Platform Name</label>
+                <input value={form.platform} onChange={e => setForm(f => ({ ...f, platform: e.target.value }))} placeholder="e.g. Facebook"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Icon Name (Lucide)</label>
+                <input value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} placeholder="e.g. Facebook, Twitter, Youtube"
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">URL</label>
+                <input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} placeholder="https://..."
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Display Order</label>
+                  <input type="number" min="0" value={form.displayOrder} onChange={e => setForm(f => ({ ...f, displayOrder: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+                </div>
+                <div className="flex items-end gap-3 pb-1">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} className="w-4 h-4 rounded text-brand-green" />
+                    <span className="text-sm">Active</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={form.openInNewTab} onChange={e => setForm(f => ({ ...f, openInNewTab: e.target.checked }))} className="w-4 h-4 rounded text-brand-green" />
+                    <span className="text-sm">New tab</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6 justify-end">
+              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
+              <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-brand-green text-white hover:bg-brand-green/90 disabled:opacity-50">
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}</AnimatePresence>
+
+      <AnimatePresence>{confirmDelete && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setConfirmDelete(null)}>
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}
+            className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl text-center">
+            <AlertCircle className="h-12 w-12 mx-auto mb-3 text-red-500" />
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Delete Platform?</h3>
+            <p className="text-sm text-gray-500 mb-5">This cannot be undone.</p>
+            <div className="flex justify-center gap-3">
+              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
+              <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700">Delete</button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}</AnimatePresence>
+    </div>
+  )
+}
+
+// ── News Tab (original AdminNews content, renamed to NewsTab) ────────────────
+function NewsTab() {
   const [items, setItems] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -34,7 +257,9 @@ export default function AdminNews() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [tagInput, setTagInput] = useState('')
+  const [urlInput, setUrlInput] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const folderInputRef = useRef<HTMLInputElement>(null)
 
   const loadItems = () => {
     setLoading(true)
@@ -49,48 +274,78 @@ export default function AdminNews() {
   useEffect(() => { loadItems() }, [])
 
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
 
     setUploading(true)
     setError('')
     try {
       const token = localStorage.getItem('admin-token')
-      const formData = new FormData()
-      formData.append('media', file)
 
-      const res = await fetch(`${BASE}/news/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      })
-
-      if (!res.ok) throw new Error('Upload failed')
-
-      const data = await res.json()
-      
-      // Determine media type from file extension
-      const ext = file.name.split('.').pop()?.toLowerCase() || ''
-      let mediaType = 'image'
-      if (['mp4', 'webm', 'ogg'].includes(ext)) mediaType = 'video'
-      else if (['mp3', 'wav', 'aac'].includes(ext)) mediaType = 'audio'
-      else if (['pdf', 'doc', 'docx'].includes(ext)) mediaType = 'document'
-
-      // Add to form.media array
-      setForm(f => ({
-        ...f,
-        media: [...f.media, { type: mediaType as 'image' | 'video' | 'audio' | 'document' | 'other', url: data.url, caption: { en: '', am: '', or: '' } }],
-      }))
-      
-      // If no cover image yet, set it as cover
-      if (!form.coverImageUrl && mediaType === 'image') {
-        setForm(f => ({ ...f, coverImageUrl: data.url }))
+      // Use upload-multiple endpoint when more than one file, single otherwise
+      if (files.length === 1) {
+        const formData = new FormData()
+        formData.append('media', files[0])
+        const res = await fetch(`${BASE}/news/upload`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        })
+        if (!res.ok) throw new Error('Upload failed')
+        const data = await res.json()
+        const ext = files[0].name.split('.').pop()?.toLowerCase() || ''
+        let mediaType: NewsMedia['type'] = 'image'
+        if (['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(ext)) mediaType = 'video'
+        else if (['mp3', 'wav', 'aac', 'm4a'].includes(ext)) mediaType = 'audio'
+        else if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'].includes(ext)) mediaType = 'document'
+        setForm(f => ({
+          ...f,
+          media: [...f.media, { type: mediaType, url: data.url, caption: { en: '', am: '', or: '' } }],
+          coverImageUrl: f.coverImageUrl || (mediaType === 'image' ? data.url : f.coverImageUrl),
+        }))
+      } else {
+        const formData = new FormData()
+        files.forEach(file => formData.append('media', file))
+        const res = await fetch(`${BASE}/news/upload-multiple`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        })
+        if (!res.ok) throw new Error('Upload failed')
+        const data = await res.json()
+        const newItems: NewsMedia[] = (data.files || []).map((f: { url: string; mimeType?: string }) => {
+          const ext = f.url.split('.').pop()?.toLowerCase() || ''
+          let mediaType: NewsMedia['type'] = 'image'
+          if (['mp4', 'webm', 'ogg', 'mov', 'avi'].includes(ext)) mediaType = 'video'
+          else if (['mp3', 'wav', 'aac', 'm4a'].includes(ext)) mediaType = 'audio'
+          else if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'].includes(ext)) mediaType = 'document'
+          return { type: mediaType, url: f.url, caption: { en: '', am: '', or: '' } }
+        })
+        setForm(f => ({
+          ...f,
+          media: [...f.media, ...newItems],
+          coverImageUrl: f.coverImageUrl || (newItems.find(i => i.type === 'image')?.url ?? f.coverImageUrl),
+        }))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload media')
     } finally {
       setUploading(false)
+      // Reset file input so the same file can be selected again
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
+  }
+
+  const addUrlMedia = () => {
+    const url = urlInput.trim()
+    if (!url) return
+    const isYoutube = url.includes('youtube.com') || url.includes('youtu.be')
+    const mediaType: NewsMedia['type'] = isYoutube ? 'youtube' : 'other'
+    setForm(f => ({
+      ...f,
+      media: [...f.media, { type: mediaType, url, caption: { en: '', am: '', or: '' } }],
+    }))
+    setUrlInput('')
   }
 
   const handleSave = async () => {
@@ -235,7 +490,7 @@ export default function AdminNews() {
                     item.category === 'notice' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
                     item.category === 'event' && 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
                     item.category === 'holiday' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-                    item.category === 'press' && 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+                    item.category === 'document' && 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
                     item.category === 'update' && 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
                   )}>
                     {item.category}
@@ -333,22 +588,59 @@ export default function AdminNews() {
 
               {/* Media Gallery */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Media Gallery</label>
-                <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors w-fit">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Media Gallery</label>
+
+                {/* Multi-file upload */}
+                <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors w-fit mb-3">
                   <Upload className="h-4 w-4" />
-                  <span>{uploading ? 'Uploading...' : 'Add Media (Image/Video/Audio)'}</span>
-                  <input ref={fileInputRef} type="file" accept="image/*,video/*,audio/*" onChange={handleMediaUpload} className="hidden" disabled={uploading} />
+                  <span>{uploading ? 'Uploading...' : 'Add Files (select multiple at once)'}</span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*,video/*,audio/*,.pdf,.doc,.docx"
+                    onChange={handleMediaUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
                 </label>
+
+                {/* YouTube / external URL input */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="relative flex-1">
+                    <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="url"
+                      value={urlInput}
+                      onChange={e => setUrlInput(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addUrlMedia() } }}
+                      placeholder="Paste YouTube or any media URL..."
+                      className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addUrlMedia}
+                    disabled={!urlInput.trim()}
+                    className="px-3 py-2 text-sm bg-brand-green text-white rounded-lg hover:bg-brand-green/90 disabled:opacity-40 transition-colors"
+                  >
+                    Add URL
+                  </button>
+                </div>
+
+                {/* Media list */}
                 {form.media.length > 0 && (
-                  <div className="mt-2 space-y-2">
+                  <div className="space-y-2">
                     {form.media.map((m, i) => (
                       <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                        {m.type === 'image' && <ImageIcon className="h-5 w-5 text-blue-500 shrink-0" />}
-                        {m.type === 'video' && <Video className="h-5 w-5 text-purple-500 shrink-0" />}
-                        {m.type === 'audio' && <Music className="h-5 w-5 text-green-500 shrink-0" />}
-                        {m.type === 'document' && <FileText className="h-5 w-5 text-amber-500 shrink-0" />}
-                        <span className="text-xs text-gray-500 truncate flex-1">{m.url.split('/').pop()}</span>
-                        <button onClick={() => removeMedia(i)} className="p-1 text-gray-400 hover:text-red-500"><X className="h-3.5 w-3.5" /></button>
+                        {m.type === 'image'    && <ImageIcon className="h-5 w-5 text-blue-500 shrink-0" />}
+                        {m.type === 'video'    && <Video     className="h-5 w-5 text-purple-500 shrink-0" />}
+                        {m.type === 'audio'    && <Music     className="h-5 w-5 text-green-500 shrink-0" />}
+                        {m.type === 'document' && <FileText  className="h-5 w-5 text-amber-500 shrink-0" />}
+                        {m.type === 'youtube'  && <LinkIcon  className="h-5 w-5 text-red-500 shrink-0" />}
+                        {m.type === 'other'    && <LinkIcon  className="h-5 w-5 text-gray-500 shrink-0" />}
+                        <span className="text-xs text-gray-500 truncate flex-1">{m.url}</span>
+                        <button onClick={() => removeMedia(i)} className="p-1 text-gray-400 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
                       </div>
                     ))}
                   </div>
@@ -427,6 +719,38 @@ export default function AdminNews() {
           </motion.div>
         </motion.div>
       )}</AnimatePresence>
+    </div>
+  )
+}
+
+// ── AdminNews — tabbed wrapper ────────────────────────────────────────────────
+type TabKey = 'news' | 'social'
+
+export default function AdminNews() {
+  const [tab, setTab] = useState<TabKey>('news')
+
+  return (
+    <div>
+      {/* Tab bar */}
+      <div className="flex gap-1 mb-8 border-b border-gray-200 dark:border-gray-700">
+        <button onClick={() => setTab('news')}
+          className={cn('flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors',
+            tab === 'news' ? 'border-brand-green text-brand-green dark:text-green-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300')}>
+          <Newspaper className="h-4 w-4" /> News Posts
+        </button>
+        <button onClick={() => setTab('social')}
+          className={cn('flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors',
+            tab === 'social' ? 'border-brand-green text-brand-green dark:text-green-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300')}>
+          <Share2 className="h-4 w-4" /> Social Media
+        </button>
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div key={tab} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.15 }}>
+          {tab === 'news'   && <NewsTab />}
+          {tab === 'social' && <SocialMediaTab />}
+        </motion.div>
+      </AnimatePresence>
     </div>
   )
 }

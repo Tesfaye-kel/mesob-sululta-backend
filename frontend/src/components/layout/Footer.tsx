@@ -1,46 +1,66 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Phone, Mail, MapPin, Clock, ExternalLink, Facebook, Twitter, Youtube, Send } from 'lucide-react'
+import {
+  Phone, Mail, MapPin, Clock, ExternalLink,
+  Facebook, Twitter, Youtube, Send, Instagram,
+  Linkedin, Music2, MessageCircle,
+} from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
-import MesobLogo, { EthiopiaEmblem } from '@/components/brand/MesobLogo'
-import { getContact, type ContactContent } from '@/api/tajaajila'
+import { EthiopiaEmblem } from '@/components/brand/MesobLogo'
+import { getContact, getSocialMedia, type ContactContent, type SocialMediaPlatform } from '@/api/tajaajila'
+
+// Map icon string to Lucide component
+function SocialIcon({ icon, className }: { icon: string; className?: string }) {
+  const props = { className: className || 'h-4 w-4', 'aria-hidden': true as const }
+  const n = icon?.toLowerCase() || ''
+  if (n.includes('facebook'))  return <Facebook {...props} />
+  if (n.includes('twitter') || n === 'x') return <Twitter {...props} />
+  if (n.includes('youtube'))   return <Youtube {...props} />
+  if (n.includes('send') || n.includes('telegram')) return <Send {...props} />
+  if (n.includes('instagram'))  return <Instagram {...props} />
+  if (n.includes('linkedin'))   return <Linkedin {...props} />
+  if (n.includes('tiktok') || n.includes('music')) return <Music2 {...props} />
+  if (n.includes('whatsapp') || n.includes('messagecircle')) return <MessageCircle {...props} />
+  return <ExternalLink {...props} />
+}
 
 export default function Footer() {
   const { t, language } = useLanguage()
   const [contact, setContact] = useState<ContactContent | null>(null)
+  const [socialMedia, setSocialMedia] = useState<SocialMediaPlatform[]>([])
 
   useEffect(() => {
-    getContact()
-      .then(setContact)
-      .catch(() => {}) // silently fail, fallback to hardcoded defaults
+    getContact().then(setContact).catch(() => {})
+    getSocialMedia().then(data => setSocialMedia(Array.isArray(data) ? data : [])).catch(() => {})
   }, [])
 
   const quickLinks = [
-    { labelEn: 'Home',          labelAm: 'መነሻ',          labelOr: 'Mana',            path: '/' },
-    { labelEn: 'About Us',      labelAm: 'ስለ እኛ',         labelOr: "Waa'ee Keenya",   path: '/about' },
-    { labelEn: 'Organization',  labelAm: 'ድርጅት',          labelOr: 'Dhaabbata',       path: '/organization' },
-    { labelEn: 'News', labelAm: 'ዜና',     labelOr: 'Beeksisaalee',    path: '/news' },
-    { labelEn: 'Gallery',       labelAm: 'ጋለሪ',           labelOr: 'Galerii',         path: '/gallery' },
-    { labelEn: 'FAQ',           labelAm: 'ጥያቄዎች',        labelOr: 'Gaaffilee',       path: '/faq' },
-    { labelEn: 'Contact',       labelAm: 'ያናግሩን',         labelOr: 'Nu Qunnamaa',     path: '/contact' },
+    { labelEn: 'Home',     labelAm: 'መነሻ',    labelOr: 'Mana',           path: '/' },
+    { labelEn: 'About Us', labelAm: 'ስለ እኛ',   labelOr: "Waa'ee Keenya",  path: '/about' },
+    { labelEn: 'Services', labelAm: 'አገልግሎቶች', labelOr: 'Tajaajiloota',   path: '/tajaajila' },
+    { labelEn: 'Offices',  labelAm: 'ቢሮዎቻቸን',  labelOr: 'Wajjiraaleedhaan', path: '/tajaajila/office' },
+    { labelEn: 'News',     labelAm: 'ዜና',      labelOr: 'Oduu',           path: '/news' },
+    { labelEn: 'Gallery',  labelAm: 'ጋለሪ',     labelOr: 'Galerii',        path: '/gallery' },
+    { labelEn: 'FAQ',      labelAm: 'ጥያቄዎች',  labelOr: 'Gaaffilee',      path: '/faq' },
+    { labelEn: 'Contact',  labelAm: 'ያናግሩን',   labelOr: 'Nu Qunnamaa',    path: '/contact' },
   ]
 
   const serviceLinks = [
-    { labelEn: 'National ID',           labelAm: 'ብሔራዊ መታወቂያ',   labelOr: 'ID Biyyoolessa',     path: '/tajaajila' },
-    { labelEn: 'Passport Services',     labelAm: 'የፓስፖርት አገልግሎቶች', labelOr: 'Tajaajila Paasipoorti', path: '/tajaajila' },
-    { labelEn: 'Business Registration', labelAm: 'የንግድ ምዝገባ',      labelOr: 'Galmee Daldalaa',    path: '/tajaajila' },
-    { labelEn: 'TIN Registration',      labelAm: 'TIN ምዝገባ',       labelOr: 'Galmee TIN',         path: '/tajaajila' },
-    { labelEn: 'Civil Registration',    labelAm: 'የሲቪል ምዝገባ',      labelOr: 'Galmee Sivilii',     path: '/tajaajila' },
-    { labelEn: 'Digital Payments',      labelAm: 'ዲጂታል ክፍያዎች',    labelOr: 'Kaffaltii Dijitaalaa', path: '/tajaajila' },
+    { labelEn: 'National ID',           labelAm: 'ብሔራዊ መታወቂያ',      labelOr: 'ID Biyyoolessa',        path: '/tajaajila' },
+    { labelEn: 'Passport Services',     labelAm: 'የፓስፖርት አገልግሎቶች',   labelOr: 'Tajaajila Paasipoorti', path: '/tajaajila' },
+    { labelEn: 'Business Registration', labelAm: 'የንግድ ምዝገባ',          labelOr: 'Galmee Daldalaa',       path: '/tajaajila' },
+    { labelEn: 'TIN Registration',      labelAm: 'TIN ምዝገባ',            labelOr: 'Galmee TIN',            path: '/tajaajila' },
+    { labelEn: 'Civil Registration',    labelAm: 'የሲቪል ምዝገባ',          labelOr: 'Galmee Sivilii',        path: '/tajaajila' },
+    { labelEn: 'Digital Payments',      labelAm: 'ዲጂታል ክፍያዎች',        labelOr: 'Kaffaltii Dijitaalaa',  path: '/tajaajila' },
   ]
 
   const legalLinks = [
-    { labelEn: 'Privacy Policy', labelAm: 'የግላዊነት ፖሊሲ',    labelOr: 'Imaammata Dhuunfaa',  path: '/privacy' },
-    { labelEn: 'Terms of Use',   labelAm: 'የአጠቃቀም ውሎች',    labelOr: 'Hayyama Fayyadamuu',  path: '/terms' },
-    { labelEn: 'Accessibility',  labelAm: 'ተደራሽነት',         labelOr: 'Dhaqqabbii',          path: '/accessibility' },
-    { labelEn: 'FAQ',            labelAm: 'ጥያቄዎች',           labelOr: 'Gaaffilee',           path: '/faq' },
-    { labelEn: 'Feedback',       labelAm: 'አስተያየት',          labelOr: 'Yaada',               path: '/feedback' },
-    { labelEn: 'Contact',        labelAm: 'ያናግሩን',           labelOr: 'Nu Qunnamaa',         path: '/contact' },
+    { labelEn: 'Privacy Policy', labelAm: 'የግላዊነት ፖሊሲ', labelOr: 'Imaammata Dhuunfaa', path: '/privacy' },
+    { labelEn: 'Terms of Use',   labelAm: 'የአጠቃቀም ውሎች', labelOr: 'Hayyama Fayyadamuu', path: '/terms' },
+    { labelEn: 'Accessibility',  labelAm: 'ተደራሽነት',      labelOr: 'Dhaqqabbii',         path: '/accessibility' },
+    { labelEn: 'FAQ',            labelAm: 'ጥያቄዎች',        labelOr: 'Gaaffilee',          path: '/faq' },
+    { labelEn: 'Feedback',       labelAm: 'አስተያየት',       labelOr: 'Yaada',              path: '/feedback' },
+    { labelEn: 'Contact',        labelAm: 'ያናግሩን',        labelOr: 'Nu Qunnamaa',        path: '/contact' },
   ]
 
   const govPortalsLabel = language === 'am' ? 'የመንግሥት ፖርታሎች' : language === 'or' ? 'Poortaaloota Mootummaa' : 'Government Portals'
@@ -50,8 +70,13 @@ export default function Footer() {
     language === 'am' ? link.labelAm : language === 'or' ? link.labelOr : link.labelEn
 
   const address = contact?.address?.[language] || contact?.address?.en || ''
-  const phone = contact?.phone || '+251 11 111 0000'
-  const email = contact?.email || 'info@mesob-sululta.gov.et'
+  const phone   = contact?.phone  || '+251 11 111 0000'
+  const email   = contact?.email  || 'info@mesob-sululta.gov.et'
+
+  // Active social media platforms from DB, sorted by displayOrder
+  const activeSocial = socialMedia
+    .filter(s => s.isActive)
+    .sort((a, b) => a.displayOrder - b.displayOrder)
 
   return (
     <footer className="bg-gray-900 dark:bg-gray-950 text-gray-300" aria-label="Site footer">
@@ -63,7 +88,14 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <MesobLogo size={44} />
+              <img
+                src="/shaggar-logo.svg"
+                alt="SHAGGAR Logo"
+                width={48}
+                height={48}
+                style={{ width: 48, height: 48, objectFit: 'contain' }}
+                draggable={false}
+              />
               <div>
                 <p className="font-bold text-white text-base leading-tight">{t.siteName}</p>
                 <p className="text-xs text-gray-400 leading-tight">{t.siteTagline}</p>
@@ -73,7 +105,7 @@ export default function Footer() {
             <div className="space-y-2.5">
               <div className="flex items-start gap-2.5 text-sm">
                 <MapPin className="h-4 w-4 text-brand-gold mt-0.5 shrink-0" aria-hidden />
-                <span>{address || `${language === 'am' ? 'ዋና መንገድ፣ ሱሉልታ ከተማ፣ ኦሮሚያ ክልል' : language === 'or' ? 'Karaa Guddaa, Magaalaa Sululta, Oromiyaa' : 'Main Road, Sululta Town, Oromia Region'}`}</span>
+                <span>{address || (language === 'am' ? 'ዋና መንገድ፣ ሱሉልታ ከተማ፣ ኦሮሚያ ክልል' : language === 'or' ? 'Karaa Guddaa, Magaalaa Sululta, Oromiyaa' : 'Main Road, Sululta Town, Oromia Region')}</span>
               </div>
               <div className="flex items-center gap-2.5 text-sm">
                 <Phone className="h-4 w-4 text-brand-gold shrink-0" aria-hidden />
@@ -139,12 +171,13 @@ export default function Footer() {
             <h3 className="text-white font-bold text-sm uppercase tracking-wider mb-3">{govPortalsLabel}</h3>
             <ul className="space-y-2" role="list">
               {[
-                { label: 'PMO Ethiopia',      url: 'https://pmo.gov.et' },
+                { label: 'PMO Ethiopia',       url: 'https://pmo.gov.et' },
                 { label: 'National ID Portal', url: 'https://id.gov.et' },
                 { label: 'ENA News Agency',    url: 'https://ena.et' },
               ].map(link => (
                 <li key={link.url}>
-                  <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5">
+                  <a href={link.url} target="_blank" rel="noopener noreferrer"
+                    className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5">
                     <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
                     {link.label}
                   </a>
@@ -164,19 +197,25 @@ export default function Footer() {
                 <p>{t.footer.rights}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-500">{followUsLabel}</span>
-              {[
-                { Icon: Facebook, label: 'Facebook', href: 'https://facebook.com/mesobsululta' },
-                { Icon: Twitter,  label: 'Twitter/X', href: 'https://twitter.com/mesobsululta' },
-                { Icon: Youtube,  label: 'YouTube',   href: 'https://youtube.com/@mesobsululta' },
-                { Icon: Send,     label: 'Telegram',  href: 'https://t.me/mesobsululta' },
-              ].map(({ Icon, label, href }) => (
-                <a key={label} href={href} aria-label={label} className="p-2 rounded-lg bg-gray-800 hover:bg-brand-green text-gray-400 hover:text-white transition-all duration-200">
-                  <Icon className="h-4 w-4" aria-hidden />
-                </a>
-              ))}
-            </div>
+
+            {/* Social media — loaded dynamically from database */}
+            {activeSocial.length > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500">{followUsLabel}</span>
+                {activeSocial.map(s => (
+                  <a
+                    key={s._id}
+                    href={s.url}
+                    aria-label={s.platform}
+                    target={s.openInNewTab ? '_blank' : undefined}
+                    rel={s.openInNewTab ? 'noopener noreferrer' : undefined}
+                    className="p-2 rounded-lg bg-gray-800 hover:bg-brand-green text-gray-400 hover:text-white transition-all duration-200"
+                  >
+                    <SocialIcon icon={s.icon} />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

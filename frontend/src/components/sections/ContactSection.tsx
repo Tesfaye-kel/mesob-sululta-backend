@@ -13,6 +13,7 @@ import { getContact, type ContactContent } from '@/api/tajaajila'
 const schema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
+  phone: z.string().optional().or(z.literal('')),
   subject: z.string().min(5),
   message: z.string().min(20),
 })
@@ -99,6 +100,21 @@ export default function ContactSection({ compact = false, showHeader = true }: C
                 </div>
               </div>
             ))}
+
+            {/* Google Maps — Sululta */}
+            <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm mt-2">
+              <iframe
+                title="MESOB Sululta Branch Location"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15731.23!2d38.7699!3d9.1763!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x164b85f2d9b5e5a9%3A0x0!2sSululta%2C+Ethiopia!5e0!3m2!1sen!2set!4v1700000000000!5m2!1sen!2set"
+                width="100%"
+                height="260"
+                style={{ border: 0, display: 'block' }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                aria-label="Map showing Sululta, Oromia, Ethiopia"
+              />
+            </div>
           </div>
         </AnimatedSection>
 
@@ -117,6 +133,7 @@ export default function ContactSection({ compact = false, showHeader = true }: C
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
                 <Input label={t.contact.name} error={errors.name?.message} {...register('name')} />
                 <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
+                <Input label="Phone" type="tel" error={errors.phone?.message} {...register('phone')} />
                 <Input label={t.contact.subject} error={errors.subject?.message} {...register('subject')} />
                 <Textarea label={t.contact.message} rows={5} error={errors.message?.message} {...register('message')} />
                 <Button type="submit" size="lg" className="w-full" loading={loading} leftIcon={<Send className="h-4 w-4" />}>

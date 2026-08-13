@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Info, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Heart, Award, Eye, TrendingUp, Target, History, ChevronDown, Upload, Building2, MessageSquare, Image, Palette } from 'lucide-react'
-import { getAbout, updateAbout, addAboutStory, updateAboutStory, deleteAboutStory, addAboutValue, updateAboutValue, deleteAboutValue, addAboutStat, updateAboutStat, deleteAboutStat, type AboutContent, type AboutStory, type AboutValue, type AboutStat } from '@/api/admin'
+import { getAbout, updateAbout, uploadManagerPhoto, addAboutStory, updateAboutStory, deleteAboutStory, addAboutValue, updateAboutValue, deleteAboutValue, addAboutStat, updateAboutStat, deleteAboutStat, type AboutContent, type AboutStory, type AboutValue, type AboutStat } from '@/api/admin'
 import { getImageUrl } from '@/lib/images'
-
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const langs = ['en', 'am', 'or'] as const
 
@@ -196,20 +194,10 @@ export default function AdminAbout() {
   const handleManagerPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     setUploading(true)
+    setError('')
     try {
-      const token = localStorage.getItem('admin-token')
-      const formData = new FormData()
-      formData.append('photo', file)
-
-      const res = await fetch(`${BASE}/api/about/upload-manager-photo`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      })
-      if (!res.ok) throw new Error('Upload failed')
-      const data = await res.json()
+      const data = await uploadManagerPhoto(file)
       setManagerForm(prev => ({ ...prev, managerPhoto: data.imageUrl }))
       setSuccess('Photo uploaded!')
       setTimeout(() => setSuccess(''), 3000)
@@ -408,14 +396,22 @@ export default function AdminAbout() {
             {data?.story?.length === 0 && <p className="text-sm text-gray-400">No story paragraphs added yet.</p>}
             {data?.story?.map((story, idx) => (
               <motion.div key={story._id || idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                <span className="text-xs text-gray-400 w-6 shrink-0">#{story.order}</span>
-                <p className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{story.paragraph.en}</p>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => { setEditingStory(story); setStoryForm({ paragraph: { ...story.paragraph }, order: story.order }); setShowStoryForm(true) }}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600"><Edit3 className="h-3.5 w-3.5" /></button>
-                  <button onClick={() => story._id && setConfirmDelete({ type: 'story', id: story._id })}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
+                className="flex flex-col gap-2 p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-brand-green shrink-0">#{story.order}</span>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed line-clamp-2">{story.paragraph.en}</p>
+                </div>
+                <div className="flex items-center gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+                  <button
+                    onClick={() => { setEditingStory(story); setStoryForm({ paragraph: { ...story.paragraph }, order: story.order }); setShowStoryForm(true) }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
+                    <Edit3 className="h-3.5 w-3.5" /> Edit
+                  </button>
+                  <button
+                    onClick={() => story._id && setConfirmDelete({ type: 'story', id: story._id })}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                  </button>
                 </div>
               </motion.div>
             ))}
