@@ -1,7 +1,46 @@
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
+// ─── Storage keys (single source of truth) ─────────────────────
+export const ADMIN_TOKEN_KEY = 'admin-token'
+export const ADMIN_USER_KEY = 'admin-user'
+// Legacy key from an older implementation — cleaned up on logout
+const LEGACY_TOKEN_KEY = 'token'
+
+// ─── Safe localStorage helpers ─────────────────────────────────
+function safeGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSet(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // localStorage unavailable — fail silently
+  }
+}
+
+function safeRemove(key: string): void {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // localStorage unavailable — fail silently
+  }
+}
+
 function getToken(): string | null {
-  return localStorage.getItem('admin-token')
+  return safeGet(ADMIN_TOKEN_KEY)
+}
+
+// ─── Clean up all admin auth storage ───────────────────────────
+export function clearAdminAuthStorage(): void {
+  safeRemove(ADMIN_TOKEN_KEY)
+  safeRemove(ADMIN_USER_KEY)
+  // Remove legacy/duplicate key from older implementation
+  safeRemove(LEGACY_TOKEN_KEY)
 }
 
 async function authFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -14,8 +53,7 @@ async function authFetch<T>(path: string, options: RequestInit = {}): Promise<T>
 
   const res = await fetch(`${BASE}${path}`, { ...options, headers })
   if (res.status === 401) {
-    localStorage.removeItem('admin-token')
-    localStorage.removeItem('admin-user')
+    clearAdminAuthStorage()
     throw new Error('Unauthorized')
   }
   if (!res.ok) {
@@ -31,19 +69,25 @@ export const adminLogin = async (email: string, password: string) => {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   })
-  localStorage.setItem('admin-token', data.token)
-  localStorage.setItem('admin-user', JSON.stringify(data.user))
+  safeSet(ADMIN_TOKEN_KEY, data.token)
+  safeSet(ADMIN_USER_KEY, JSON.stringify(data.user))
   return data
 }
 
 export const adminLogout = () => {
-  localStorage.removeItem('admin-token')
-  localStorage.removeItem('admin-user')
+  clearAdminAuthStorage()
 }
 
 export const getStoredUser = () => {
-  const raw = localStorage.getItem('admin-user')
-  return raw ? JSON.parse(raw) : null
+  const raw = safeGet(ADMIN_USER_KEY)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw)
+  } catch {
+    // Corrupted/old-format data — clear it so it can't crash the app
+    clearAdminAuthStorage()
+    return null
+  }
 }
 
 export const isAuthenticated = () => !!getToken()
@@ -304,8 +348,7 @@ export const uploadFile = async (path: string, fieldName: string, file: File): P
     body: formData,
   })
   if (res.status === 401) {
-    localStorage.removeItem('admin-token')
-    localStorage.removeItem('admin-user')
+    clearAdminAuthStorage()
     throw new Error('Session expired — please log in again')
   }
   if (!res.ok) {

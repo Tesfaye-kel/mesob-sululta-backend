@@ -5,6 +5,7 @@ import { Loader2, AlertCircle, X, Layers, CheckCircle2, Circle, Building2, Searc
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getWindowsGroupedByFloor, getServiceRequirements, searchServices } from '@/api/tajaajila'
 import type { WindowGroupedByFloorWithName, WindowSummary, Service, Requirement } from '@/api/tajaajila'
+import { saveCache, loadCache } from '@/lib/cache'
 import { cn } from '@/lib/utils'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 
@@ -177,28 +178,45 @@ function WindowModal({ win, floorName, index, language, onClose, autoOpenService
     language === 'am' ? `${services.length} አገልግሎቶች` :
     `${services.length} Services`
 
-  // Fetch services when modal opens
+  // Fetch services when modal opens; keep last cached data if the network is down.
   useEffect(() => {
-    setLoadingSvc(true); setErrorSvc(false)
+    const cacheKey = `window_services_${win._id}`
+    const cached = loadCache<Service[]>(cacheKey)
+    if (cached && cached.length > 0) {
+      setServices(cached)
+      setLoadingSvc(false)
+    } else {
+      setLoadingSvc(true)
+    }
+    setErrorSvc(false)
+
     fetch(`${BASE}/windows/${win._id}/services`)
       .then(r => { if (!r.ok) throw new Error(); return r.json() })
       .then(async (data) => {
         const list: Service[] = Array.isArray(data) ? data : []
         setServices(list)
-        // If a service ID was passed (from search), auto-fetch its requirements
+        saveCache(cacheKey, list)
+
         if (autoOpenServiceId && list.find(s => s._id === autoOpenServiceId)) {
           setLoadingReqs(prev => ({ ...prev, [autoOpenServiceId]: true }))
           try {
             const reqs = await getServiceRequirements(autoOpenServiceId)
-            setRequirements(prev => ({ ...prev, [autoOpenServiceId]: Array.isArray(reqs) ? reqs : [] }))
+            const reqList = Array.isArray(reqs) ? reqs : []
+            setRequirements(prev => ({ ...prev, [autoOpenServiceId]: reqList }))
+            saveCache(`service_requirements_${autoOpenServiceId}`, reqList)
           } catch {
-            setRequirements(prev => ({ ...prev, [autoOpenServiceId]: [] }))
+            const lastReqs = loadCache<Requirement[]>(`service_requirements_${autoOpenServiceId}`) || []
+            setRequirements(prev => ({ ...prev, [autoOpenServiceId]: lastReqs }))
           } finally {
             setLoadingReqs(prev => ({ ...prev, [autoOpenServiceId]: false }))
           }
         }
       })
-      .catch(() => setErrorSvc(true))
+      .catch(() => {
+        const fallback = loadCache<Service[]>(cacheKey)
+        if (fallback) setServices(fallback)
+        else setErrorSvc(true)
+      })
       .finally(() => setLoadingSvc(false))
   }, [win._id])
 
@@ -209,9 +227,12 @@ function WindowModal({ win, floorName, index, language, onClose, autoOpenService
     setLoadingReqs(prev => ({ ...prev, [svcId]: true }))
     try {
       const data = await getServiceRequirements(svcId)
-      setRequirements(prev => ({ ...prev, [svcId]: Array.isArray(data) ? data : [] }))
+      const reqList = Array.isArray(data) ? data : []
+      setRequirements(prev => ({ ...prev, [svcId]: reqList }))
+      saveCache(`service_requirements_${svcId}`, reqList)
     } catch {
-      setRequirements(prev => ({ ...prev, [svcId]: [] }))
+      const fallback = loadCache<Requirement[]>(`service_requirements_${svcId}`) || []
+      setRequirements(prev => ({ ...prev, [svcId]: fallback }))
     } finally {
       setLoadingReqs(prev => ({ ...prev, [svcId]: false }))
     }
@@ -447,19 +468,35 @@ export default function ServiceByWindowPage() {
   const searchPh     = language === 'or' ? 'Tajaajila barbaadi...' : language === 'am' ? 'አገልግሎቶችን ፈልጉ...' : 'Search services...'
 
   const load = () => {
-    setLoading(true); setError(false)
+    const cached = loadCache<WindowGroupedByFloorWithName[]>('windows_grouped')
+    if (cached && cached.length > 0) {
+      const flat: typeof allWindows = []
+      for (const group of cached) {
+        for (const win of group.windows) {
+          flat.push({ win, floorName: group.floorName, floorNum: group.floor })
+        }
+      }
+      flat.sort((a, b) => Number(a.win.number) - Number(b.win.number))
+      setAllWindows(flat)
+      setLoading(false)
+    } else {
+      setLoading(true)
+    }
+
+    setError(false)
     getWindowsGroupedByFloor()
       .then(groups => {
+        const data = Array.isArray(groups) ? groups : []
         const flat: typeof allWindows = []
-        for (const group of (Array.isArray(groups) ? groups : [])) {
+        for (const group of data) {
           for (const win of group.windows) {
             flat.push({ win, floorName: group.floorName, floorNum: group.floor })
           }
         }
         flat.sort((a, b) => Number(a.win.number) - Number(b.win.number))
         setAllWindows(flat)
+        saveCache('windows_grouped', data)
 
-        // Auto-open a window if navigated here with openWindowId
         if (openWindowId) {
           const idx = flat.findIndex(f => f.win._id === openWindowId)
           if (idx !== -1) {
@@ -467,7 +504,9 @@ export default function ServiceByWindowPage() {
           }
         }
       })
-      .catch(() => setError(true))
+      .catch(() => {
+        if (!cached || cached.length === 0) setError(true)
+      })
       .finally(() => setLoading(false))
   }
 

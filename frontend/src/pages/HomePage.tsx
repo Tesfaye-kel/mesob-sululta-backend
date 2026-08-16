@@ -256,10 +256,18 @@ function WinModal({ win, floorName, index, language, onClose, autoOpenServiceId 
 
   useEffect(() => {
     setLoadingSvc(true)
+    // Show cached services instantly if available
+    const cached = loadCache<Service[]>(`win_services_${win._id}`)
+    if (cached && cached.length > 0) {
+      setServices(cached)
+      setLoadingSvc(false)
+    }
     fetch(`${BASE}/windows/${win._id}/services`)
+      .then(r => r.json())
       .then(async d => {
         const list: Service[] = Array.isArray(d) ? d : []
         setServices(list)
+        saveCache(`win_services_${win._id}`, list)
         // If a specific service was requested, fetch its requirements immediately
         if (autoOpenServiceId && list.find(s => s._id === autoOpenServiceId)) {
           setLoadingReqs(p => ({ ...p, [autoOpenServiceId]: true }))
@@ -273,7 +281,7 @@ function WinModal({ win, floorName, index, language, onClose, autoOpenServiceId 
           }
         }
       })
-      .catch(() => setServices([]))
+      .catch(() => {})
       .finally(() => setLoadingSvc(false))
   }, [win._id])
 
@@ -394,11 +402,18 @@ function OrgModal({ id, name, index, language, onClose, autoOpenServiceId }: { i
   const noReq = language === 'or' ? 'Barbaachisoonni hin jiran' : language === 'am' ? 'ምንም መስፈርቶች የሉም' : 'No requirements listed'
 
   useEffect(() => {
+    // Show cached services instantly if available
+    const cached = loadCache<Service[]>(`org_services_${id}`)
+    if (cached && cached.length > 0) {
+      setServices(cached)
+      setLoading(false)
+    }
     fetch(`${BASE}/services/by-organization/${id}`)
       .then(r => r.json())
       .then(async d => {
         const list: Service[] = Array.isArray(d) ? d : []
         setServices(list)
+        saveCache(`org_services_${id}`, list)
         // If a specific service was requested, fetch its requirements immediately
         if (autoOpenServiceId && list.find(s => s._id === autoOpenServiceId)) {
           setLoadingReqs(p => ({ ...p, [autoOpenServiceId]: true }))
@@ -412,7 +427,7 @@ function OrgModal({ id, name, index, language, onClose, autoOpenServiceId }: { i
           }
         }
       })
-      .catch(() => setServices([]))
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [id])
 
@@ -593,6 +608,36 @@ export default function HomePage() {
     .flatMap(g => g.windows.map(win => ({ win, floorName: g.floorName, floorNum: g.floor })))
     .sort((a, b) => Number(a.win.number) - Number(b.win.number))
 
+  // ── Pre-fetch all services in background for instant modal opening ──
+  const prefetchedRef = useRef(false)
+  useEffect(() => {
+    if (prefetchedRef.current) return
+    if (flat.length === 0 && orgs.length === 0) return
+    prefetchedRef.current = true
+    // Pre-fetch services for all windows
+    flat.forEach(({ win }) => {
+      if (loadCache<Service[]>(`win_services_${win._id}`)) return
+      fetch(`${BASE}/windows/${win._id}/services`)
+        .then(r => r.json())
+        .then(d => {
+          const list = Array.isArray(d) ? d : []
+          if (list.length > 0) saveCache(`win_services_${win._id}`, list)
+        })
+        .catch(() => {})
+    })
+    // Pre-fetch services for all organizations
+    orgs.forEach(org => {
+      if (loadCache<Service[]>(`org_services_${org._id}`)) return
+      fetch(`${BASE}/services/by-organization/${org._id}`)
+        .then(r => r.json())
+        .then(d => {
+          const list = Array.isArray(d) ? d : []
+          if (list.length > 0) saveCache(`org_services_${org._id}`, list)
+        })
+        .catch(() => {})
+    })
+  }, [flat, orgs])
+
   // ── Search state ──────────────────────────────────────────────
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Array<{ svc: Service; win: typeof flat[0] | null; org: typeof orgs[0] | null }>>([])
@@ -659,12 +704,12 @@ export default function HomePage() {
       <Hero />
 
       {/* About */}
-      <HomeSection id="about" title={t.about.title} subtitle={t.about.subtitle} bg="bg-white dark:bg-transparent">
+      <HomeSection id="about" title={t.about.title} subtitle={t.about.subtitle} bg="bg-transparent">
         <div className="section-padding pt-0"><AboutSection /></div>
       </HomeSection>
 
       {/* Services — 11 window cards, modal opens inline */}
-      <HomeSection id="services" title={svcTitle} subtitle={svcSubtitle} bg="bg-slate-50/60 dark:bg-gray-900/50">
+      <HomeSection id="services" title={svcTitle} subtitle={svcSubtitle} bg="bg-transparent">
         <div className="section-padding pt-0">
           <div className="container-gov">
 
@@ -865,19 +910,19 @@ export default function HomePage() {
       <WhyMesob />
 
       {/* News */}
-      <HomeSection id="news" title={t.news.title} subtitle={t.news.subtitle} bg="bg-slate-50/60 dark:bg-gray-900/30">
+      <HomeSection id="news" title={t.news.title} subtitle={t.news.subtitle} bg="bg-transparent">
         <div className="section-padding pt-0"><NewsSection compact showHeader={false} /></div>
       </HomeSection>
 
       {/* Gallery */}
-      <HomeSection id="gallery" title={t.gallery.title} subtitle={t.gallery.subtitle} bg="bg-slate-50/60 dark:bg-gray-900/30">
+      <HomeSection id="gallery" title={t.gallery.title} subtitle={t.gallery.subtitle} bg="bg-transparent">
         <div className="section-padding pt-0"><GallerySection compact /></div>
       </HomeSection>
 
       <Testimonials />
 
       {/* FAQ */}
-      <HomeSection id="faq" title={t.faq.title} subtitle={t.faq.subtitle} bg="bg-slate-50/60 dark:bg-gray-900/30">
+      <HomeSection id="faq" title={t.faq.title} subtitle={t.faq.subtitle} bg="bg-transparent">
         <div className="section-padding pt-0"><FAQSection compact showHeader={false} /></div>
       </HomeSection>
 
@@ -887,7 +932,7 @@ export default function HomePage() {
       </HomeSection>
 
       {/* Feedback */}
-      <HomeSection id="feedback" title={t.feedback.title} subtitle={t.feedback.subtitle} bg="bg-slate-50/60 dark:bg-gray-900/30">
+      <HomeSection id="feedback" title={t.feedback.title} subtitle={t.feedback.subtitle} bg="bg-transparent">
         <div className="section-padding pt-0"><FeedbackSection /></div>
       </HomeSection>
 

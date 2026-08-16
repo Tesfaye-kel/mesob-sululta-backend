@@ -12,15 +12,31 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const LANGUAGE_STORAGE_KEY = 'mesob-language'
 
+function safeGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSet(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // localStorage unavailable — fail silently
+  }
+}
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY)
-    return (stored as Language) || 'en'
+    const stored = safeGet(LANGUAGE_STORAGE_KEY)
+    return (stored === 'en' || stored === 'am' || stored === 'or') ? stored : 'en'
   })
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang)
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang)
+    safeSet(LANGUAGE_STORAGE_KEY, lang)
     document.documentElement.lang = lang === 'am' ? 'am' : lang === 'or' ? 'om' : 'en'
   }
 

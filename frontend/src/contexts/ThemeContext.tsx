@@ -12,11 +12,31 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 const THEME_STORAGE_KEY = 'mesob-theme'
 
+function safeGet(key: string): string | null {
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function safeSet(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value)
+  } catch {
+    // localStorage unavailable — fail silently
+  }
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null
-    if (stored) return stored
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    const stored = safeGet(THEME_STORAGE_KEY) as Theme | null
+    if (stored === 'light' || stored === 'dark') return stored
+    try {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    } catch {
+      return 'light'
+    }
   })
 
   useEffect(() => {
@@ -28,7 +48,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       root.classList.remove('dark')
       root.setAttribute('data-theme', 'light')
     }
-    localStorage.setItem(THEME_STORAGE_KEY, theme)
+    safeSet(THEME_STORAGE_KEY, theme)
   }, [theme])
 
   const toggleTheme = () => setTheme(t => t === 'light' ? 'dark' : 'light')

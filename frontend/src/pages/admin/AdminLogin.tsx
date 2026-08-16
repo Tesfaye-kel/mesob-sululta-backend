@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Navigate } from 'react-router-dom'
 import {
   Lock, Mail, AlertCircle, Eye, EyeOff,
   Loader2, KeyRound, CheckCircle2, ArrowLeft, Clock,
@@ -15,7 +15,7 @@ type Step = 'login' | 'forgot-email' | 'forgot-sent' | 'reset-password' | 'reset
 export default function AdminLogin() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { login, isLoggedIn } = useAdminAuth()
+  const { login, loading: authLoading, isLoggedIn } = useAdminAuth()
 
   // ── Detect reset token in URL (?resetToken=xxx) ────────────────────────────
   const urlToken = searchParams.get('resetToken') || ''
@@ -46,14 +46,7 @@ export default function AdminLogin() {
   const [rpLoading, setRpLoading]       = useState(false)
   const [rpError, setRpError]           = useState('')
 
-  // Redirect if already logged in
-  if (isLoggedIn) {
-    navigate('/Admin/dashboard', { replace: true })
-    return null
-  }
-
   // ── Countdown timer for lockout ────────────────────────────────────────────
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!lockedUntil) return
     const tick = () => {
@@ -70,6 +63,22 @@ export default function AdminLogin() {
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
   }, [lockedUntil])
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-brand-green" />
+          <p className="text-sm text-slate-300">Checking admin session...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Already authenticated — redirect to dashboard
+  if (isLoggedIn) {
+    return <Navigate to="/Admin/dashboard" replace />
+  }
 
   // ── Login submit ───────────────────────────────────────────────────────────
   const handleLogin = async (e: React.FormEvent) => {

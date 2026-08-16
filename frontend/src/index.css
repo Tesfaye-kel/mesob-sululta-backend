@@ -91,12 +91,22 @@
     overflow-x: hidden;
     max-width: 100vw;
     /* Smooth, subtle gradient background instead of flat white */
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 30%, #f1f5f9 65%, #eef2f7 100%);
+    background:
+      radial-gradient(ellipse at 15% 0%, rgba(26, 107, 60, 0.06) 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 10%, rgba(21, 101, 192, 0.06) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 50%, rgba(200, 150, 30, 0.04) 0%, transparent 50%),
+      linear-gradient(180deg, #ffffff 0%, #f8fafc 30%, #f1f5f9 65%, #eef2f7 100%);
     background-attachment: fixed;
+    transition: background-color 0.5s ease;
   }
   .dark body {
-    background: linear-gradient(180deg, #0b1b2e 0%, #0f1c2e 35%, #13253d 70%, #0f1524 100%);
+    background:
+      radial-gradient(ellipse at 15% 0%, rgba(46, 155, 95, 0.08) 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 10%, rgba(21, 101, 192, 0.08) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 50%, rgba(200, 150, 30, 0.05) 0%, transparent 50%),
+      linear-gradient(180deg, #0b1b2e 0%, #0f1c2e 35%, #13253d 70%, #0f1524 100%);
     background-attachment: fixed;
+    transition: background-color 0.5s ease;
   }
 
   /* Section subtitle */

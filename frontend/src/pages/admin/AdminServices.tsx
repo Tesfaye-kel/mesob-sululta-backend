@@ -648,16 +648,23 @@ function ServicesTab() {
   const [savingReq, setSavingReq] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<{ type: string; id: string } | null>(null)
 
+  const loadWindowsForOrg = async (organizationId?: string) => {
+    try {
+      const url = organizationId ? `${BASE}/windows?organization=${organizationId}` : `${BASE}/windows`
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${localStorage.getItem('admin-token')}` } })
+      const wdata = await res.json()
+      setWindows(Array.isArray(wdata) ? wdata : [])
+    } catch {
+      setWindows([])
+    }
+  }
+
   const loadAll = async () => {
     setLoading(true)
     try {
       const [orgData, svcData] = await Promise.all([getOrganizations(), getServicesAdmin()])
       setOrgs(orgData); setServices(svcData)
-      if (selectedOrg) {
-        const res = await fetch(`${BASE}/windows?organization=${selectedOrg}`, { headers: { Authorization: `Bearer ${localStorage.getItem('admin-token')}` } })
-        const wdata = await res.json()
-        setWindows(Array.isArray(wdata) ? wdata : [])
-      }
+      await loadWindowsForOrg(selectedOrg || undefined)
     } catch { setError('Failed to load data') } finally { setLoading(false) }
   }
 
@@ -826,8 +833,15 @@ function ServicesTab() {
               <LangFields label="Description" value={svcForm.description} onChange={v => setSvcForm(f => ({ ...f, description: v }))} />
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Office</label>
-                <select value={svcForm.organization} onChange={e => setSvcForm(f => ({ ...f, organization: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
+                <select
+                  value={svcForm.organization}
+                  onChange={async e => {
+                    const orgId = e.target.value
+                    setSvcForm(f => ({ ...f, organization: orgId, window: '' }))
+                    await loadWindowsForOrg(orgId || undefined)
+                  }}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+                >
                   <option value="">Select office...</option>
                   {orgs.map(o => <option key={o._id} value={o._id}>{o.name.en}</option>)}
                 </select>
@@ -835,8 +849,10 @@ function ServicesTab() {
               <div>
                 <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Window (optional)</label>
                 <select value={svcForm.window} onChange={e => setSvcForm(f => ({ ...f, window: e.target.value }))}
-                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
-                  <option value="">No window</option>
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+                  disabled={!svcForm.organization || windows.length === 0}
+                >
+                  <option value="">{!svcForm.organization ? 'Choose an office first' : windows.length === 0 ? 'No windows in this office' : 'No window'}</option>
                   {windows.map((w: any) => <option key={w._id} value={w._id}>Window {w.number} (Floor {w.floor})</option>)}
                 </select>
               </div>

@@ -42,6 +42,11 @@ const login = async (req, res, next) => {
     if (!isMatch)
       return res.status(401).json({ message: 'Invalid email or password' });
 
+    // Only admin users can access the admin panel
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied: admin role required' });
+    }
+
     res.json({
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
       token: generateToken(user),
