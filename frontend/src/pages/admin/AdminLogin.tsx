@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
@@ -16,6 +17,8 @@ export default function AdminLogin() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { login, loading: authLoading, isLoggedIn } = useAdminAuth()
+  const { t } = useLanguage()
+  const admin = t.admin
 
   // ── Detect reset token in URL (?resetToken=xxx) ────────────────────────────
   const urlToken = searchParams.get('resetToken') || ''
@@ -37,7 +40,6 @@ export default function AdminLogin() {
   const [fpEmail, setFpEmail]           = useState('')
   const [fpLoading, setFpLoading]       = useState(false)
   const [fpError, setFpError]           = useState('')
-  const [resetLink, setResetLink]       = useState('')
 
   // ── Reset password state ───────────────────────────────────────────────────
   const [rpToken, setRpToken]           = useState(urlToken)
@@ -69,7 +71,7 @@ export default function AdminLogin() {
       <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-brand-green" />
-          <p className="text-sm text-slate-300">Checking admin session...</p>
+          <p className="text-sm text-slate-300">{admin.checkingSession}</p>
         </div>
       </div>
     )
@@ -84,7 +86,7 @@ export default function AdminLogin() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (lockedUntil) return
-    if (!email || !password) { setError('Please enter email and password'); return }
+    if (!email || !password) { setError(admin.enterEmailPassword); return }
     setError(''); setLoading(true)
     try {
       await login(email, password)
@@ -115,10 +117,6 @@ export default function AdminLogin() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.message || 'Request failed')
-      // Capture the reset link returned by the backend (so it can be shown on screen
-      // if email delivery fails — e.g. when the network cannot reach Gmail SMTP)
-      setResetLink(data.resetLink || '')
-      // Always show "sent" screen regardless (prevents email enumeration)
       setStep('forgot-sent')
     } catch (err: any) {
       setFpError(err.message || 'Request failed. Please try again.')
@@ -171,7 +169,7 @@ export default function AdminLogin() {
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-green/10 dark:bg-brand-green/20 mb-4">
                     <Lock className="h-8 w-8 text-brand-green" />
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Admin Login</h1>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.adminLogin}</h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">MESOB Sululta Branch Management</p>
                 </div>
 
@@ -204,7 +202,7 @@ export default function AdminLogin() {
 
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t.common.emailLabel}</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input type="email" value={email} onChange={e => setEmail(e.target.value)}
@@ -214,11 +212,11 @@ export default function AdminLogin() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{admin.passwordLabel}</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input type={showPassword ? 'text' : 'password'} value={password}
-                        onChange={e => setPassword(e.target.value)} placeholder="Enter your password"
+                        onChange={e => setPassword(e.target.value)} placeholder={admin.enterPassword}
                         autoComplete="current-password" disabled={!!lockedUntil}
                         className="w-full pl-10 pr-12 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-green disabled:opacity-50 disabled:cursor-not-allowed" />
                       <button type="button" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}
@@ -231,7 +229,7 @@ export default function AdminLogin() {
                   <div className="text-right">
                     <button type="button" onClick={() => { setStep('forgot-email'); setError('') }}
                       className="text-xs text-brand-green hover:underline font-medium">
-                      Forgot password?
+                      {admin.forgotPassword}?
                     </button>
                   </div>
 
@@ -239,8 +237,8 @@ export default function AdminLogin() {
                     whileHover={!lockedUntil ? { scale: 1.01 } : {}} whileTap={!lockedUntil ? { scale: 0.99 } : {}}
                     className={cn('w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white bg-brand-green hover:bg-brand-green-dark focus:outline-none focus:ring-2 focus:ring-brand-green', (loading || !!lockedUntil) && 'opacity-60 cursor-not-allowed')}>
                     {loading
-                      ? <><Loader2 className="h-4 w-4 animate-spin" />Signing in...</>
-                      : <><Lock className="h-4 w-4" />Sign In</>}
+                      ? <><Loader2 className="h-4 w-4 animate-spin" />{admin.signingIn}</>
+                      : <><Lock className="h-4 w-4" />{admin.signIn}</>}
                   </motion.button>
                 </form>
 
@@ -257,7 +255,7 @@ export default function AdminLogin() {
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/20 mb-4">
                     <KeyRound className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Forgot Password</h1>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.forgotPassword}</h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
                     Enter your admin email. We'll send a reset link to that address.
                   </p>
@@ -271,7 +269,7 @@ export default function AdminLogin() {
 
                 <form onSubmit={handleForgotSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email Address</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t.common.emailAddress}</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input type="email" value={fpEmail} onChange={e => setFpEmail(e.target.value)}
@@ -283,13 +281,13 @@ export default function AdminLogin() {
                   <button type="submit" disabled={fpLoading}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-60">
                     {fpLoading
-                      ? <><Loader2 className="h-4 w-4 animate-spin" />Sending...</>
-                      : <><Mail className="h-4 w-4" />Send Reset Link</>}
+                      ? <><Loader2 className="h-4 w-4 animate-spin" />{admin.sending}</>
+                      : <><Mail className="h-4 w-4" />{admin.sendResetLink}</>}
                   </button>
 
                   <button type="button" onClick={() => { setStep('login'); setFpError(''); setFpEmail('') }}
                     className="w-full flex items-center justify-center gap-1.5 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                    <ArrowLeft className="h-4 w-4" /> Back to Login
+                    <ArrowLeft className="h-4 w-4" /> {admin.backToLogin}
                   </button>
                 </form>
               </motion.div>
@@ -302,7 +300,7 @@ export default function AdminLogin() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
                   <Mail className="h-8 w-8 text-brand-green" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Check Your Email</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{admin.checkEmail}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
                   If <span className="font-medium text-gray-700 dark:text-gray-300">{fpEmail}</span> is registered,
                   a password reset link has been sent to that address.
@@ -311,25 +309,9 @@ export default function AdminLogin() {
                   The link expires in 1 hour. Check your spam folder if you don't see it.
                 </p>
 
-                {/* Inline reset link — always shown so the user can reset even if
-                    the email is slow/delayed or Gmail SMTP is unreachable */}
-                {resetLink && (
-                  <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-left">
-                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2">
-                      Reset link (click to reset your password):
-                    </p>
-                    <a
-                      href={resetLink}
-                      className="text-sm text-brand-green font-semibold hover:underline break-all"
-                    >
-                      {resetLink}
-                    </a>
-                  </div>
-                )}
-
-                <button onClick={() => { setStep('login'); setFpEmail(''); setResetLink('') }}
+                <button onClick={() => { setStep('login'); setFpEmail('') }}
                   className="flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-lg font-semibold text-white bg-brand-green hover:bg-brand-green-dark">
-                  <ArrowLeft className="h-4 w-4" /> Back to Login
+                  <ArrowLeft className="h-4 w-4" /> {admin.backToLogin}
                 </button>
               </motion.div>
             )}
@@ -341,7 +323,7 @@ export default function AdminLogin() {
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-900/20 mb-4">
                     <KeyRound className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Set New Password</h1>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.setNewPassword}</h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Enter your new password below.</p>
                 </div>
 
@@ -353,11 +335,11 @@ export default function AdminLogin() {
 
                 <form onSubmit={handleResetSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">New Password</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{admin.newPasswordLabel}</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input type={rpShowPw ? 'text' : 'password'} value={rpNewPw}
-                        onChange={e => setRpNewPw(e.target.value)} placeholder="Min. 6 characters" autoFocus
+                        onChange={e => setRpNewPw(e.target.value)} placeholder={admin.minPassword} autoFocus
                         className="w-full pl-10 pr-12 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500" />
                       <button type="button" onClick={() => setRpShowPw(!rpShowPw)} tabIndex={-1}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
@@ -369,13 +351,13 @@ export default function AdminLogin() {
                   <button type="submit" disabled={rpLoading}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-60">
                     {rpLoading
-                      ? <><Loader2 className="h-4 w-4 animate-spin" />Resetting...</>
-                      : 'Reset Password'}
+                      ? <><Loader2 className="h-4 w-4 animate-spin" />{admin.resetting}</>
+                      : admin.resetPassword}
                   </button>
 
                   <button type="button" onClick={() => { setStep('login'); window.history.replaceState({}, '', '/Admin') }}
                     className="w-full flex items-center justify-center gap-1.5 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
-                    <ArrowLeft className="h-4 w-4" /> Back to Login
+                    <ArrowLeft className="h-4 w-4" /> {admin.backToLogin}
                   </button>
                 </form>
               </motion.div>
@@ -388,13 +370,13 @@ export default function AdminLogin() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
                   <CheckCircle2 className="h-8 w-8 text-brand-green" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Password Updated!</h2>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{admin.passwordUpdated}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                   Your password has been reset successfully. You can now log in.
                 </p>
                 <button onClick={() => setStep('login')}
                   className="flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-lg font-semibold text-white bg-brand-green hover:bg-brand-green-dark">
-                  <Lock className="h-4 w-4" /> Go to Login
+                  <Lock className="h-4 w-4" /> {admin.goToLogin}
                 </button>
               </motion.div>
             )}

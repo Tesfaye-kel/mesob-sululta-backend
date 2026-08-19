@@ -29,6 +29,8 @@ const navItems: NavItem[] = [
   { key: 'contact',  path: '/contact', anchor: 'contact'  },
 ]
 
+const NEWS_SEEN_KEY = 'mesob-news-seen-at'
+
 function USFlag({ size = 16 }: { size?: number }) {
   const flagWidth = 16
   const flagHeight = 10
@@ -57,12 +59,14 @@ function USFlag({ size = 16 }: { size?: number }) {
   )
 }
 
-function AmharaFlag({ size = 16 }: { size?: number }) {
+function EthiopiaFlag({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size * 0.5} viewBox="0 0 16 8" aria-hidden>
-      <rect width="16" height="8" fill="#FCD116" />
-      <polygon points="5.5,0 16,0 16,2.5 10.5,8 0,8 0,5.5" fill="#DA251D" />
-      <polygon points="8,2.7 8.35,3.7 9.4,3.7 8.55,4.3 8.85,5.3 8,4.7 7.15,5.3 7.45,4.3 6.6,3.7 7.65,3.7" fill="#FCD116" />
+    <svg width={size} height={size * 0.6} viewBox="0 0 16 10" aria-hidden>
+      <rect width="16" height="3.33" fill="#078930" />
+      <rect y="3.33" width="16" height="3.34" fill="#FCDD09" />
+      <rect y="6.67" width="16" height="3.33" fill="#DA121A" />
+      <circle cx="8" cy="5" r="2.8" fill="#0F47AF" />
+      <polygon points="8,2.9 8.5,4.3 10,4.3 8.8,5.2 9.2,6.7 8,5.8 6.8,6.7 7.2,5.2 6,4.3 7.5,4.3" fill="#FCDD09" />
     </svg>
   )
 }
@@ -81,7 +85,7 @@ function OromoFlag({ size = 16 }: { size?: number }) {
 
 const FlagIcon = ({ code, size = 16 }: { code: string; size?: number }) => {
   if (code === 'en') return <USFlag size={size} />
-  if (code === 'am') return <AmharaFlag size={size} />
+  if (code === 'am') return <EthiopiaFlag size={size} />
   if (code === 'or') return <OromoFlag size={size} />
   return null
 }
@@ -131,7 +135,8 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
 
   useEffect(() => {
     const checkNews = () => {
-      getLatestNews()
+      const seenAt = localStorage.getItem(NEWS_SEEN_KEY) || undefined
+      getLatestNews(seenAt)
         .then(data => setNewNewsCount(data.count))
         .catch(() => {})
     }
@@ -157,6 +162,13 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
   }, [location.pathname])
 
   useEffect(() => {
+    if (location.pathname === '/news') {
+      localStorage.setItem(NEWS_SEEN_KEY, new Date().toISOString())
+      setNewNewsCount(0)
+    }
+  }, [location.pathname])
+
+  useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [mobileOpen])
@@ -176,6 +188,10 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
   const navigate = useNavigate()
 
   const handleNavClick = useCallback((item: NavItem) => {
+    if (item.key === 'news') {
+      localStorage.setItem(NEWS_SEEN_KEY, new Date().toISOString())
+      setNewNewsCount(0)
+    }
     if (isHome) {
       scrollToHomeSection(item.anchor)
     } else {

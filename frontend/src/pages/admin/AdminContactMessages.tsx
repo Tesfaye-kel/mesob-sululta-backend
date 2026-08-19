@@ -3,8 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, Mail, Phone, Trash2, Loader2, AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { getContactMessages, markContactMessageRead, deleteContactMessage, type ContactMessage } from '@/api/admin'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function AdminContactMessages() {
+  const { t } = useLanguage()
+  const admin = t.admin
   const [items, setItems] = useState<ContactMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -54,9 +57,9 @@ export default function AdminContactMessages() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Messages</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.messagesTitle}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {unreadCount > 0 ? `${unreadCount} unread messages` : 'All messages read'}
+            {unreadCount > 0 ? admin.unreadMessages.replace('{count}', String(unreadCount)) : admin.allMessagesRead}
           </p>
         </div>
       </div>
@@ -88,7 +91,7 @@ export default function AdminContactMessages() {
       {!loading && !error && items.length === 0 && (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-40" />
-          <p>No messages found</p>
+          <p>{admin.noMessages}</p>
         </div>
       )}
 
@@ -195,8 +198,8 @@ export default function AdminContactMessages() {
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Message?</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
             <div className="flex items-center justify-center gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
+              <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">{admin.delete}</button>
             </div>
           </motion.div>
         </motion.div>

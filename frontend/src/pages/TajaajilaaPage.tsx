@@ -5,13 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import OfficeCard from '@/components/tajaajila/OfficeCard'
 import { CardGrid, CardItem } from '@/components/tajaajila/CardGrid'
-import { getOrganizations, getServiceRequirements, type Organization, type Service, type Requirement } from '@/api/tajaajila'
+import { getOrganizations, getOrganizationServices, getServiceRequirements, type Organization, type Service, type Requirement } from '@/api/tajaajila'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
-
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
-
-
 
 // ── Skeleton card for loading state ──────────────────────────────────────────
 function SkeletonCard() {
@@ -63,9 +59,8 @@ function OrgModal({ id, name, language, onClose }: {
   const noReq = language === 'or' ? 'Barbaachisoonni hin jiran' : language === 'am' ? 'ምንም መስፈርቶች የሉም' : 'No requirements listed'
 
   useEffect(() => {
-    fetch(`${BASE}/services/by-organization/${id}`)
-      .then(r => r.json())
-      .then(d => setServices(Array.isArray(d) ? d : []))
+    getOrganizationServices(id)
+      .then(data => setServices(Array.isArray(data) ? data : []))
       .catch(() => setServices([]))
       .finally(() => setLoading(false))
   }, [id])

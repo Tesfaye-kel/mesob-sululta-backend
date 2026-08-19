@@ -59,6 +59,7 @@ export default function App() {
                     <Route path="about" element={<AdminAbout />} />
                     <Route path="news" element={<AdminNews />} />
                     <Route path="services" element={<AdminServices />} />
+                    <Route path="offices" element={<Navigate to="/Admin/services" replace />} />
                     <Route path="faqs" element={<AdminFAQs />} />
                     <Route path="gallery" element={<AdminGallery />} />
                     <Route path="contact" element={<AdminContact />} />
@@ -67,6 +68,7 @@ export default function App() {
                     <Route path="profile" element={<AdminProfile />} />
                     <Route path="settings" element={<AdminSettings />} />
                     <Route index element={<Navigate to="/Admin/dashboard" replace />} />
+                    <Route path="*" element={<Navigate to="/Admin/dashboard" replace />} />
                   </Route>
                 </Route>
               </Routes>

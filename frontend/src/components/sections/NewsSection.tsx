@@ -10,6 +10,11 @@ import { cn } from '@/lib/utils'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
+function getYoutubeThumbnail(url?: string) {
+  const match = url?.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/)
+  return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : ''
+}
+
 interface NewsData {
   _id: string
   title: { en: string; am: string; or: string }
@@ -38,15 +43,6 @@ const CATEGORY_LABELS: Record<string, { en: string; am: string; or: string }> = 
   Holiday: { en: 'Holiday', am: 'ዕረፍት',    or: 'Boqonnaa' },
   Document: { en: 'Document', am: 'ሰነድ',    or: 'Dokumentii' },
   Update:  { en: 'Update',  am: 'ዝማኔ',     or: 'Haaromsa' },
-}
-
-const categoryImages: Record<string, string> = {
-  news: 'https://picsum.photos/seed/news1/800/600',
-  notice: 'https://picsum.photos/seed/news2/800/600',
-  event: 'https://picsum.photos/seed/news3/800/600',
-  holiday: 'https://picsum.photos/seed/news4/800/600',
-  document: 'https://picsum.photos/seed/news5/800/600',
-  update: 'https://picsum.photos/seed/news6/800/600',
 }
 
 const categoryVariant: Record<string, 'default' | 'notice' | 'event' | 'holiday' | 'document'> = {
@@ -157,7 +153,11 @@ export default function NewsSection({ compact = false, showHeader = true }: News
           {filtered.map((news, i) => {
             const title = getTitle(news)
             const excerpt = getExcerpt(news) || getContent(news).substring(0, 150) + '...'
-            const imgUrl = news.coverImageUrl || categoryImages[news.category] || ''
+            const youtubeUrl = news.media?.find(media => media.type === 'youtube')?.url
+            const uploadedImage = news.media?.find(media => media.type === 'image')?.url
+            const imgUrl = getYoutubeThumbnail(youtubeUrl) || uploadedImage || news.coverImageUrl || ''
+            const primaryMedia = news.media?.find(media => ['video', 'audio', 'document'].includes(media.type))
+            const mediaCount = news.media?.length ?? 0
 
             return (
               <motion.div key={news._id} layout
@@ -177,6 +177,18 @@ export default function NewsSection({ compact = false, showHeader = true }: News
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
                   </div>
+                ) : primaryMedia?.type === 'video' ? (
+                  <video src={getImageUrl(primaryMedia.url)} controls className="w-full h-40 object-cover bg-black" />
+                ) : primaryMedia?.type === 'audio' ? (
+                  <div className="h-40 flex flex-col items-center justify-center gap-3 bg-brand-green/10 px-4">
+                    <Music className="h-10 w-10 text-brand-green" />
+                    <audio src={getImageUrl(primaryMedia.url)} controls className="w-full" />
+                  </div>
+                ) : primaryMedia?.type === 'document' ? (
+                  <a href={getImageUrl(primaryMedia.url)} target="_blank" rel="noopener noreferrer" className="h-40 flex flex-col items-center justify-center gap-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
+                    <FileText className="h-12 w-12" />
+                    <span className="text-sm font-medium px-4 text-center">{primaryMedia.url.split('/').pop()}</span>
+                  </a>
                 ) : (
                   <div className="h-32 bg-gradient-to-br from-brand-green to-brand-blue flex items-center justify-center">
                     <Megaphone className="h-10 w-10 text-white/50" />
@@ -192,6 +204,11 @@ export default function NewsSection({ compact = false, showHeader = true }: News
                     {news.isFeatured && (
                       <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-green/10 text-brand-green">
                         {t.common?.featuredNews || 'Featured'}
+                      </span>
+                    )}
+                    {mediaCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                        {mediaCount} media
                       </span>
                     )}
                   </div>
@@ -238,11 +255,11 @@ export default function NewsSection({ compact = false, showHeader = true }: News
               onClick={e => e.stopPropagation()}
             >
               {/* Featured image */}
-              {(selectedNews.coverImageUrl || categoryImages[selectedNews.category]) && (
+              {(!selectedNews.media?.length && selectedNews.coverImageUrl) && (
                 <div className="w-full aspect-video rounded-2xl overflow-hidden mb-4 bg-gray-800 relative">
                   <div className="relative w-full h-full">
                     <img
-                      src={getImageUrl(selectedNews.coverImageUrl || categoryImages[selectedNews.category])}
+                      src={getImageUrl(selectedNews.coverImageUrl)}
                       alt={getTitle(selectedNews)}
                       className="w-full h-full object-contain"
                       onError={handleImgError}
@@ -291,7 +308,7 @@ export default function NewsSection({ compact = false, showHeader = true }: News
                         const items = selectedNews.media!.filter(m =>
                           ['image','video','audio','document'].includes(m.type)
                         )
-                        const cover = selectedNews.coverImageUrl
+                        const cover = selectedNews.coverImageUrl && !selectedNews.media?.length
                           ? [{ url: getImageUrl(selectedNews.coverImageUrl), name: `cover` }]
                           : []
                         const all = [

@@ -30,8 +30,8 @@ export default function Partners() {
             return (
               <motion.div
                 key={partner.abbr}
-                initial={{ opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.06, duration: 0.4 }}
                 className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl border border-gray-100 dark:border-gray-700 ${partner.color} hover:shadow-md transition-all duration-200`}

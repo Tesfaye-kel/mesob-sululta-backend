@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, AlertCircle, X, Layers, CheckCircle2, Circle, Building2, Search, ArrowRight } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -463,7 +463,6 @@ export default function ServiceByWindowPage() {
 
   const pageTitle    = language === 'or' ? 'Tajaajila Foddaadhaan' : language === 'am' ? 'አገልግሎት በፎዳ' : 'Service by Window'
   const pageSubtitle = language === 'or' ? 'Foddaa yookan Wajjiralee filachuudhaan tajaajila Barbaddan argadhaa' : language === 'am' ? 'ፎዳ ምርጡ አገልግሎቱን ያግኙ' : 'Select a window to find the services available'
-  const officeBtn    = language === 'or' ? 'Wajjiraaleedhaan' : language === 'am' ? 'ቢሮዎቻቸን' : 'Offices'
   const retryLabel   = language === 'or' ? "Irra deebi'ii yaalii" : language === 'am' ? 'እንደገና ሞክር' : 'Try Again'
   const searchPh     = language === 'or' ? 'Tajaajila barbaadi...' : language === 'am' ? 'አገልግሎቶችን ፈልጉ...' : 'Search services...'
 
@@ -525,13 +524,6 @@ export default function ServiceByWindowPage() {
             <AnimatedHeading as="h1" className="mb-1">{pageTitle}</AnimatedHeading>
             <p className="text-sm text-gray-500 dark:text-gray-400">{pageSubtitle}</p>
           </div>
-          <Link
-            to="/tajaajila/office"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#1a2744] dark:bg-brand-green text-white text-sm font-semibold hover:opacity-90 transition-opacity whitespace-nowrap shrink-0"
-          >
-            <Building2 className="h-4 w-4" aria-hidden />
-            {officeBtn}
-          </Link>
         </div>
 
         {/* Search bar */}

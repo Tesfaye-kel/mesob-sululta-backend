@@ -58,7 +58,10 @@ async function authFetch<T>(path: string, options: RequestInit = {}): Promise<T>
   }
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: `HTTP ${res.status}` }))
-    throw new Error(error.message || `HTTP ${res.status}`)
+    const details = error.details && typeof error.details === 'object'
+      ? Object.values(error.details as Record<string, { message?: string }>).map(detail => detail?.message).filter(Boolean).join(', ')
+      : ''
+    throw new Error(details ? `${error.message || `HTTP ${res.status}`}: ${details}` : error.message || `HTTP ${res.status}`)
   }
   return res.json() as Promise<T>
 }
@@ -106,6 +109,7 @@ stats: {
     unreadMessages: number
     total: number
   }
+  feedback: FeedbackSummary
   recent: {
     news: Array<{ _id: string; title: { en: string; am: string; or: string }; category: string; publishedAt: string; isFeatured: boolean }>
     services: Array<{ _id: string; name: { en: string; am: string; or: string }; organization: { name: { en: string } }; createdAt: string }>
@@ -113,7 +117,22 @@ stats: {
   }
 }
 
+export interface FeedbackSummary {
+  votes: Record<1 | 2 | 3 | 4 | 5, number>
+  totalRatings: number
+  mostFrequentRating: 1 | 2 | 3 | 4 | 5
+  percentages: Record<1 | 2 | 3 | 4 | 5, number>
+  overallProjectScore: number
+  showOverallProjectScore: boolean
+}
+
 export const getDashboardStats = () => authFetch<DashboardStats>('/admin/dashboard')
+export const getFeedbackDashboard = () => authFetch<FeedbackSummary>('/admin/feedback')
+export const updateFeedbackPercentages = (percentages: Record<1 | 2 | 3 | 4 | 5, number>, showOverallProjectScore?: boolean) =>
+  authFetch<FeedbackSummary>('/admin/feedback/percentages', {
+    method: 'PUT',
+    body: JSON.stringify({ percentages, ...(showOverallProjectScore === undefined ? {} : { showOverallProjectScore }) }),
+  })
 
 // ─── Profile ────────────────────────────────────────────────────
 export interface AdminProfile {
@@ -126,10 +145,14 @@ export interface AdminProfile {
 }
 
 export const getProfile = () => authFetch<AdminProfile>('/admin/profile')
-export const updateProfile = (data: { name?: string; email?: string }) => authFetch<AdminProfile>('/admin/profile', {
-  method: 'PUT',
-  body: JSON.stringify(data),
-})
+export const updateProfile = async (data: { name?: string; email?: string }) => {
+  const updated = await authFetch<AdminProfile>('/admin/profile', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+  safeSet(ADMIN_USER_KEY, JSON.stringify(updated))
+  return updated
+}
 export const changePassword = (data: { currentPassword: string; newPassword: string; confirmPassword: string }) => authFetch<{ message: string }>('/admin/change-password', {
   method: 'PUT',
   body: JSON.stringify(data),
@@ -288,6 +311,7 @@ export interface AboutStat {
   label: MultiLang
   color: string
   order: number
+  isVisible: boolean
 }
 
 export interface AboutStory {
@@ -321,7 +345,7 @@ export interface AboutContent {
   updatedAt: string
 }
 
-export const getAbout = () => authFetch<AboutContent>('/about')
+export const getAbout = () => authFetch<AboutContent>('/about?includeHidden=true')
 export const updateAbout = (data: Partial<AboutContent>) => authFetch<AboutContent>('/about', { method: 'PUT', body: JSON.stringify(data) })
 
 // About sub-document CRUD
@@ -435,7 +459,7 @@ export interface WindowAdmin {
   createdAt: string
 }
 
-export const getWindowsAdmin = () => authFetch<WindowAdmin[]>('/windows')
+export const getWindowsAdmin = (organizationId?: string) => authFetch<WindowAdmin[]>(`/windows${organizationId ? `?organization=${encodeURIComponent(organizationId)}` : ''}`)
 export const createWindow = (data: { number: string; name?: { en: string; am: string; or: string }; floor: number; organization: string; description?: { en: string; am: string; or: string } }) => authFetch<WindowAdmin>('/windows', { method: 'POST', body: JSON.stringify(data) })
 export const updateWindow = (id: string, data: Partial<WindowAdmin & { organization: string }>) => authFetch<WindowAdmin>(`/windows/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteWindow = (id: string) => authFetch<{ message: string }>(`/windows/${id}`, { method: 'DELETE' })
@@ -456,7 +480,7 @@ export interface ServiceAdmin {
   _id: string
   name: MultiLang
   description: MultiLang
-  organization: string | { _id: string; name: MultiLang }
+  organization: string | { _id: string; name: MultiLang } | null
   window: string | { _id: string; number: string; floor: number } | null
   requiredDocuments: string[]
   fee: number
@@ -466,10 +490,11 @@ export interface ServiceAdmin {
   createdAt: string
 }
 
-export const getServicesAdmin = (orgId?: string) => authFetch<ServiceAdmin[]>(`/services${orgId ? `?organizationId=${orgId}` : ''}`)
+export const getServicesAdmin = (orgId?: string) => authFetch<ServiceAdmin[]>(`/services${orgId ? `?organizationId=${encodeURIComponent(orgId)}` : ''}`)
 export const createService = (data: Partial<ServiceAdmin>) => authFetch<ServiceAdmin>('/services', { method: 'POST', body: JSON.stringify(data) })
 export const updateService = (id: string, data: Partial<ServiceAdmin>) => authFetch<ServiceAdmin>(`/services/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteService = (id: string) => authFetch<{ message: string }>(`/services/${id}`, { method: 'DELETE' })
+export const deleteServicesByWindow = (windowId: string) => authFetch<{ message: string; deletedCount: number }>(`/services/by-window/${windowId}`, { method: 'DELETE' })
 
 // ─── Requirements (admin) ────────────────────────────────────────
 export interface RequirementAdmin {
@@ -538,3 +563,27 @@ export const updateOrganizationContent = (data: Partial<OrganizationContent>) =>
 export const addOrgContentLeadership = (data: Partial<OrgContentLeadership>) => authFetch<OrganizationContent>('/organization-content/leadership', { method: 'POST', body: JSON.stringify(data) })
 export const updateOrgContentLeadership = (id: string, data: Partial<OrgContentLeadership>) => authFetch<OrganizationContent>(`/organization-content/leadership/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteOrgContentLeadership = (id: string) => authFetch<OrganizationContent>(`/organization-content/leadership/${id}`, { method: 'DELETE' })
+
+// ─── Offices ────────────────────────────────────────────────────
+export interface Office {
+  _id: string
+  name: MultiLang
+  address: MultiLang
+  phone: string
+  email: string
+  location?: {
+    latitude: number | null
+    longitude: number | null
+  }
+  workingHours: MultiLang
+  description: MultiLang
+  displayOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export const getOffices = () => authFetch<Office[]>('/offices')
+export const getOffice = (id: string) => authFetch<Office>(`/offices/${id}`)
+export const createOffice = (data: Partial<Office>) => authFetch<Office>('/offices', { method: 'POST', body: JSON.stringify(data) })
+export const updateOffice = (id: string, data: Partial<Office>) => authFetch<Office>(`/offices/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+export const deleteOffice = (id: string) => authFetch<{ message: string }>(`/offices/${id}`, { method: 'DELETE' })

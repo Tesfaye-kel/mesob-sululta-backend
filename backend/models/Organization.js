@@ -13,6 +13,11 @@ const organizationSchema = new mongoose.Schema(
       or: { type: String, default: '' },
     },
     logoUrl: { type: String, default: '' },
+    displayOrder: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
   },
   { timestamps: true }
 );

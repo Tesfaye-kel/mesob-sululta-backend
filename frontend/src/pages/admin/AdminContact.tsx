@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Phone, Mail, MapPin, Clock, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { getContact, updateContact, type ContactContent } from '@/api/admin'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const langs = ['en', 'am', 'or'] as const
 
 export default function AdminContact() {
+  const { t } = useLanguage()
+  const admin = t.admin
   const [data, setData] = useState<ContactContent | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -58,7 +61,7 @@ export default function AdminContact() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Information</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.contactTitle}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage contact details, address, and working hours</p>
         </div>
       </div>

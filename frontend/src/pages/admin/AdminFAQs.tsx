@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { HelpCircle, Plus, Search, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { getFAQs, createFAQ, updateFAQ, deleteFAQ, type FAQ } from '@/api/admin'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const emptyForm = {
   question: { en: '', am: '', or: '' },
@@ -12,6 +13,8 @@ const emptyForm = {
 }
 
 export default function AdminFAQs() {
+  const { t } = useLanguage()
+  const admin = t.admin
   const [items, setItems] = useState<FAQ[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -76,7 +79,7 @@ export default function AdminFAQs() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">FAQs</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.faqsTitle}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage frequently asked questions</p>
         </div>
         <motion.button
@@ -102,7 +105,7 @@ export default function AdminFAQs() {
 
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search FAQs..." className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={admin.search} className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
       </div>
 
       {loading && <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-brand-green" /></div>}
@@ -151,7 +154,7 @@ export default function AdminFAQs() {
               onClick={e => e.stopPropagation()}
               className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? 'Edit FAQ' : 'New FAQ'}</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? admin.editFAQ : admin.newFAQ}</h2>
                 <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
               </div>
               <div className="space-y-4">

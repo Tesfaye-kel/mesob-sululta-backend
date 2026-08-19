@@ -3,8 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { UserCircle, Mail, Shield, Save, Loader2, AlertCircle, CheckCircle, Lock } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { updateProfile, changePassword } from '@/api/admin'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function AdminProfile() {
+  const { t } = useLanguage()
+  const admin = t.admin
   const { user } = useAdminAuth()
   const [name, setName] = useState(user?.name || '')
   const [email, setEmail] = useState(user?.email || '')
@@ -54,7 +57,7 @@ export default function AdminProfile() {
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.profileTitle}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your account settings</p>
       </div>
 

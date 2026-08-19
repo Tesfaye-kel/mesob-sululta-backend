@@ -10,6 +10,7 @@ const {
   getServiceById,
   updateService,
   deleteService,
+  deleteServicesByWindow,
   getServicesByOrganization,
   getServicesByWindow,
 } = require('../controllers/serviceController');
@@ -33,6 +34,7 @@ router.get('/:id', getServiceById);
 
 router.post('/', authenticateJWT, requireAdmin, createService);
 router.put('/:id', authenticateJWT, requireAdmin, updateService);
+router.delete('/by-window/:windowId', authenticateJWT, requireAdmin, deleteServicesByWindow);
 router.delete('/:id', authenticateJWT, requireAdmin, deleteService);
 
 module.exports = router;

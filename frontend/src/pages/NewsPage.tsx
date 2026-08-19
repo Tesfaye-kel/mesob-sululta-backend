@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Calendar, ChevronRight, Loader2, ImageIcon, Play } from 'lucide-react'
+import { Search, Calendar, ChevronRight, Loader2, ImageIcon, Play, FileText } from 'lucide-react'
 import { getImageUrl } from '@/lib/images'
 import AnimatedHeading from '@/components/tajaajila/AnimatedHeading'
 import { Badge } from '@/components/ui/Badge'
@@ -15,6 +15,11 @@ const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 const ITEMS_PER_PAGE = 9
 const categoryVariant: Record<string, 'default' | 'notice' | 'event' | 'holiday' | 'document'> = {
   news: 'default', notice: 'notice', event: 'event', holiday: 'holiday', document: 'document',
+}
+
+function getYoutubeThumbnail(url?: string) {
+  const match = url?.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/)
+  return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : ''
 }
 
 interface NewsItem {
@@ -63,6 +68,7 @@ document.title = `${t.news.title} | MESOB Center`
   const featured = items.find(a => a.isFeatured)
   const featuredTitle = featured ? (language === 'am' ? featured.title.am : language === 'or' ? featured.title.or : featured.title.en) : ''
   const featuredSummary = featured ? (language === 'am' ? (featured.excerpt?.am || featured.content.am) : language === 'or' ? (featured.excerpt?.or || featured.content.or) : (featured.excerpt?.en || featured.content.en)) : ''
+  const getNewsImage = (news: NewsItem) => news.media?.find(media => media.type === 'image')?.url || news.coverImageUrl || ''
 
   const noResultsMsg = language === 'am' ? 'ምንም ዜና አልተገኘም' : language === 'or' ? 'Oduun hin argamne' : 'No news found'
   const tryAdjust = language === 'am' ? 'ፍለጋዎን ያስተካክሉ።' : language === 'or' ? 'Barbaaduu kee sirreessi.' : 'Try adjusting your search or filter.'
@@ -80,9 +86,9 @@ document.title = `${t.news.title} | MESOB Center`
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {featured.coverImageUrl ? (
+            {getNewsImage(featured) ? (
               <div className="relative">
-                <img src={getImageUrl(featured.coverImageUrl)} alt={featuredTitle} className="w-full h-48 md:h-64 object-cover" />
+                <img src={getImageUrl(getNewsImage(featured))} alt={featuredTitle} className="w-full h-48 md:h-64 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                   <Badge className="bg-brand-gold text-white mb-3">{t.common.featuredNews || 'Featured News'}</Badge>
@@ -157,7 +163,10 @@ placeholder={`${t.common.search} ${t.news.title.toLowerCase()}...`}
                 {paginated.map((ann, i) => {
                   const title = language === 'am' ? ann.title.am : language === 'or' ? ann.title.or : ann.title.en
                   const summary = language === 'am' ? (ann.excerpt?.am || ann.content.am) : language === 'or' ? (ann.excerpt?.or || ann.content.or) : (ann.excerpt?.en || ann.content.en)
-                  const hasVideo = ann.media?.some(m => m.type === 'video')
+                  const youtubeUrl = ann.media?.find(m => m.type === 'youtube')?.url
+                  const youtubeThumbnail = getYoutubeThumbnail(youtubeUrl)
+                  const hasVideo = ann.media?.some(m => m.type === 'video' || m.type === 'youtube')
+                  const hasDocument = ann.media?.some(m => m.type === 'document')
                   return (
                     <Link key={ann._id} to={`/news/${ann._id}`}>
                       <motion.div
@@ -168,8 +177,8 @@ placeholder={`${t.common.search} ${t.news.title.toLowerCase()}...`}
                       >
                         {/* Cover image */}
                         <div className="relative h-44 bg-gray-100 dark:bg-gray-700 overflow-hidden">
-                          {ann.coverImageUrl ? (
-                            <img src={getImageUrl(ann.coverImageUrl)} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                          {youtubeThumbnail || getNewsImage(ann) ? (
+                            <img src={youtubeThumbnail || getImageUrl(getNewsImage(ann))} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-brand-green/20 to-brand-blue/20">
                               <ImageIcon className="h-10 w-10 text-gray-400" />
@@ -180,11 +189,21 @@ placeholder={`${t.common.search} ${t.news.title.toLowerCase()}...`}
                               <Play className="h-4 w-4" />
                             </div>
                           )}
+                          {hasDocument && (
+                            <div className="absolute top-2 right-2 bg-amber-500 text-white p-1.5 rounded-full" title="Document attached">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                          )}
                           <div className="absolute top-2 left-2">
                             <Badge variant={categoryVariant[ann.category] || 'default'} size="sm">
 {(t.news.categories as Record<string, string>)[ann.category] || ann.category}
                             </Badge>
                           </div>
+                          {ann.media && ann.media.length > 0 && (
+                            <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-full bg-black/60 text-white text-xs">
+                              {ann.media.length} media
+                            </span>
+                          )}
                         </div>
                         <div className="p-4">
                           <h3 className="font-bold text-gray-900 dark:text-white mb-2 leading-snug group-hover:text-brand-green dark:group-hover:text-brand-green-light transition-colors line-clamp-2">

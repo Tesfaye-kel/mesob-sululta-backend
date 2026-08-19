@@ -19,6 +19,7 @@ const aboutStatSchema = new mongoose.Schema({
   label: localizedString,
   color: { type: String, default: '' },
   order: { type: Number, default: 0 },
+  isVisible: { type: Boolean, default: true },
 }, { timestamps: true });
 
 const aboutStorySchema = new mongoose.Schema({

@@ -2,19 +2,21 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard, Newspaper, HelpCircle, Building2,
-  Users, Activity, Clock, ArrowUpRight,
+  Users, Activity, Clock,
+  Star, Save, X, CheckCircle2,
 } from 'lucide-react'
-import { getDashboardStats, type DashboardStats } from '@/api/admin'
+import { getDashboardStats, updateFeedbackPercentages, type DashboardStats } from '@/api/admin'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const statCards = [
-  { key: 'organizations', label: 'Offices', icon: Building2, color: 'blue' },
-  { key: 'services', label: 'Services', icon: Activity, color: 'green' },
-  { key: 'windows', label: 'Windows', icon: LayoutDashboard, color: 'rose' },
-  { key: 'news', label: 'News', icon: Newspaper, color: 'purple' },
-  { key: 'faqs', label: 'FAQs', icon: HelpCircle, color: 'amber' },
-  { key: 'unreadMessages', label: 'Unread Messages', icon: Clock, color: 'indigo' },
-  { key: 'users', label: 'Users', icon: Users, color: 'indigo' },
+  { key: 'organizations', labelKey: 'organizations', icon: Building2, color: 'blue' },
+  { key: 'services', labelKey: 'services', icon: Activity, color: 'green' },
+  { key: 'windows', labelKey: 'windows', icon: LayoutDashboard, color: 'rose' },
+  { key: 'news', labelKey: 'news', icon: Newspaper, color: 'purple' },
+  { key: 'faqs', labelKey: 'faqs', icon: HelpCircle, color: 'amber' },
+  { key: 'unreadMessages', labelKey: 'unreadMessages', icon: Clock, color: 'indigo' },
+  { key: 'users', labelKey: 'users', icon: Users, color: 'indigo' },
 ]
 
 const colorMap: Record<string, { bg: string; text: string; iconBg: string }> = {
@@ -28,15 +30,27 @@ const colorMap: Record<string, { bg: string; text: string; iconBg: string }> = {
 }
 
 export default function AdminDashboard() {
+  const { t } = useLanguage()
+  const admin = t.admin
   const [data, setData] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [editingRating, setEditingRating] = useState<number | null>(null)
+  const [percentageDraft, setPercentageDraft] = useState('')
+  const [savingPercentage, setSavingPercentage] = useState(false)
+  const [feedbackMessage, setFeedbackMessage] = useState('')
+  const [feedbackError, setFeedbackError] = useState('')
+  const [savingVisibility, setSavingVisibility] = useState(false)
 
   useEffect(() => {
-    getDashboardStats()
-      .then(setData)
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false))
+    let active = true
+    const load = () => getDashboardStats()
+      .then(next => { if (active) setData(next) })
+      .catch(err => { if (active) setError(err.message) })
+      .finally(() => { if (active) setLoading(false) })
+    load()
+    const interval = window.setInterval(load, 15000)
+    return () => { active = false; window.clearInterval(interval) }
   }, [])
 
   if (loading) {
@@ -50,12 +64,56 @@ export default function AdminDashboard() {
   if (error) {
     return (
       <div className="text-center py-20">
-        <p className="text-red-500">Failed to load dashboard: {error}</p>
+        <p className="text-red-500">{admin.failedToLoad}: {error}</p>
       </div>
     )
   }
 
   if (!data) return null
+
+  const startPercentageEdit = (rating: number) => {
+    setEditingRating(rating)
+    setPercentageDraft(String(data.feedback.percentages[rating as 1 | 2 | 3 | 4 | 5]))
+    setFeedbackMessage('')
+    setFeedbackError('')
+  }
+
+  const savePercentage = async (rating: number) => {
+    const value = Number(percentageDraft)
+    if (!Number.isFinite(value) || percentageDraft.trim() === '' || value < 0 || value > 100) {
+      setFeedbackError(admin.invalidPercentage)
+      return
+    }
+    setSavingPercentage(true)
+    setFeedbackMessage('')
+    setFeedbackError('')
+    try {
+      const percentages = { ...data.feedback.percentages, [rating]: value } as DashboardStats['feedback']['percentages']
+      const feedback = await updateFeedbackPercentages(percentages)
+      setData(current => current ? { ...current, feedback } : current)
+      setEditingRating(null)
+      setFeedbackMessage(admin.percentageSaved)
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : 'Could not save percentage.')
+    } finally {
+      setSavingPercentage(false)
+    }
+  }
+
+  const toggleOverallScore = async () => {
+    setSavingVisibility(true)
+    setFeedbackMessage('')
+    setFeedbackError('')
+    try {
+      const feedback = await updateFeedbackPercentages(data.feedback.percentages, !data.feedback.showOverallProjectScore)
+      setData(current => current ? { ...current, feedback } : current)
+      setFeedbackMessage('Frontend percentage visibility updated.')
+    } catch (err) {
+      setFeedbackError(err instanceof Error ? err.message : 'Could not update visibility.')
+    } finally {
+      setSavingVisibility(false)
+    }
+  }
 
   const container = {
     hidden: { opacity: 0 },
@@ -74,15 +132,15 @@ export default function AdminDashboard() {
     <motion.div variants={container} initial="hidden" animate="show">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.dashboardTitle}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Overview of your MESOB Sululta Branch content
+          {admin.overviewTitle}
         </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-        {statCards.map(({ key, label, icon: Icon, color }) => {
+        {statCards.map(({ key, labelKey, icon: Icon, color }) => {
           const value = data.stats[key as keyof typeof data.stats] as number
           const colors = colorMap[color]
           return (
@@ -98,76 +156,79 @@ export default function AdminDashboard() {
                 <Icon className={cn('h-5 w-5', colors.text)} />
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                {key === 'windows' ? 'Windows' : (admin as any)[labelKey]}
+              </p>
             </motion.div>
           )
         })}
       </div>
 
-      {/* Total & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Total Content */}
+      <div className="grid grid-cols-1 gap-6">
         {/* Total Items */}
         <motion.div variants={item} className="lg:col-span-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
           <div className="flex items-center gap-3 mb-4">
             <LayoutDashboard className="h-5 w-5 text-brand-green" />
-            <h2 className="font-semibold text-gray-900 dark:text-white">Total Content</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white">{admin.totalContent}</h2>
           </div>
           <p className="text-4xl font-bold text-brand-green">{data.stats.total}</p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Items managed</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{admin.itemsManaged}</p>
         </motion.div>
 
-{/* Recent News */}
-        <motion.div variants={item} className="lg:col-span-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Newspaper className="h-5 w-5 text-purple-500" />
-            <h2 className="font-semibold text-gray-900 dark:text-white">Recent News</h2>
-          </div>
-          <div className="space-y-3">
-            {data.recent.news.length === 0 && (
-              <p className="text-sm text-gray-400">No news yet</p>
-            )}
-            {data.recent.news.slice(0, 4).map(a => (
-              <div key={a._id} className="flex items-start gap-2">
-                <Clock className="h-3 w-3 text-gray-400 mt-1 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {a.title.en}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(a.publishedAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Recent Orgs */}
-        <motion.div variants={item} className="lg:col-span-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Building2 className="h-5 w-5 text-blue-500" />
-            <h2 className="font-semibold text-gray-900 dark:text-white">Offices</h2>
-          </div>
-          <div className="space-y-3">
-            {data.recent.organizations.length === 0 && (
-              <p className="text-sm text-gray-400">No organizations yet</p>
-            )}
-            {data.recent.organizations.slice(0, 4).map(o => (
-              <div key={o._id} className="flex items-start gap-2">
-                <ArrowUpRight className="h-3 w-3 text-gray-400 mt-1 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {o.name.en}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Added {new Date(o.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
       </div>
+
+      <motion.section variants={item} className="mt-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 className="font-semibold text-gray-900 dark:text-white">{admin.feedbackStatistics}</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{admin.feedbackScoreHint}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-500 dark:text-gray-400">{admin.overallProjectScore}</p>
+            <p className="text-3xl font-bold text-brand-green">{data.feedback.overallProjectScore}%</p>
+          </div>
+        </div>
+        <label className="flex items-center gap-3 mb-5 text-sm text-gray-700 dark:text-gray-300">
+          <input type="checkbox" checked={data.feedback.showOverallProjectScore} onChange={toggleOverallScore} disabled={savingVisibility}
+            className="h-4 w-4 rounded border-gray-300 text-brand-green focus:ring-brand-green" />
+          Show this percentage number on the frontend
+        </label>
+
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map(rating => {
+            const starRating = rating as 1 | 2 | 3 | 4 | 5
+            const isEditing = editingRating === rating
+            return (
+              <div key={rating} className="flex items-center gap-3 rounded-lg bg-gray-50 dark:bg-gray-800/60 px-3 py-2.5">
+                <div className="flex items-center gap-1 w-20 shrink-0">
+                  <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                  <span className="font-semibold text-gray-900 dark:text-white">{rating}</span>
+                </div>
+                <span className="text-sm text-gray-500 dark:text-gray-400 flex-1">{data.feedback.votes[starRating]} {admin.votes}</span>
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <input type="number" min="0" max="100" step="1" value={percentageDraft} onChange={e => setPercentageDraft(e.target.value)} className="w-20 px-2 py-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm" aria-label={`${rating} star percentage`} autoFocus />
+                    <button type="button" onClick={() => savePercentage(rating)} disabled={savingPercentage} className="p-1.5 rounded text-brand-green hover:bg-brand-green/10" aria-label={admin.savePercentage}><Save className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => setEditingRating(null)} className="p-1.5 rounded text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700" aria-label={admin.cancelEditing}><X className="h-4 w-4" /></button>
+                  </div>
+                ) : (
+                  <button type="button" onClick={() => startPercentageEdit(rating)} className="text-sm font-semibold text-brand-green hover:underline" aria-label={`${admin.editPercentage} ${rating}`}>
+                    {data.feedback.percentages[starRating]}% {admin.edit}
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5 pt-5 border-t border-gray-200 dark:border-gray-700">
+          <div><p className="text-xs text-gray-500 dark:text-gray-400">{admin.totalRatings}</p><p className="text-xl font-bold text-gray-900 dark:text-white">{data.feedback.totalRatings}</p></div>
+          <div><p className="text-xs text-gray-500 dark:text-gray-400">{admin.mostFrequentRating}</p><p className="text-xl font-bold text-amber-500">{data.feedback.mostFrequentRating} {admin.stars}</p></div>
+        </div>
+        {feedbackMessage && <p className="flex items-center gap-2 mt-4 text-sm text-brand-green"><CheckCircle2 className="h-4 w-4" />{feedbackMessage}</p>}
+        {feedbackError && <p className="mt-4 text-sm text-red-500">{feedbackError}</p>}
+      </motion.section>
     </motion.div>
   )
 }

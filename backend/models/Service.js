@@ -15,7 +15,6 @@ const serviceSchema = new mongoose.Schema(
     organization: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Organization',
-      required: true,
       index: true,
     },
     window: {

@@ -26,7 +26,8 @@ const colorOptions = [
 ]
 
 export default function AdminLeadership() {
-  const { language } = useLanguage()
+  const { language, t } = useLanguage()
+  const admin = t.admin
   const [content, setContent] = useState<OrganizationContent | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -50,7 +51,7 @@ export default function AdminLeadership() {
       setHierarchyTitle(data.hierarchyTitle || { en: '', am: '', or: '' })
       setFutureExpansion(data.futureExpansion || { en: '', am: '', or: '' })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load')
+      setError(err instanceof Error ? err.message : admin.failedToLoad)
     } finally {
       setLoading(false)
     }
@@ -77,11 +78,11 @@ export default function AdminLeadership() {
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
       })
-      if (!res.ok) throw new Error('Upload failed')
+      if (!res.ok) throw new Error(admin.failedToSave)
       const data = await res.json()
       setForm(prev => ({ ...prev, avatar: data.imageUrl }))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setUploading(false)
     }
@@ -96,10 +97,10 @@ export default function AdminLeadership() {
         futureExpansion,
       })
       setContent(updated)
-      setSuccess('Organization content saved!')
+      setSuccess(admin.aboutSaved)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setSavingOrgContent(false)
     }
@@ -113,18 +114,18 @@ export default function AdminLeadership() {
       if (editingMember?._id) {
         const updated = await updateOrgContentLeadership(editingMember._id, form)
         setContent(updated)
-        setSuccess('Member updated!')
+        setSuccess(admin.update)
       } else {
         const created = await addOrgContentLeadership(form)
         setContent(created)
-        setSuccess('Member added!')
+        setSuccess(admin.addMember)
       }
       setShowForm(false)
       setEditingMember(null)
       setForm(emptyMember)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setSaving(false)
     }
@@ -134,10 +135,10 @@ export default function AdminLeadership() {
     try {
       const updated = await deleteOrgContentLeadership(id)
       setContent(updated)
-      setSuccess('Member deleted!')
+      setSuccess(admin.delete)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete')
+      setError(err instanceof Error ? err.message : admin.failedToDelete)
     }
     setConfirmDelete(null)
   }
@@ -148,8 +149,8 @@ export default function AdminLeadership() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Organization Content</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage organization structure, leadership, and information</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.organizationContent}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{admin.organizationContentDesc}</p>
         </div>
       </div>
 
@@ -180,13 +181,13 @@ export default function AdminLeadership() {
           <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-8">
             <div className="flex items-center gap-3 mb-6">
               <Building2 className="h-5 w-5 text-brand-green" />
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Organization Content</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{admin.organizationContent}</h2>
             </div>
 
             <div className="space-y-4">
               {/* Hierarchy Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Hierarchy Title</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{admin.hierarchyTitle}</label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {(['en', 'am', 'or'] as const).map(lang => (
                     <input key={lang} value={hierarchyTitle[lang]}
@@ -199,7 +200,7 @@ export default function AdminLeadership() {
 
               {/* Future Expansion */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Future Expansion Text</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{admin.futureExpansionText}</label>
                 <div className="grid grid-cols-1 gap-3">
                   {(['en', 'am', 'or'] as const).map(lang => (
                     <textarea key={lang} value={futureExpansion[lang]}
@@ -215,7 +216,7 @@ export default function AdminLeadership() {
                 <button onClick={handleSaveOrgContent} disabled={savingOrgContent}
                   className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
                   {savingOrgContent && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Save Organization Content
+                  {admin.saveOrganizationContent}
                 </button>
               </div>
             </div>
@@ -226,19 +227,19 @@ export default function AdminLeadership() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <Users className="h-5 w-5 text-brand-green" />
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">Leadership Team</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">{admin.leadershipTeam}</h2>
               </div>
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => { setEditingMember(null); setForm(emptyMember); setShowForm(true) }}
                 className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
-                <Plus className="h-4 w-4" /> Add Member
+                <Plus className="h-4 w-4" /> {admin.addMember}
               </motion.button>
             </div>
 
             {sortedLeadership.length === 0 && (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <Users className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">No leadership members yet</p>
+                <p className="text-sm">{admin.noLeadershipMembers}</p>
               </div>
             )}
 
@@ -295,7 +296,7 @@ export default function AdminLeadership() {
               className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl max-h-[90vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-                  {editingMember ? 'Edit Member' : 'Add Member'}
+                  {editingMember ? admin.editMember : admin.addMember}
                 </h2>
                 <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
                   <X className="h-5 w-5" />
@@ -304,12 +305,12 @@ export default function AdminLeadership() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Photo</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{admin.photo}</label>
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0">
                       {form.avatar ? (
                         <img src={form.avatar.startsWith('http') ? form.avatar : `${BASE}${form.avatar}`}
-                          alt="Preview" className="w-full h-full object-cover" />
+                          alt={admin.preview} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 text-2xl font-bold">
                           {form.name ? form.name.charAt(0).toUpperCase() : '?'}
@@ -318,32 +319,32 @@ export default function AdminLeadership() {
                     </div>
                     <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm font-medium rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                       <Upload className="h-4 w-4" />
-                      {uploading ? 'Uploading...' : 'Upload Photo'}
+                      {uploading ? admin.uploading : admin.uploadPhoto}
                       <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
                     </label>
                     {form.avatar && (
                       <button onClick={() => setForm(prev => ({ ...prev, avatar: '' }))}
-                        className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                        className="text-xs text-red-500 hover:text-red-700">{admin.removePhoto}</button>
                     )}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.name}</label>
                   <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                 </div>
 
                 {(['en', 'am', 'or'] as const).map(lang => (
                   <div key={lang}>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Role ({lang.toUpperCase()})</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.role} ({lang.toUpperCase()})</label>
                     <input value={form.role[lang]} onChange={e => setForm(f => ({ ...f, role: { ...f.role, [lang]: e.target.value } }))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                   </div>
                 ))}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.color}</label>
                   <div className="flex flex-wrap gap-2">
                     {colorOptions.map(c => (
                       <button key={c.value} onClick={() => setForm(f => ({ ...f, color: c.value }))}
@@ -354,18 +355,18 @@ export default function AdminLeadership() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Order (display position)</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.displayPosition}</label>
                   <input type="number" value={form.order} onChange={e => setForm(f => ({ ...f, order: parseInt(e.target.value) || 0 }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button onClick={() => setShowForm(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
                   <button onClick={handleSave} disabled={saving || !form.name.trim()}
                     className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
                     {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {editingMember ? 'Update' : 'Add'}
+                    {editingMember ? admin.update : admin.addMember}
                   </button>
                 </div>
               </div>
@@ -384,13 +385,13 @@ export default function AdminLeadership() {
               onClick={e => e.stopPropagation()}
               className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl text-center">
               <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Member?</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{admin.delete} {admin.member}?</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{admin.deleteConfirmDesc}</p>
               <div className="flex items-center justify-center gap-3">
                 <button onClick={() => setConfirmDelete(null)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
                 <button onClick={() => handleDelete(confirmDelete)}
-                  className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+                  className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">{admin.delete}</button>
               </div>
             </motion.div>
           </motion.div>

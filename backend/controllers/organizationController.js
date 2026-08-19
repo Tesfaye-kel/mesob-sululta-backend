@@ -6,9 +6,9 @@ const Window = require('../models/Window');
 // POST /api/organizations
 const createOrganization = async (req, res, next) => {
   try {
-    const { name, description, logoUrl } = req.body;
+    const { name, description, logoUrl, displayOrder } = req.body;
 
-    const org = await Organization.create({ name, description, logoUrl });
+    const org = await Organization.create({ name, description, logoUrl, displayOrder: displayOrder ?? 0 });
     return res.status(201).json(org);
   } catch (err) {
     next(err);
@@ -32,7 +32,7 @@ const getAllOrganizations = async (req, res, next) => {
     // Use aggregation to avoid N+1 query problem
     const organizations = await Organization.aggregate([
       { $match: filter },
-      { $sort: { createdAt: -1 } },
+      { $sort: { displayOrder: 1, createdAt: -1 } },
       {
         $lookup: {
           from: 'services',
@@ -71,11 +71,11 @@ const getOrganizationById = async (req, res, next) => {
 const updateOrganization = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, logoUrl } = req.body;
+    const { name, description, logoUrl, displayOrder } = req.body;
 
     const org = await Organization.findByIdAndUpdate(
       id,
-      { name, description, logoUrl },
+      { name, description, logoUrl, displayOrder },
       { new: true, runValidators: true }
     );
 

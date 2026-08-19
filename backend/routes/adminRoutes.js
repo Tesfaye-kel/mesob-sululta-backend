@@ -11,12 +11,15 @@ const {
   getUsers,
   deleteUser,
 } = require('../controllers/adminController');
+const { getFeedbackDashboard, updateFeedbackPercentages } = require('../controllers/feedbackController');
 
 // All admin routes require authentication + admin role
 router.use(authenticateJWT, requireAdmin);
 
 // Dashboard
 router.get('/dashboard', getDashboardStats);
+router.get('/feedback', getFeedbackDashboard);
+router.put('/feedback/percentages', updateFeedbackPercentages);
 
 // Profile
 router.get('/profile', getProfile);

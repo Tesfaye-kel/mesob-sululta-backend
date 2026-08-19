@@ -88,7 +88,7 @@ export default function FAQSection({ compact = false, showHeader = true }: FAQSe
           const isOpen = openId === faq._id
 
           return (
-            <motion.div key={faq._id || i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.4 }} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <motion.div key={faq._id || i} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.08, duration: 0.4 }} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
               <button className="w-full flex items-center justify-between gap-4 p-5 text-left hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors" onClick={() => setOpenId(isOpen ? null : (faq._id || String(i)))} aria-expanded={isOpen}>
                 <span className="font-medium text-gray-900 dark:text-white text-sm">{question}</span>
                 <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="shrink-0" aria-hidden>

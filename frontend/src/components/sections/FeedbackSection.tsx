@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { Input, Textarea } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
+import { getServices, type Service } from '@/api/tajaajila'
 
 const schema = z.object({
   type: z.enum(['suggestion', 'complaint', 'compliment', 'general']),
@@ -32,15 +33,15 @@ export default function FeedbackSection() {
     { value: 'general',    icon: MessageSquare, label: t.feedback.rate,       color: 'border-brand-blue text-brand-blue bg-brand-blue/5 dark:bg-brand-blue/10',       activeColor: 'bg-brand-blue text-white border-brand-blue' },
   ]
 
-  const serviceOptions = [
-    language === 'am' ? 'ብሔራዊ መታወቂያ' : language === 'or' ? 'ID Biyyoolessa'       : 'National ID',
-    language === 'am' ? 'ፓስፖርት'        : language === 'or' ? 'Paasipoorti'           : 'Passport',
-    language === 'am' ? 'የንግድ ምዝገባ'    : language === 'or' ? 'Galmee Daldalaa'       : 'Business Registration',
-    language === 'am' ? 'TIN ምዝገባ'     : language === 'or' ? 'Galmee TIN'            : 'TIN',
-    language === 'am' ? 'የሲቪል ምዝገባ'   : language === 'or' ? 'Galmee Sivilii'        : 'Civil Registration',
-    language === 'am' ? 'የመሬት አገልግሎቶች': language === 'or' ? 'Tajaajila Lafaa'       : 'Land Services',
-    language === 'am' ? 'ሌላ'            : language === 'or' ? 'Kan biraa'             : 'Other',
-  ]
+  const [services, setServices] = useState<Service[]>([])
+
+  useEffect(() => {
+    getServices().then(setServices).catch(() => setServices([]))
+  }, [])
+
+  const getServiceName = (service: Service) =>
+    language === 'am' ? (service.name.am || service.name.or || service.name.en) :
+    language === 'or' ? (service.name.or || service.name.en) : service.name.en
 
   const ratingLabels = language === 'am'
     ? ['','ደካማ','መካከለኛ','ጥሩ','በጣም ጥሩ','እጹብ ድንቅ']
@@ -86,6 +87,12 @@ export default function FeedbackSection() {
         }),
       })
       if (!res.ok) throw new Error('Failed to send feedback')
+      const ratingRes = await fetch(`${BASE}/feedback-ratings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: data.rating, service: data.service }),
+      })
+      if (!ratingRes.ok) throw new Error('Failed to save rating')
       setSubmitted(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send feedback')
@@ -148,7 +155,10 @@ export default function FeedbackSection() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{serviceLabel}</label>
                 <select {...register('service')} className="input-gov" aria-label={serviceLabel}>
                   <option value="">{selectService}</option>
-                  {serviceOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                  {services.map(service => {
+                    const serviceName = getServiceName(service)
+                    return <option key={service._id} value={serviceName}>{serviceName}</option>
+                  })}
                 </select>
                 {errors.service && <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errors.service.message}</p>}
               </div>

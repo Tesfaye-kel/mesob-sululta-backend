@@ -1,5 +1,6 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
+import AdminLogin from '@/pages/admin/AdminLogin'
 
 export default function AdminRoute() {
   const { isLoggedIn, loading, user } = useAdminAuth()
@@ -17,7 +18,7 @@ export default function AdminRoute() {
 
   // Must be logged in AND have the admin role
   if (!isLoggedIn || !user || user.role !== 'admin') {
-    return <Navigate to="/Admin" replace />
+    return <AdminLogin />
   }
 
   return <Outlet />

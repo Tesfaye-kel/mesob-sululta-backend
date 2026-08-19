@@ -4,6 +4,7 @@ import { Image, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Uploa
 import { getGalleryItemsList, createGalleryItem, updateGalleryItem, deleteGalleryItem, uploadFile, type GalleryItem } from '@/api/admin'
 import { cn } from '@/lib/utils'
 import { getImageUrl } from '@/lib/images'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
@@ -20,6 +21,8 @@ const emptyForm = {
 }
 
 export default function AdminGallery() {
+  const { t } = useLanguage()
+  const admin = t.admin
   const [items, setItems] = useState<GalleryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -93,7 +96,7 @@ export default function AdminGallery() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gallery</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.galleryTitle}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage gallery images with captions and categories</p>
         </div>
         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
@@ -156,7 +159,7 @@ export default function AdminGallery() {
             onClick={e => e.stopPropagation()}
             className="w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? 'Edit Gallery Item' : 'New Gallery Item'}</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? admin.editGalleryItem : admin.newGalleryItem}</h2>
               <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-4">

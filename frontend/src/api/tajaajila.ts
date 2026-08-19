@@ -108,7 +108,7 @@ export interface NewsListResponse {
 }
 
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`)
+  const res = await fetch(`${BASE}${path}`, { cache: 'no-store' })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json() as Promise<T>
 }
@@ -132,6 +132,7 @@ export const getWindows = () => get<WindowSummary[]>('/windows')
 export const getWindowsGroupedByFloor = () => get<WindowGroupedByFloorWithName[]>('/windows/grouped-by-floor')
 export const getWindowsByOrganization = (orgId: string) => get<WindowGroupedByFloor[]>(`/windows/by-organization/${orgId}`)
 export const getWindowServices = (id: string) => get<Service[]>(`/windows/${id}/services`)
+export const getServices = () => get<Service[]>('/services')
 
 export const getOrganizations = () => get<Organization[]>('/organizations')
 export const getOrganizationServices = (id: string) => get<Service[]>(`/organizations/${id}/services`)
@@ -141,6 +142,12 @@ export const getOrganizationWithWindows = (id: string) => get<{ organization: Or
 export const getServiceById = (id: string) => get<Service>(`/services/${id}`)
 export const getServiceRequirements = (id: string) => get<Requirement[]>(`/services/${id}/requirements`)
 export const searchServices = (q: string) => get<Service[]>(`/services/search?q=${encodeURIComponent(q)}`)
+
+export interface PublicFeedbackSummary {
+  overallProjectScore: number
+  showOverallProjectScore: boolean
+}
+export const getFeedbackSummary = () => get<PublicFeedbackSummary>('/feedback-ratings')
 
 export const getContact = () => get<ContactContent>('/contact')
 
@@ -172,6 +179,7 @@ export interface AboutStat {
   label: MultiLang
   color: string
   order: number
+  isVisible: boolean
 }
 
 export interface AboutContent {

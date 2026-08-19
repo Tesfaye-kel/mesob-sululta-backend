@@ -3,8 +3,30 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Info, Plus, Edit3, Trash2, X, Loader2, AlertCircle, CheckCircle, Heart, Award, Eye, TrendingUp, Target, History, ChevronDown, Upload, Building2, MessageSquare, Image, Palette } from 'lucide-react'
 import { getAbout, updateAbout, uploadManagerPhoto, addAboutStory, updateAboutStory, deleteAboutStory, addAboutValue, updateAboutValue, deleteAboutValue, addAboutStat, updateAboutStat, deleteAboutStat, type AboutContent, type AboutStory, type AboutValue, type AboutStat } from '@/api/admin'
 import { getImageUrl } from '@/lib/images'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const langs = ['en', 'am', 'or'] as const
+const langLabels = { en: 'EN', am: 'አማ', or: 'AF' } as const
+const aboutEditorLabels = {
+  en: {
+    mainContent: 'Main Content', mainSubtitle: 'Mission, Vision, Objectives, History, Branch Introduction',
+    mission: 'Mission', vision: 'Vision', objectives: 'Objectives', branchIntroduction: 'Branch Introduction', history: 'History',
+    sectionTitles: 'Section Titles / Labels', sectionTitlesSubtitle: 'Customize the section headings shown on the frontend (badge, titles, subtitles)',
+    story: 'Story / History Paragraphs', values: 'Core Values', statistics: 'Statistics', manager: 'Manager Message',
+  },
+  am: {
+    mainContent: 'ዋና ይዘት', mainSubtitle: 'ተልዕኮ፣ ራዕይ፣ ዓላማዎች፣ ታሪክ እና የቅርንጫፍ መግቢያ',
+    mission: 'ተልዕኮ', vision: 'ራዕይ', objectives: 'ዓላማዎች', branchIntroduction: 'የቅርንጫፍ መግቢያ', history: 'ታሪክ',
+    sectionTitles: 'የክፍል ርዕሶች / መለያዎች', sectionTitlesSubtitle: 'በድረ-ገጹ ላይ የሚታዩ ርዕሶችን እና ንዑስ ርዕሶችን ያስተካክሉ',
+    story: 'ታሪክ / የታሪክ አንቀጾች', values: 'መሠረታዊ እሴቶች', statistics: 'ስታቲስቲክስ', manager: 'የአስተዳዳሪ መልዕክት',
+  },
+  or: {
+    mainContent: 'Qabiyyee Ijoo', mainSubtitle: 'Ergama, Mul\'ata, Kaayyoo, Seenaa fi Seensa Damee',
+    mission: 'Ergama', vision: 'Mul\'ata', objectives: 'Kaayyoo', branchIntroduction: 'Seensa Damee', history: 'Seenaa',
+    sectionTitles: 'Mata-dureewwan / Mallattoolee Kutaa', sectionTitlesSubtitle: 'Mata-dureewwan fi ibsa fuula duraa irratti mul\'atan qindeessi',
+    story: 'Seenaa / Kutaa Seenaa', values: 'Gatiilee Ijoo', statistics: 'Istaatiksii', manager: 'Ergaa Hoogganaa',
+  },
+} as const
 
 const fields = ['mission', 'vision', 'objectives', 'branchIntroduction', 'history'] as const
 
@@ -55,7 +77,7 @@ const textColorClass = (c: string): string => {
 
 const emptyStory = { paragraph: { en: '', am: '', or: '' }, order: 0 }
 const emptyValue = { icon: 'Heart', title: { en: '', am: '', or: '' }, description: { en: '', am: '', or: '' }, color: 'green', order: 0 }
-const emptyStat = { value: '', label: { en: '', am: '', or: '' }, color: 'green', order: 0 }
+const emptyStat = { value: '', label: { en: '', am: '', or: '' }, color: 'green', order: 0, isVisible: true }
 
 // ─── Accordion Section Component ─────────────────────────────────
 function AccordionSection({
@@ -107,6 +129,10 @@ function AccordionSection({
 }
 
 export default function AdminAbout() {
+  const { t } = useLanguage()
+  const admin = t.admin
+  const [selectedLang, setSelectedLang] = useState<typeof langs[number]>('en')
+  const editorLabels = aboutEditorLabels[selectedLang]
   const [data, setData] = useState<AboutContent | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -181,10 +207,10 @@ export default function AdminAbout() {
     try {
       const updated = await updateAbout({ ...form, ...managerForm, ...sectionTitles })
       setData(updated)
-      setSuccess('About content updated successfully!')
+      setSuccess(admin.aboutSaved)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setSaving(false)
     }
@@ -199,10 +225,10 @@ export default function AdminAbout() {
     try {
       const data = await uploadManagerPhoto(file)
       setManagerForm(prev => ({ ...prev, managerPhoto: data.imageUrl }))
-      setSuccess('Photo uploaded!')
+      setSuccess(admin.imageSelected)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setUploading(false)
     }
@@ -221,10 +247,10 @@ export default function AdminAbout() {
       setShowStoryForm(false)
       setEditingStory(null)
       setStoryForm(emptyStory)
-      setSuccess('Story saved!')
+      setSuccess(admin.storySaved)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save story')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     }
   }
 
@@ -233,10 +259,10 @@ export default function AdminAbout() {
       await deleteAboutStory(id)
       const updated = await getAbout()
       setData(updated)
-      setSuccess('Story deleted!')
+      setSuccess(admin.storyDeleted)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete')
+      setError(err instanceof Error ? err.message : admin.failedToDelete)
     }
     setConfirmDelete(null)
   }
@@ -254,10 +280,10 @@ export default function AdminAbout() {
       setShowValueForm(false)
       setEditingValue(null)
       setValueForm(emptyValue)
-      setSuccess('Value saved!')
+      setSuccess(admin.valueSaved)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save value')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     }
   }
 
@@ -266,7 +292,7 @@ export default function AdminAbout() {
       await deleteAboutValue(id)
       const updated = await getAbout()
       setData(updated)
-      setSuccess('Value deleted!')
+      setSuccess(admin.valueDeleted)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete')
@@ -287,10 +313,10 @@ export default function AdminAbout() {
       setShowStatForm(false)
       setEditingStat(null)
       setStatForm(emptyStat)
-      setSuccess('Stat saved!')
+      setSuccess(admin.statSaved)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save stat')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     }
   }
 
@@ -299,7 +325,7 @@ export default function AdminAbout() {
       await deleteAboutStat(id)
       const updated = await getAbout()
       setData(updated)
-      setSuccess('Stat deleted!')
+      setSuccess(admin.statDeleted)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete')
@@ -315,8 +341,16 @@ export default function AdminAbout() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">About Content</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage all About section content</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.aboutTitle}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{admin.aboutDesc}</p>
+        </div>
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          {langs.map(lang => (
+            <button key={lang} type="button" onClick={() => setSelectedLang(lang)}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${selectedLang === lang ? 'bg-white dark:bg-gray-700 text-brand-green shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'}`}>
+              {langLabels[lang]}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -339,24 +373,25 @@ export default function AdminAbout() {
 
       <div className="space-y-3 mb-8">
         {/* ── Main Text Fields ── */}
-        <AccordionSection icon={Info} title="Main Content" subtitle="Mission, Vision, Objectives, History, Branch Introduction" defaultOpen={true}>
+        <AccordionSection icon={Info} title={editorLabels.mainContent} subtitle={editorLabels.mainSubtitle} defaultOpen={true}>
           <div className="space-y-6">
             {fields.map(field => (
               <div key={field}>
-                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">{fieldLabels[field]}</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">{editorLabels[field]}</h3>
                 <div className="space-y-2">
-                  {langs.map(lang => (
-                    <div key={lang}>
-                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase">{lang}</label>
+                  {(() => {
+                    const lang = selectedLang
+                    return <div>
+                      <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase">{langLabels[lang]}</label>
                       <textarea
                         value={form[field]?.[lang] || ''}
                         onChange={e => setForm(f => ({ ...f, [field]: { ...f[field], [lang]: e.target.value } }))}
                         rows={3}
                         className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none"
-                        placeholder={`${fieldLabels[field]} in ${lang}`}
+                        placeholder={`${editorLabels[field]} (${langLabels[lang]})`}
                       />
                     </div>
-                  ))}
+                  })()}
                 </div>
               </div>
             ))}
@@ -364,36 +399,32 @@ export default function AdminAbout() {
         </AccordionSection>
 
         {/* ── Section Titles ── */}
-        <AccordionSection icon={Palette} title="Section Titles / Labels" subtitle="Customize the section headings shown on the frontend (badge, titles, subtitles)">
+        <AccordionSection icon={Palette} title={editorLabels.sectionTitles} subtitle={editorLabels.sectionTitlesSubtitle}>
           <div className="space-y-4">
             {Object.entries(sectionTitles).map(([key, val]) => (
               <div key={key}>
                 <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wider">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  {langs.map(lang => (
-                    <input key={lang}
-                      value={val[lang]}
-                      onChange={e => setSectionTitles(prev => ({ ...prev, [key]: { ...prev[key as keyof typeof sectionTitles], [lang]: e.target.value } }))}
-                      placeholder={`${lang.toUpperCase()}`}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
-                  ))}
-                </div>
+                <input
+                  value={val[selectedLang]}
+                  onChange={e => setSectionTitles(prev => ({ ...prev, [key]: { ...prev[key as keyof typeof sectionTitles], [selectedLang]: e.target.value } }))}
+                  placeholder={langLabels[selectedLang]}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
             ))}
           </div>
         </AccordionSection>
 
         {/* ── Story Section ── */}
-        <AccordionSection icon={Building2} title="Story / History Paragraphs" subtitle={data?.story?.length ? `${data.story.length} paragraphs` : 'No paragraphs yet'}>
+        <AccordionSection icon={Building2} title={editorLabels.story} subtitle={data?.story?.length ? `${data.story.length} ${selectedLang === 'or' ? 'kutaa' : selectedLang === 'am' ? 'አንቀጾች' : 'paragraphs'}` : selectedLang === 'or' ? 'Kutaan hin jiru' : selectedLang === 'am' ? 'አንቀጽ የለም' : 'No paragraphs yet'}>
           <div className="space-y-2">
             <div className="flex justify-end mb-3">
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => { setEditingStory(null); setStoryForm(emptyStory); setShowStoryForm(true) }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-brand-green text-white text-xs font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
-                <Plus className="h-3.5 w-3.5" /> Add Story
+                <Plus className="h-3.5 w-3.5" /> {admin.addStory}
               </motion.button>
             </div>
-            {data?.story?.length === 0 && <p className="text-sm text-gray-400">No story paragraphs added yet.</p>}
+            {data?.story?.length === 0 && <p className="text-sm text-gray-400">{selectedLang === 'or' ? 'Kutaan seenaa amma iyyuu hin dabalamin.' : selectedLang === 'am' ? 'እስካሁን ምንም የታሪክ አንቀጾች አልተጨመሩም።' : 'No story paragraphs added yet.'}</p>}
             {data?.story?.map((story, idx) => (
               <motion.div key={story._id || idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col gap-2 p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
@@ -405,12 +436,12 @@ export default function AdminAbout() {
                   <button
                     onClick={() => { setEditingStory(story); setStoryForm({ paragraph: { ...story.paragraph }, order: story.order }); setShowStoryForm(true) }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
-                    <Edit3 className="h-3.5 w-3.5" /> Edit
+                    <Edit3 className="h-3.5 w-3.5" /> {admin.edit}
                   </button>
                   <button
                     onClick={() => story._id && setConfirmDelete({ type: 'story', id: story._id })}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
-                    <Trash2 className="h-3.5 w-3.5" /> Delete
+                    <Trash2 className="h-3.5 w-3.5" /> {admin.delete}
                   </button>
                 </div>
               </motion.div>
@@ -419,13 +450,13 @@ export default function AdminAbout() {
         </AccordionSection>
 
         {/* ── Values Section ── */}
-        <AccordionSection icon={Heart} title="Core Values" subtitle={data?.values?.length ? `${data.values.length} values` : 'No values yet'}>
+        <AccordionSection icon={Heart} title={editorLabels.values} subtitle={data?.values?.length ? `${data.values.length} ${selectedLang === 'or' ? 'gatii' : selectedLang === 'am' ? 'እሴቶች' : 'values'}` : selectedLang === 'or' ? 'Gatiin hin jiru' : selectedLang === 'am' ? 'እሴት የለም' : 'No values yet'}>
           <div className="space-y-2">
             <div className="flex justify-end mb-3">
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => { setEditingValue(null); setValueForm(emptyValue); setShowValueForm(true) }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-brand-green text-white text-xs font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
-                <Plus className="h-3.5 w-3.5" /> Add Value
+                <Plus className="h-3.5 w-3.5" /> {admin.addValue}
               </motion.button>
             </div>
             {data?.values?.length === 0 && <p className="text-sm text-gray-400">No values added yet.</p>}
@@ -451,13 +482,13 @@ export default function AdminAbout() {
         </AccordionSection>
 
         {/* ── Stats Section ── */}
-        <AccordionSection icon={TrendingUp} title="Statistics" subtitle={data?.stats?.length ? `${data.stats.length} stats` : 'No stats yet'}>
+        <AccordionSection icon={TrendingUp} title={editorLabels.statistics} subtitle={data?.stats?.length ? `${data.stats.length} ${selectedLang === 'or' ? 'tilmaama' : selectedLang === 'am' ? 'ስታቶች' : 'stats'}` : selectedLang === 'or' ? 'Tilmaamni hin jiru' : selectedLang === 'am' ? 'ስታት የለም' : 'No stats yet'}>
           <div className="space-y-2">
             <div className="flex justify-end mb-3">
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                 onClick={() => { setEditingStat(null); setStatForm(emptyStat); setShowStatForm(true) }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-brand-green text-white text-xs font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
-                <Plus className="h-3.5 w-3.5" /> Add Stat
+                <Plus className="h-3.5 w-3.5" /> {admin.addStat}
               </motion.button>
             </div>
             {data?.stats?.length === 0 && <p className="text-sm text-gray-400">No stats added yet.</p>}
@@ -466,8 +497,11 @@ export default function AdminAbout() {
                 className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
                 <span className={`text-lg font-bold ${textColorClass(stat.color)} w-12 shrink-0`}>{stat.value}</span>
                 <p className="flex-1 text-sm text-gray-700 dark:text-gray-300 truncate">{stat.label.en}</p>
+                <span className={`text-xs font-medium ${stat.isVisible !== false ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  {stat.isVisible !== false ? 'Shown' : 'Hidden'}
+                </span>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => { setEditingStat(stat); setStatForm({ value: stat.value, label: { ...stat.label }, color: stat.color || 'green', order: stat.order }); setShowStatForm(true) }}
+                  <button onClick={() => { setEditingStat(stat); setStatForm({ value: stat.value, label: { ...stat.label }, color: stat.color || 'green', order: stat.order, isVisible: stat.isVisible !== false }); setShowStatForm(true) }}
                     className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600"><Edit3 className="h-3.5 w-3.5" /></button>
                   <button onClick={() => stat._id && setConfirmDelete({ type: 'stat', id: stat._id })}
                     className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
@@ -478,11 +512,11 @@ export default function AdminAbout() {
         </AccordionSection>
 
         {/* ── Manager Message ── */}
-        <AccordionSection icon={MessageSquare} title="Manager Message" subtitle="Name, photo, title, and quote">
+        <AccordionSection icon={MessageSquare} title={editorLabels.manager} subtitle={selectedLang === 'or' ? 'Maqaa, suuraa, mata-duree fi caqasaa' : selectedLang === 'am' ? 'ስም፣ ፎቶ፣ ርዕስ እና ጥቅስ' : 'Name, photo, title, and quote'}>
           <div className="space-y-4">
             {/* Manager Photo */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Manager Photo</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{admin.managerPhoto}</label>
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 shrink-0">
                   {managerForm.managerPhoto ? (
@@ -496,35 +530,31 @@ export default function AdminAbout() {
                 </div>
                 <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm font-medium rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                   <Upload className="h-4 w-4" />
-                  {uploading ? 'Uploading...' : 'Upload Photo'}
+                  {uploading ? admin.uploading : admin.uploadPhoto}
                   <input type="file" accept="image/*" className="hidden" onChange={handleManagerPhotoUpload} disabled={uploading} />
                 </label>
                 {managerForm.managerPhoto && (
                   <button onClick={() => setManagerForm(prev => ({ ...prev, managerPhoto: '' }))}
-                    className="text-xs text-red-500 hover:text-red-700">Remove</button>
+                    className="text-xs text-red-500 hover:text-red-700">{admin.remove}</button>
                 )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Manager Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.managerName}</label>
               <input value={managerForm.managerName} onChange={e => setManagerForm(f => ({ ...f, managerName: e.target.value }))}
                 className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
             </div>
-            {langs.map(lang => (
-              <div key={lang}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Manager Title ({lang.toUpperCase()})</label>
-                <input value={managerForm.managerTitle[lang]} onChange={e => setManagerForm(f => ({ ...f, managerTitle: { ...f.managerTitle, [lang]: e.target.value } }))}
+            <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.managerTitle} ({langLabels[selectedLang]})</label>
+                <input value={managerForm.managerTitle[selectedLang]} onChange={e => setManagerForm(f => ({ ...f, managerTitle: { ...f.managerTitle, [selectedLang]: e.target.value } }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
-            ))}
-            {langs.map(lang => (
-              <div key={lang}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message ({lang.toUpperCase()})</label>
-                <textarea value={managerForm.managerMessage[lang]} onChange={e => setManagerForm(f => ({ ...f, managerMessage: { ...f.managerMessage, [lang]: e.target.value } }))} rows={4}
+            <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.messageLabel} ({langLabels[selectedLang]})</label>
+                <textarea value={managerForm.managerMessage[selectedLang]} onChange={e => setManagerForm(f => ({ ...f, managerMessage: { ...f.managerMessage, [selectedLang]: e.target.value } }))} rows={4}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none" />
               </div>
-            ))}
           </div>
         </AccordionSection>
       </div>
@@ -533,7 +563,7 @@ export default function AdminAbout() {
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-6 py-2.5 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save All Changes
+          {admin.saveAllChanges}
         </button>
       </div>
 
@@ -545,25 +575,23 @@ export default function AdminAbout() {
             onClick={e => e.stopPropagation()}
             className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editingStory ? 'Edit Story' : 'Add Story'}</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editingStory ? admin.editStory : admin.addStory}</h2>
               <button onClick={() => setShowStoryForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-4">
-              {langs.map(lang => (
-                <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Paragraph ({lang.toUpperCase()})</label>
-                  <textarea value={storyForm.paragraph[lang]} onChange={e => setStoryForm(f => ({ ...f, paragraph: { ...f.paragraph, [lang]: e.target.value } }))} rows={3}
+              <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.paragraph} ({langLabels[selectedLang]})</label>
+                  <textarea value={storyForm.paragraph[selectedLang]} onChange={e => setStoryForm(f => ({ ...f, paragraph: { ...f.paragraph, [selectedLang]: e.target.value } }))} rows={3}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none" />
                 </div>
-              ))}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Order</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.order}</label>
                 <input type="number" value={storyForm.order} onChange={e => setStoryForm(f => ({ ...f, order: Number(e.target.value) }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button onClick={() => setShowStoryForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
-                <button onClick={handleSaveStory} className="px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">{editingStory ? 'Update' : 'Add'}</button>
+                <button onClick={() => setShowStoryForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
+                <button onClick={handleSaveStory} className="px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">{editingStory ? admin.update : admin.add}</button>
               </div>
             </div>
           </motion.div>
@@ -578,19 +606,19 @@ export default function AdminAbout() {
             onClick={e => e.stopPropagation()}
             className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editingValue ? 'Edit Value' : 'Add Value'}</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editingValue ? admin.editValue : admin.addValue}</h2>
               <button onClick={() => setShowValueForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Icon</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.iconName}</label>
                 <select value={valueForm.icon} onChange={e => setValueForm(f => ({ ...f, icon: e.target.value }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
                   {iconOptions.map(ico => <option key={ico} value={ico}>{ico}</option>)}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.color}</label>
                 <div className="flex flex-wrap gap-2">
                   {colorOptions.map(c => (
                     <button key={c} type="button" onClick={() => setValueForm(f => ({ ...f, color: c }))}
@@ -599,28 +627,24 @@ export default function AdminAbout() {
                   ))}
                 </div>
               </div>
-              {langs.map(lang => (
-                <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title ({lang.toUpperCase()})</label>
-                  <input value={valueForm.title[lang]} onChange={e => setValueForm(f => ({ ...f, title: { ...f.title, [lang]: e.target.value } }))}
+              <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.title} ({langLabels[selectedLang]})</label>
+                  <input value={valueForm.title[selectedLang]} onChange={e => setValueForm(f => ({ ...f, title: { ...f.title, [selectedLang]: e.target.value } }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                 </div>
-              ))}
-              {langs.map(lang => (
-                <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description ({lang.toUpperCase()})</label>
-                  <textarea value={valueForm.description[lang]} onChange={e => setValueForm(f => ({ ...f, description: { ...f.description, [lang]: e.target.value } }))} rows={2}
+              <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.description} ({langLabels[selectedLang]})</label>
+                  <textarea value={valueForm.description[selectedLang]} onChange={e => setValueForm(f => ({ ...f, description: { ...f.description, [selectedLang]: e.target.value } }))} rows={2}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none" />
                 </div>
-              ))}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Order</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.order}</label>
                 <input type="number" value={valueForm.order} onChange={e => setValueForm(f => ({ ...f, order: Number(e.target.value) }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button onClick={() => setShowValueForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
-                <button onClick={handleSaveValue} className="px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">{editingValue ? 'Update' : 'Add'}</button>
+                <button onClick={() => setShowValueForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
+                <button onClick={handleSaveValue} className="px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">{editingValue ? admin.update : admin.add}</button>
               </div>
             </div>
           </motion.div>
@@ -635,17 +659,17 @@ export default function AdminAbout() {
             onClick={e => e.stopPropagation()}
             className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editingStat ? 'Edit Stat' : 'Add Stat'}</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editingStat ? admin.editStat : admin.addStat}</h2>
               <button onClick={() => setShowStatForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Value (e.g. 50+, 98%)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.valueExample}</label>
                 <input value={statForm.value} onChange={e => setStatForm(f => ({ ...f, value: e.target.value }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Color</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.color}</label>
                 <div className="flex flex-wrap gap-2">
                   {colorOptions.map(c => (
                     <button key={c} type="button" onClick={() => setStatForm(f => ({ ...f, color: c }))}
@@ -654,21 +678,24 @@ export default function AdminAbout() {
                   ))}
                 </div>
               </div>
-              {langs.map(lang => (
-                <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label ({lang.toUpperCase()})</label>
-                  <input value={statForm.label[lang]} onChange={e => setStatForm(f => ({ ...f, label: { ...f.label, [lang]: e.target.value } }))}
+              <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.label} ({langLabels[selectedLang]})</label>
+                  <input value={statForm.label[selectedLang]} onChange={e => setStatForm(f => ({ ...f, label: { ...f.label, [selectedLang]: e.target.value } }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                 </div>
-              ))}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Order</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.order}</label>
                 <input type="number" value={statForm.order} onChange={e => setStatForm(f => ({ ...f, order: Number(e.target.value) }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
+              <label className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                <input type="checkbox" checked={statForm.isVisible} onChange={e => setStatForm(f => ({ ...f, isVisible: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300 text-brand-green focus:ring-brand-green" />
+                Show this statistic on the frontend
+              </label>
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button onClick={() => setShowStatForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
-                <button onClick={handleSaveStat} className="px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">{editingStat ? 'Update' : 'Add'}</button>
+                <button onClick={() => setShowStatForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
+                <button onClick={handleSaveStat} className="px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">{editingStat ? admin.update : admin.add}</button>
               </div>
             </div>
           </motion.div>
@@ -682,15 +709,15 @@ export default function AdminAbout() {
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}
             className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete {confirmDelete.type}?</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{admin.delete} {confirmDelete.type}?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{admin.deleteConfirmDesc}</p>
             <div className="flex items-center justify-center gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
               <button onClick={() => {
                 if (confirmDelete.type === 'story') handleDeleteStory(confirmDelete.id)
                 else if (confirmDelete.type === 'value') handleDeleteValue(confirmDelete.id)
                 else if (confirmDelete.type === 'stat') handleDeleteStat(confirmDelete.id)
-              }} className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+              }} className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">{admin.delete}</button>
             </div>
           </motion.div>
         </motion.div>

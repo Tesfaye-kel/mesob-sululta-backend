@@ -17,20 +17,20 @@ interface AnimatedSectionProps {
 
 const variants = {
   fadeUp: {
-    hidden: { opacity: 0, y: 32 },
-    visible: { opacity: 1, y: 0 },
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
   },
   fadeIn: {
     hidden: { opacity: 0 },
     visible: { opacity: 1 },
   },
   fadeLeft: {
-    hidden: { opacity: 0, x: -32 },
-    visible: { opacity: 1, x: 0 },
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
   },
   fadeRight: {
-    hidden: { opacity: 0, x: 32 },
-    visible: { opacity: 1, x: 0 },
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 },
   },
   zoomIn: {
     hidden: { opacity: 0, scale: 0.92 },
@@ -106,8 +106,8 @@ export function StaggerItem({ children, className }: { children: ReactNode; clas
   return (
     <motion.div
       variants={{
-        hidden: { opacity: 0, y: 24 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } },
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { duration: 0.45, ease: [0.25, 0.1, 0.25, 1] } },
       }}
       className={className}
     >

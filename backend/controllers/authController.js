@@ -112,14 +112,11 @@ const forgotPassword = async (req, res, next) => {
 
     if (!emailResult.success) {
       console.warn('Password reset email could not be sent:', emailResult.reason || emailResult.error);
+      return res.status(503).json({ message: 'We could not send the password reset email. Please try again later.' });
     }
 
-    // Always return the reset link so the frontend can display it directly
-    // (especially if email delivery fails — GitHub/office LAN often blocks Gmail SMTP)
-    res.json({
-      message: 'If that email is registered, a reset link has been sent.',
-      resetLink,
-    });
+    // Never return the reset token. Password resets must use the link delivered by email.
+    res.json({ message: 'If that email is registered, a reset link has been sent.' });
   } catch (err) { next(err); }
 };
 

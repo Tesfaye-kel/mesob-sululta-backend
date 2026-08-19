@@ -184,7 +184,8 @@ export default function Hero() {
     searchServices(q)
       .then(data => {
         if (!cancelled) {
-          setResults(data)
+          // Hero search leads directly to a window card, where floor and requirements are available.
+          setResults(data.filter(service => service.window))
           setShowDropdown(true)
           setIsSearching(false)
         }
@@ -224,7 +225,9 @@ export default function Hero() {
   const handleSelectService = useCallback((service: Service) => {
     setShowDropdown(false)
     setQuery('')
-    const windowId = service.window?._id
+    const windowId = typeof service.window === 'object' && service.window
+      ? service.window._id
+      : typeof service.window === 'string' ? service.window : ''
     const orgId = typeof service.organization === 'object' && service.organization
       ? String((service.organization as any)._id || '')
       : typeof service.organization === 'string' ? service.organization : ''

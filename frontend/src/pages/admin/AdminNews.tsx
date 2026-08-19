@@ -24,7 +24,6 @@ const emptyForm = {
   category: 'news',
   isFeatured: false,
   isPublished: true,
-  coverImageUrl: '',
   media: [] as NewsMedia[],
   tags: [] as string[],
 }
@@ -301,7 +300,6 @@ function NewsTab() {
         setForm(f => ({
           ...f,
           media: [...f.media, { type: mediaType, url: data.url, caption: { en: '', am: '', or: '' } }],
-          coverImageUrl: f.coverImageUrl || (mediaType === 'image' ? data.url : f.coverImageUrl),
         }))
       } else {
         const formData = new FormData()
@@ -324,7 +322,6 @@ function NewsTab() {
         setForm(f => ({
           ...f,
           media: [...f.media, ...newItems],
-          coverImageUrl: f.coverImageUrl || (newItems.find(i => i.type === 'image')?.url ?? f.coverImageUrl),
         }))
       }
     } catch (err) {
@@ -415,7 +412,6 @@ function NewsTab() {
       category: item.category,
       isFeatured: item.isFeatured,
       isPublished: item.isPublished,
-      coverImageUrl: item.coverImageUrl || '',
       media: item.media || [],
       tags: item.tags || [],
     })
@@ -476,9 +472,9 @@ function NewsTab() {
           {filtered.map((item, idx) => (
             <motion.div key={item._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}
               className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-              {item.coverImageUrl && (
+              {item.media?.find(media => media.type === 'image')?.url && (
                 <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0 bg-gray-100 dark:bg-gray-700">
-                  <img src={item.coverImageUrl.startsWith('http') ? item.coverImageUrl : `${BASE.replace('/api', '')}${item.coverImageUrl}`}
+                  <img src={item.media.find(media => media.type === 'image')!.url.startsWith('http') ? item.media.find(media => media.type === 'image')!.url : `${BASE.replace('/api', '')}${item.media.find(media => media.type === 'image')!.url}`}
                     alt="" className="w-full h-full object-cover" />
                 </div>
               )}
@@ -549,42 +545,6 @@ function NewsTab() {
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none" />
                 </div>
               ))}
-
-              {/* Cover Image Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover Image</label>
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                    <ImageIcon className="h-4 w-4" />
-                    <span>{uploading ? 'Uploading...' : 'Upload Cover'}</span>
-                    <input type="file" accept="image/*" onChange={async (e) => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-                      setUploading(true)
-                      try {
-                        const token = localStorage.getItem('admin-token')
-                        const fd = new FormData()
-                        fd.append('media', file)
-                        const res = await fetch(`${BASE}/news/upload`, {
-                          method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd,
-                        })
-                        if (!res.ok) throw new Error('Upload failed')
-                        const data = await res.json()
-                        setForm(f => ({ ...f, coverImageUrl: data.url }))
-                      } catch (err) {
-                        setError('Upload failed')
-                      } finally { setUploading(false) }
-                    }} className="hidden" />
-                  </label>
-                  {form.coverImageUrl && (
-                    <button onClick={() => setForm(f => ({ ...f, coverImageUrl: '' }))} className="text-xs text-red-500 hover:underline">Remove</button>
-                  )}
-                </div>
-                {form.coverImageUrl && (
-                  <img src={form.coverImageUrl.startsWith('http') ? form.coverImageUrl : `${BASE.replace('/api', '')}${form.coverImageUrl}`}
-                    alt="Cover preview" className="mt-2 w-48 h-32 object-cover rounded-lg" />
-                )}
-              </div>
 
               {/* Media Gallery */}
               <div>

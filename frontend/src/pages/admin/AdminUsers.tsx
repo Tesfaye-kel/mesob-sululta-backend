@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Users, Trash2, Loader2, AlertCircle, CheckCircle, Shield, Mail, Calendar } from 'lucide-react'
 import { getUsers, deleteUser } from '@/api/admin'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface UserItem {
   _id: string
@@ -13,6 +14,8 @@ interface UserItem {
 }
 
 export default function AdminUsers() {
+  const { t } = useLanguage()
+  const admin = t.admin
   const [items, setItems] = useState<UserItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -41,7 +44,7 @@ export default function AdminUsers() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.usersTitle}</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage admin users</p>
       </div>
       <AnimatePresence>{success && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm"><CheckCircle className="h-4 w-4 shrink-0" /><span>{success}</span></motion.div>}</AnimatePresence>

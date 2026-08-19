@@ -16,6 +16,8 @@ const adminRoutes = require('./adminRoutes');
 const organizationContentRoutes = require('./organizationContentRoutes');
 const socialMediaRoutes = require('./socialMediaRoutes');
 const floorRoutes = require('./floorRoutes');
+const officeRoutes = require('./officeRoutes');
+const feedbackRoutes = require('./feedbackRoutes');
 
 const router = express.Router();
 
@@ -35,5 +37,7 @@ router.use('/admin', adminRoutes);
 router.use('/organization-content', organizationContentRoutes);
 router.use('/social-media', socialMediaRoutes);
 router.use('/floors', floorRoutes);
+router.use('/offices', officeRoutes);
+router.use('/feedback-ratings', feedbackRoutes);
 
 module.exports = router;

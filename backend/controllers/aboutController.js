@@ -56,6 +56,7 @@ const cleanSubDoc = (body = {}) => {
   if (body.value && typeof body.value === 'string') clean.value = body.value.trim();
   if (body.order !== undefined) clean.order = Number(body.order) || 0;
   if (body.color && typeof body.color === 'string') clean.color = body.color.trim();
+  if (body.isVisible !== undefined) clean.isVisible = Boolean(body.isVisible);
   return clean;
 };
 
@@ -64,7 +65,11 @@ const getAbout = async (req, res, next) => {
   try {
     const about = await About.findOne().sort({ createdAt: -1 });
     if (!about) return res.status(404).json({ message: 'About content not found' });
-    return res.json(about);
+    const result = about.toObject();
+    if (req.query.includeHidden !== 'true') {
+      result.stats = result.stats.filter(stat => stat.isVisible !== false);
+    }
+    return res.json(result);
   } catch (err) {
     next(err);
   }

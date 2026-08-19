@@ -11,6 +11,7 @@ const ContactMessage = require('../models/ContactMessage');
 const Requirement = require('../models/Requirement');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { getFeedbackSummary } = require('./feedbackController');
 
 // ─── Dashboard Stats ────────────────────────────────────────────
 const getDashboardStats = async (req, res, next) => {
@@ -25,6 +26,7 @@ const getDashboardStats = async (req, res, next) => {
       testimonialCount,
       contactCount,
       unreadContactCount,
+      feedback,
     ] = await Promise.all([
       User.countDocuments(),
       Organization.countDocuments(),
@@ -35,6 +37,7 @@ const getDashboardStats = async (req, res, next) => {
       Testimonial.countDocuments(),
       ContactMessage.countDocuments(),
       ContactMessage.countDocuments({ isRead: false }),
+      getFeedbackSummary(),
     ]);
 
     const recentNews = await News.find()
@@ -64,8 +67,9 @@ const getDashboardStats = async (req, res, next) => {
         testimonials: testimonialCount,
         contactSubmissions: contactCount,
         unreadMessages: unreadContactCount,
-      total: userCount + orgCount + serviceCount + windowCount + newsCount + faqCount + testimonialCount,
+        total: userCount + orgCount + serviceCount + windowCount + newsCount + faqCount + testimonialCount,
       },
+      feedback,
       recent: {
         news: recentNews,
         services: recentServices,
@@ -93,15 +97,32 @@ const updateProfile = async (req, res, next) => {
     const { name, email } = req.body;
     const updates = {};
     if (name) updates.name = name;
-    if (email) updates.email = email;
+    if (email) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const existing = await User.findOne({
+        email: normalizedEmail,
+        _id: { $ne: req.user.id },
+      });
+      if (existing) {
+        return res.status(409).json({ message: 'A user with this email already exists' });
+      }
+      updates.email = normalizedEmail;
+    }
 
-    const user = await User.findByIdAndUpdate(req.user.id, updates, {
-      new: true,
-      runValidators: true,
-    }).select('-password');
+    try {
+      const user = await User.findByIdAndUpdate(req.user.id, updates, {
+        new: true,
+        runValidators: true,
+      }).select('-password');
 
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      res.json(user);
+    } catch (err) {
+      if (err?.code === 11000 && err?.keyPattern?.email) {
+        return res.status(409).json({ message: 'A user with this email already exists' });
+      }
+      throw err;
+    }
   } catch (err) {
     next(err);
   }

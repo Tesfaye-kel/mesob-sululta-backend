@@ -89,7 +89,7 @@ const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 // ── Section wrapper ───────────────────────────────────────────────────────────
 function HomeSection({ id, title, subtitle, bg = '', children }: { id: string; title: string; subtitle?: string; bg?: string; children: React.ReactNode }) {
   return (
-    <motion.section id={id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }}
+    <motion.section id={id} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.45 }}
       style={{ pointerEvents: 'auto' }}
       className={`section-padding ${bg}`} aria-label={title}>
@@ -679,7 +679,13 @@ export default function HomePage() {
       const idx = flat.findIndex(f => f.win._id === locationState.openWindowId)
       if (idx !== -1) {
         setActiveView('windows')
-        setModal({ win: flat[idx].win, floorName: flat[idx].floorName, index: idx, autoOpenServiceId: locationState.openServiceId })
+        document.getElementById('services')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        const selected = flat[idx]
+        const timer = window.setTimeout(() => {
+          setModal({ win: selected.win, floorName: selected.floorName, index: idx, autoOpenServiceId: locationState.openServiceId })
+        }, 450)
+        window.history.replaceState({}, '')
+        return () => window.clearTimeout(timer)
       }
     }
     if (locationState.openOrgId && orgs.length > 0) {

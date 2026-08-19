@@ -28,7 +28,7 @@ const mediaSchema = new mongoose.Schema(
 const newsSchema = new mongoose.Schema(
   {
     title: { ...localizedString, en: { type: String, required: true } },
-    content: { ...localizedString, en: { type: String, required: true } },
+    content: { ...localizedString },
     excerpt: { ...localizedString },
     category: {
       type: String,

@@ -66,7 +66,7 @@ export default function NewsDetailPage() {
     )
     // Also include cover image
     const allUrls = [
-      ...(item.coverImageUrl ? [{ url: item.coverImageUrl, name: `cover-${item._id}` }] : []),
+      ...(item.coverImageUrl && !hasMedia ? [{ url: item.coverImageUrl, name: `cover-${item._id}` }] : []),
       ...downloadable.map(m => ({ url: getImageUrl(m.url), name: m.url.split('/').pop() || 'media' })),
     ]
     for (const { url, name } of allUrls) {
@@ -150,7 +150,7 @@ export default function NewsDetailPage() {
           </div>
 
           {/* Cover Image */}
-          {item.coverImageUrl && (
+          {item.coverImageUrl && !hasMedia && (
             <div className="rounded-2xl overflow-hidden mb-8 shadow-lg">
               <img
                 src={getImageUrl(item.coverImageUrl)}
@@ -179,7 +179,7 @@ export default function NewsDetailPage() {
           {hasMedia && (
             <div className="mb-10">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                {language === 'am' ? 'ሚዲያ' : language === 'or' ? 'Miidiyaa' : 'Media'}
+                {language === 'am' ? 'ሚዲያ' : language === 'or' ? 'Miidiyaa' : 'Media'} ({item.media.length})
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {item.media.map((m, i) => {
@@ -278,7 +278,7 @@ export default function NewsDetailPage() {
               <ArrowLeft className="h-4 w-4" />
               {language === 'am' ? 'ሌሎች ዜናዎች' : language === 'or' ? 'Oduuwwan biroo' : 'More News'}
             </Link>
-            {((item.media && item.media.length > 0) || item.coverImageUrl) && (
+            {((item.media && item.media.length > 0) || (item.coverImageUrl && !hasMedia)) && (
               <button
                 onClick={handleDownloadAll}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-green text-white text-sm font-semibold hover:bg-brand-green/90 transition-colors"

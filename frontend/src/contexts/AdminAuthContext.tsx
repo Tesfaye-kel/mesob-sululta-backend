@@ -17,26 +17,30 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Restore session from storage on mount
-    const stored = getStoredUser()
-    if (stored && isAuthenticated()) {
-      // Verify the stored user has the admin role
-      if (stored.role === 'admin') {
-        setIsLoggedIn(true)
-        setUser(stored)
+    try {
+      // Restore session from storage on mount. Any storage failure is treated as logged out.
+      const stored = getStoredUser()
+      if (stored && isAuthenticated()) {
+        if (stored.role === 'admin') {
+          setIsLoggedIn(true)
+          setUser(stored)
+        } else {
+          clearAdminAuthStorage()
+          setIsLoggedIn(false)
+          setUser(null)
+        }
       } else {
-        // Non-admin user with a token — clear the session
         clearAdminAuthStorage()
         setIsLoggedIn(false)
         setUser(null)
       }
-    } else {
-      // No valid session — clear any stale data
+    } catch {
       clearAdminAuthStorage()
       setIsLoggedIn(false)
       setUser(null)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [])
 
   const login = useCallback(async (email: string, password: string) => {

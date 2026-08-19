@@ -4,7 +4,7 @@ import { motion, useInView } from 'framer-motion'
 import { Target, Eye, Heart, Award, TrendingUp, History, Loader2, CheckCircle2 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
-import { getAbout, type AboutContent } from '@/api/tajaajila'
+import { getAbout, getFeedbackSummary, getServices, getOrganizations, type AboutContent } from '@/api/tajaajila'
 import { getImageUrl } from '@/lib/images'
 
 function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -13,8 +13,8 @@ function Reveal({ children, className = '', delay = 0 }: { children: React.React
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 24 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      initial={{ opacity: 0 }}
+      animate={inView ? { opacity: 1 } : { opacity: 0 }}
       transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
@@ -64,6 +64,10 @@ export default function AboutSection() {
   const { t, language } = useLanguage()
   const [about, setAbout] = useState<AboutContent | null>(null)
   const [loading, setLoading] = useState(true)
+  const [feedbackScore, setFeedbackScore] = useState<number | null>(null)
+  const [showOverallScore, setShowOverallScore] = useState(true)
+  const [serviceCount, setServiceCount] = useState<number | null>(null)
+  const [officeCount, setOfficeCount] = useState<number | null>(null)
 
   useEffect(() => {
     // Load from cache immediately so content shows even offline
@@ -74,6 +78,24 @@ export default function AboutSection() {
       .then(data => { setAbout(data); saveCache('about', data) })
       .catch(() => { if (!cached) setLoading(false) })
       .finally(() => setLoading(false))
+
+    const refreshDynamicStats = () => {
+      getFeedbackSummary()
+        .then(data => {
+          setShowOverallScore(data.showOverallProjectScore)
+          setFeedbackScore(data.showOverallProjectScore ? data.overallProjectScore : null)
+        })
+        .catch(() => {})
+      getServices()
+        .then(data => setServiceCount(data.length))
+        .catch(() => {})
+      getOrganizations()
+        .then(data => setOfficeCount(data.length))
+        .catch(() => {})
+    }
+    refreshDynamicStats()
+    const statsInterval = window.setInterval(refreshDynamicStats, 15000)
+    return () => window.clearInterval(statsInterval)
   }, [])
 
   const get = (obj?: { en: string; am: string; or: string } | null): string => {
@@ -149,8 +171,8 @@ export default function AboutSection() {
                 {highlights.map((h, i) => (
                   <motion.li
                     key={h._id || i}
-                    initial={{ opacity: 0, x: 16 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.07, duration: 0.35 }}
                     className="flex items-start gap-3"
@@ -173,6 +195,8 @@ export default function AboutSection() {
           <div className="border-t border-b border-gray-200 dark:border-gray-700 py-10">
             <div className="flex items-start justify-between gap-6">
               {stats.map((stat, i) => {
+                const isSatisfactionStat = stat.label.en.toLowerCase().includes('satisfaction')
+                if (isSatisfactionStat && !showOverallScore) return null
                 const align =
                   i === 0 ? 'text-left' :
                   i === stats.length - 1 ? 'text-right' :
@@ -180,14 +204,20 @@ export default function AboutSection() {
                 return (
                   <motion.div
                     key={stat._id || i}
-                    initial={{ opacity: 0, y: 16 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: i * 0.1, duration: 0.4 }}
                     className={cn('flex-1', align)}
                   >
                     <p className={cn('text-4xl md:text-5xl font-extrabold tabular-nums leading-none', getStatColor(stat.color))}>
-                      {stat.value}
+                      {stat.label.en.toLowerCase().includes('service') && serviceCount !== null
+                        ? `${serviceCount}+`
+                        : stat.label.en.toLowerCase().includes('satisfaction') && feedbackScore !== null
+                          ? `${feedbackScore}%`
+                          : (stat.label.en.toLowerCase().includes('office') || stat.label.en.toLowerCase().includes('department')) && officeCount !== null
+                            ? String(officeCount)
+                            : stat.value}
                     </p>
                     <p className="mt-2 text-sm font-medium text-gray-500 dark:text-gray-400 leading-snug">
                       {get(stat.label)}
@@ -221,7 +251,7 @@ export default function AboutSection() {
             {/* Mission */}
             {get(about?.mission) && (
               <motion.div
-                variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.45 } } }}
+                variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.45 } } }}
                 className="group bg-[#1e3a5f] dark:bg-gray-900 rounded-2xl p-6 border border-[#1e3a5f] dark:border-gray-700 shadow-md hover:shadow-lg transition-shadow"
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-white/15 text-white">
@@ -237,7 +267,7 @@ export default function AboutSection() {
             {/* Vision */}
             {get(about?.vision) && (
               <motion.div
-                variants={{ hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0, transition: { duration: 0.45 } } }}
+                variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.45 } } }}
                 className="group bg-[#2d1b69] dark:bg-gray-900 rounded-2xl p-6 border border-[#2d1b69] dark:border-gray-700 shadow-md hover:shadow-lg transition-shadow"
               >
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4 bg-white/15 text-white">
