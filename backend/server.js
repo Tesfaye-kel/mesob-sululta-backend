@@ -12,6 +12,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const apiRoutes = require('./routes');
+const { uploadRoot } = require('./utils/uploadPaths');
 const User = require('./models/User');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 
@@ -24,7 +25,7 @@ app.use(helmet({
 }));
 
 // Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(uploadRoot));
 
 // Rate limiting (simple protection against brute-force / abuse)
 app.use(

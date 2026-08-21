@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const { getUploadDir } = require('../utils/uploadPaths');
 const { authenticateJWT } = require('../middleware/authMiddleware');
 const { requireAdmin } = require('../middleware/roleMiddleware');
 
@@ -17,10 +17,7 @@ const {
 const router = express.Router();
 
 // Configure multer for gallery image uploads
-const uploadDir = path.join(__dirname, '..', 'uploads', 'gallery');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+const uploadDir = getUploadDir('gallery');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadDir),
