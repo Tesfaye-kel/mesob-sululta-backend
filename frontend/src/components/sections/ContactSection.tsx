@@ -3,12 +3,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { motion } from 'framer-motion'
-import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react'
+import { Phone, Mail, MapPin, Clock, Send, CheckCircle, Facebook, Twitter, Linkedin, ExternalLink, ArrowRight } from 'lucide-react'
 import AnimatedSection from '@/components/common/AnimatedSection'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { getContact, type ContactContent } from '@/api/tajaajila'
+import { getContact, getSocialMedia, type ContactContent, type SocialMediaPlatform } from '@/api/tajaajila'
 
 const schema = z.object({
   name: z.string().min(2),
@@ -31,11 +31,15 @@ export default function ContactSection({ compact = false, showHeader = true }: C
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [contact, setContact] = useState<ContactContent | null>(null)
+  const [socialMedia, setSocialMedia] = useState<SocialMediaPlatform[]>([])
 
   useEffect(() => {
     getContact()
       .then(setContact)
       .catch(() => {}) // silently fail, fallback to hardcoded defaults
+    getSocialMedia()
+      .then(data => setSocialMedia(Array.isArray(data) ? data : []))
+      .catch(() => {})
   }, [])
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({ resolver: zodResolver(schema) })
@@ -64,6 +68,19 @@ export default function ContactSection({ compact = false, showHeader = true }: C
   const phone = contact?.phone || '+251 11 111 0000'
   const email = contact?.email || 'info@mesob-sululta.gov.et'
   const hours = contact?.workingHours?.[language] || contact?.workingHours?.en || 'Mon–Fri: 8:30 AM – 5:30 PM\nSat: 8:30 AM – 12:00 PM'
+  const activeSocial = socialMedia
+    .filter(item => item.isActive)
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+
+  const socialIcon = (icon: string) => {
+    const name = icon.toLowerCase()
+    const props = { className: 'h-7 w-7', 'aria-hidden': true as const }
+    if (name.includes('facebook')) return <Facebook {...props} />
+    if (name.includes('twitter') || name === 'x') return <Twitter {...props} />
+    if (name.includes('linkedin')) return <Linkedin {...props} />
+    if (name.includes('telegram') || name.includes('send')) return <Send {...props} />
+    return <ExternalLink {...props} />
+  }
 
   const content = (
     <div className="container-gov">
@@ -144,6 +161,34 @@ export default function ContactSection({ compact = false, showHeader = true }: C
           </div>
         </AnimatedSection>
       </div>
+
+      {activeSocial.length > 0 && (
+        <div className="mt-12 border-y border-gray-200 dark:border-gray-700 py-8">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center w-full">
+            <div className="flex items-center justify-center gap-2 shrink-0 md:min-w-56 md:justify-start">
+              <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                {language === 'or' ? 'Kanaan Nu Qunnamaa' : language === 'am' ? 'በእነዚህ ያግኙን' : 'Connect with us'}
+              </span>
+              <ArrowRight className="h-5 w-5 text-brand-green" aria-hidden />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+            {activeSocial.map(item => (
+              <a
+                key={item._id}
+                href={item.url}
+                target={item.openInNewTab ? '_blank' : undefined}
+                rel={item.openInNewTab ? 'noopener noreferrer' : undefined}
+                aria-label={item.platform}
+                className="flex min-h-20 items-center justify-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-brand-green hover:text-brand-green transition-colors"
+              >
+                {socialIcon(item.icon || item.platform)}
+                <span className="font-semibold">{item.platform}</span>
+              </a>
+            ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 

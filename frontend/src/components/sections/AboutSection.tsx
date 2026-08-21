@@ -87,7 +87,14 @@ export default function AboutSection() {
         })
         .catch(() => {})
       getServices()
-        .then(data => setServiceCount(data.length))
+        .then(data => {
+          const uniqueServices = new Set(
+            data.map(service => [service.name.en, service.name.am, service.name.or]
+              .map(name => name.trim().toLowerCase())
+              .join('|'))
+          )
+          setServiceCount(uniqueServices.size)
+        })
         .catch(() => {})
       getOrganizations()
         .then(data => setOfficeCount(data.length))
@@ -122,71 +129,71 @@ export default function AboutSection() {
     <div className="container-gov">
 
       {/* ══════════════════════════════════════════════════════════
-          SEENAA / HISTORY — pure editorial text, no cards
+          SEENAA / HISTORY — full-bleed visual story
       ══════════════════════════════════════════════════════════ */}
-      <Reveal className="mb-3">
-        {/* Eyebrow label */}
-        <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-green dark:text-brand-green-light">
-          <span className="h-px w-8 bg-brand-green dark:bg-brand-green-light" aria-hidden />
-          {get(about?.storyBadge) || (language === 'or' ? 'Seenaa' : language === 'am' ? 'ታሪክ' : 'History')}
-        </span>
-      </Reveal>
+      <Reveal className="mb-14" delay={0.05}>
+        <section
+          className="relative isolate -mx-4 overflow-hidden border-y border-gray-200 px-4 py-10 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 md:py-14"
+          style={{ backgroundImage: "url('/photo_2026-07-03_10-15-27.jpg')", backgroundPosition: 'center', backgroundSize: 'cover' }}
+        >
+          <div className="absolute inset-0 -z-10 bg-white/78 backdrop-blur-[1px]" aria-hidden />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white/95 via-white/80 to-white/55" aria-hidden />
 
-      <Reveal className="mb-8" delay={0.05}>
-        {/* Section headline */}
-        <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight">
-          {get(about?.storyTitle) || (language === 'or' ? 'Seenaa Keenya' : language === 'am' ? 'ታሪካችን' : 'Our Story')}
-        </h2>
-        {/* Thin accent underline */}
-        <div className="mt-3 flex items-center gap-2">
-          <div className="h-0.5 w-14 rounded-full bg-brand-green" aria-hidden />
-          <div className="h-0.5 w-6 rounded-full bg-brand-gold" aria-hidden />
-        </div>
-      </Reveal>
-
-      {/* Story body text + highlights — two columns on desktop */}
-      <Reveal className="mb-14" delay={0.1}>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-start">
-
-          {/* LEFT: story paragraphs */}
-          <div className="space-y-5 text-gray-700 dark:text-gray-300 text-base md:text-lg leading-[1.85]">
-            {story.length > 0
-              ? story.map((s, i) => <p key={s._id || i}>{get(s.paragraph)}</p>)
-              : (
-                <>
-                  {get(about?.history) && <p>{get(about?.history)}</p>}
-                  {get(about?.branchIntroduction) && <p>{get(about?.branchIntroduction)}</p>}
-                </>
-              )}
-          </div>
-
-          {/* RIGHT: highlights list with checkmark symbols */}
-          {highlights.length > 0 && (
-            <div>
-              {/* Section label */}
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-green dark:text-brand-green-light mb-4">
-                {get(about?.highlightsTitle) || (language === 'or' ? 'Waan Nu Addeessu' : language === 'am' ? 'የሚለየን ነገር' : 'What Distinguishes Us')}
+          <div className="relative mx-auto max-w-6xl">
+            <div className="flex flex-col items-center text-center">
+              <h1 className="max-w-5xl text-3xl font-extrabold leading-tight tracking-tight text-[#102b4e] md:text-5xl">
+                {t.about.title}
+              </h1>
+              <p className="mt-4 max-w-3xl text-base leading-7 text-gray-700 md:text-lg">
+                {t.about.subtitle}
               </p>
-              <ul className="space-y-3">
-                {highlights.map((h, i) => (
-                  <motion.li
-                    key={h._id || i}
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.07, duration: 0.35 }}
-                    className="flex items-start gap-3"
-                  >
-                    <CheckCircle2 className="h-5 w-5 text-brand-green dark:text-brand-green-light mt-0.5 shrink-0" aria-hidden />
-                    <span className="text-sm md:text-base text-gray-700 dark:text-gray-300 leading-snug">
-                      {get(h.text)}
-                    </span>
-                  </motion.li>
-                ))}
-              </ul>
+              <span className="mt-8 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-green">
+                <span className="h-px w-8 bg-brand-gold" aria-hidden />
+                {get(about?.storyBadge) || (language === 'or' ? 'Seenaa' : language === 'am' ? 'ታሪክ' : 'History')}
+                <span className="h-px w-8 bg-brand-gold" aria-hidden />
+              </span>
+              <h2 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[#102b4e] md:text-5xl">
+                {get(about?.storyTitle) || (language === 'or' ? 'Seenaa Keenya' : language === 'am' ? 'ታሪካችን' : 'Our Story')}
+              </h2>
             </div>
-          )}
-        </div>
+
+            <div className="mt-10 grid grid-cols-1 gap-8 pt-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
+              <div className="space-y-5 text-base leading-8 text-gray-800 md:text-lg">
+                {story.length > 0
+                  ? story.map((s, i) => <p key={s._id || i}>{get(s.paragraph)}</p>)
+                  : (
+                    <>
+                      {get(about?.history) && <p>{get(about?.history)}</p>}
+                      {get(about?.branchIntroduction) && <p>{get(about?.branchIntroduction)}</p>}
+                    </>
+                  )}
+              </div>
+
+              {highlights.length > 0 && (
+                <div className="self-start border-l-4 border-brand-green bg-white/65 p-6 shadow-sm backdrop-blur-sm md:p-8">
+                <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-green">
+                  {get(about?.highlightsTitle) || (language === 'or' ? 'Waan Nu Addeessu' : language === 'am' ? 'የሚለየን ነገር' : 'What Distinguishes Us')}
+                </p>
+                <ul className="space-y-4">
+                  {highlights.map((h, i) => (
+                    <motion.li
+                      key={h._id || i}
+                      initial={{ opacity: 0, x: 12 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.07, duration: 0.35 }}
+                      className="flex items-start gap-3"
+                    >
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-green" aria-hidden />
+                      <span className="text-sm leading-6 text-gray-800 md:text-base">{get(h.text)}</span>
+                    </motion.li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            </div>
+          </div>
+        </section>
       </Reveal>
 
       {/* Stats row — left / center / right alignment */}
@@ -306,11 +313,11 @@ export default function AboutSection() {
         <Reveal className="text-center mb-12">
           <span className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-green dark:text-brand-green-light mb-3">
             <span className="h-px w-8 bg-brand-green dark:bg-brand-green-light" aria-hidden />
-            {get(about?.valuesTitle) || t.about.values}
+            {t.about.values}
             <span className="h-px w-8 bg-brand-green dark:bg-brand-green-light" aria-hidden />
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-            {get(about?.valuesTitle) || t.about.values}
+            {t.about.values}
           </h2>
           {get(about?.valuesSubtitle) && (
             <p className="mt-3 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">{get(about?.valuesSubtitle)}</p>

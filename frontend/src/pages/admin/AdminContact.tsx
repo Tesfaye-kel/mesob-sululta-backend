@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Phone, Mail, MapPin, Clock, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { getContact, updateContact, type ContactContent } from '@/api/admin'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { SocialMediaTab } from './AdminNews'
 
 const langs = ['en', 'am', 'or'] as const
 
@@ -155,6 +156,11 @@ export default function AdminContact() {
           <input value={form.mapEmbedUrl} onChange={e => setForm(f => ({ ...f, mapEmbedUrl: e.target.value }))}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
             placeholder="https://maps.google.com/..." />
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6">
+          <SocialMediaTab />
         </motion.div>
       </div>
 

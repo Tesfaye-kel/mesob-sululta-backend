@@ -1,8 +1,9 @@
 /**
  * seedWindows.js
- * Seeds 5 floors, 11 windows and all services from the Excel file.
+ * Seeds 5 floors and 11 windows, then links existing services from the catalog.
  * Run: node seedWindows.js
- * You can re-run safely — existing windows/services are not duplicated.
+ * Services are never created here: the 164-service catalog is the single source
+ * of truth and windows only provide an assignment for those services.
  */
 const dotenv = require('dotenv');
 dotenv.config();
@@ -286,8 +287,9 @@ async function seed() {
     windowMap[w.number] = win._id;
   }
 
-  // 4. Seed services
-  console.log('\n--- Seeding Services ---');
+  // 4. Link existing catalog services to windows. Do not create window-specific
+  // services: offices and windows must use the same service records.
+  console.log('\n--- Linking Existing Services ---');
   for (const [windowNum, services] of Object.entries(SERVICES_BY_WINDOW)) {
     const windowId = windowMap[windowNum];
     if (!windowId) { console.log(`  Window ${windowNum} not found, skipping`); continue; }
@@ -307,18 +309,7 @@ async function seed() {
           console.log(`  Service already exists: ${svc.en}`);
         }
       } else {
-        await Service.create({
-          name: { en: svc.en, am: svc.or, or: svc.or },
-          description: { en: '', am: '', or: '' },
-          organization: org._id,
-          window: windowId,
-          requiredDocuments: [],
-          fee: 0,
-          processingTime: '',
-          workingHours: '',
-          contactPhone: '',
-        });
-        console.log(`  Created: ${svc.en} (Window ${windowNum})`);
+        console.log(`  Catalog service not found, skipped: ${svc.en}`);
       }
     }
   }

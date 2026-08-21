@@ -39,17 +39,17 @@ const emptySMForm = {
 }
 
 const PLATFORM_PRESETS = [
-  { name: 'Facebook',  icon: 'Facebook',  placeholder: 'https://facebook.com/...' },
-  { name: 'X (Twitter)', icon: 'Twitter', placeholder: 'https://x.com/...' },
-  { name: 'Instagram', icon: 'Instagram', placeholder: 'https://instagram.com/...' },
-  { name: 'LinkedIn',  icon: 'Linkedin',  placeholder: 'https://linkedin.com/...' },
-  { name: 'Telegram',  icon: 'Send',      placeholder: 'https://t.me/...' },
-  { name: 'YouTube',   icon: 'Youtube',   placeholder: 'https://youtube.com/...' },
-  { name: 'TikTok',    icon: 'TikTok',    placeholder: 'https://tiktok.com/...' },
-  { name: 'WhatsApp',  icon: 'MessageCircle', placeholder: 'https://wa.me/...' },
+  { name: 'facebook', label: 'Facebook', icon: 'Facebook', placeholder: 'https://facebook.com/...' },
+  { name: 'twitter', label: 'X (Twitter)', icon: 'Twitter', placeholder: 'https://x.com/...' },
+  { name: 'instagram', label: 'Instagram', icon: 'Instagram', placeholder: 'https://instagram.com/...' },
+  { name: 'linkedin', label: 'LinkedIn', icon: 'Linkedin', placeholder: 'https://linkedin.com/...' },
+  { name: 'telegram', label: 'Telegram', icon: 'Send', placeholder: 'https://t.me/...' },
+  { name: 'youtube', label: 'YouTube', icon: 'Youtube', placeholder: 'https://youtube.com/...' },
+  { name: 'tiktok', label: 'TikTok', icon: 'TikTok', placeholder: 'https://tiktok.com/...' },
+  { name: 'whatsapp', label: 'WhatsApp', icon: 'MessageCircle', placeholder: 'https://wa.me/...' },
 ]
 
-function SocialMediaTab() {
+export function SocialMediaTab() {
   const [items, setItems] = useState<SocialMediaPlatform[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -174,7 +174,7 @@ function SocialMediaTab() {
                       <button key={p.name} onClick={() => applyPreset(p)}
                         className={cn('px-2.5 py-1 text-xs rounded-full border transition-colors',
                           form.platform === p.name ? 'bg-brand-green text-white border-brand-green' : 'border-gray-300 dark:border-gray-600 hover:border-brand-green hover:text-brand-green')}>
-                        {p.name}
+                        {p.label}
                       </button>
                     ))}
                   </div>

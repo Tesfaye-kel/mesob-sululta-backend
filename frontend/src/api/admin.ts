@@ -278,6 +278,7 @@ export interface OrganizationSummary {
   name: MultiLang
   description: MultiLang
   logoUrl: string
+  displayOrder: number
   serviceCount: number
   createdAt: string
   updatedAt: string
@@ -495,6 +496,7 @@ export const createService = (data: Partial<ServiceAdmin>) => authFetch<ServiceA
 export const updateService = (id: string, data: Partial<ServiceAdmin>) => authFetch<ServiceAdmin>(`/services/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteService = (id: string) => authFetch<{ message: string }>(`/services/${id}`, { method: 'DELETE' })
 export const deleteServicesByWindow = (windowId: string) => authFetch<{ message: string; deletedCount: number }>(`/services/by-window/${windowId}`, { method: 'DELETE' })
+export const deleteServicesByOrganization = (organizationId: string) => authFetch<{ message: string; deletedCount: number }>(`/services/by-organization/${organizationId}`, { method: 'DELETE' })
 
 // ─── Requirements (admin) ────────────────────────────────────────
 export interface RequirementAdmin {

@@ -1,5 +1,12 @@
 const SocialMedia = require('../models/SocialMedia');
 
+const normalizePlatform = (value) => {
+  if (typeof value !== 'string') return value;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'x' || normalized === 'x (twitter)') return 'twitter';
+  return normalized;
+};
+
 // GET /api/social-media (public - only active)
 const getActiveSocialMedia = async (req, res, next) => {
   try {
@@ -36,7 +43,10 @@ const getSocialMedia = async (req, res, next) => {
 // POST /api/social-media
 const createSocialMedia = async (req, res, next) => {
   try {
-    const platform = await SocialMedia.create(req.body);
+    const platform = await SocialMedia.create({
+      ...req.body,
+      platform: normalizePlatform(req.body.platform),
+    });
     res.status(201).json(platform);
   } catch (err) {
     next(err);
@@ -46,7 +56,9 @@ const createSocialMedia = async (req, res, next) => {
 // PUT /api/social-media/:id
 const updateSocialMedia = async (req, res, next) => {
   try {
-    const platform = await SocialMedia.findByIdAndUpdate(req.params.id, req.body, {
+    const update = { ...req.body };
+    if (update.platform !== undefined) update.platform = normalizePlatform(update.platform);
+    const platform = await SocialMedia.findByIdAndUpdate(req.params.id, update, {
       new: true,
       runValidators: true,
     });
