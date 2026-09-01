@@ -6,7 +6,7 @@ import {
   CheckSquare,
 } from 'lucide-react'
 import {
-  getOrganizations, getServicesAdmin, createService, updateService, deleteService, deleteServicesByWindow,
+  getOrganizations, getServicesAdmin, createService, updateService, deleteService, deleteServicesByWindow, deleteServicesByOrganization,
   createWindow, updateWindow, deleteWindow,
   getRequirementsByService, createRequirement, updateRequirement, deleteRequirement,
   assignServicesToWindow, getAvailableServicesForWindow,
@@ -84,7 +84,7 @@ function ConfirmDialog({ msg, onConfirm, onCancel }: { msg: string; onConfirm: (
 
 // ── OFFICES TAB ──────────────────────────────────────────────────────────────
 function OfficesTab() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const admin = t.admin
   const [orgs, setOrgs] = useState<OrganizationSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -131,6 +131,22 @@ function OfficesTab() {
     setConfirmDelete(null)
   }
 
+  const handleRemoveAllServices = async (org: OrganizationSummary) => {
+    if (!org.serviceCount) return
+    const message = language === 'or'
+      ? 'Tajaajiloota waajjira kanaa hunda haqaa?'
+      : language === 'am'
+        ? 'ሁሉንም የዚህ ቢሮ አገልግሎቶች ማስወገድ ይፈልጋሉ?'
+        : 'Remove all services from this office?'
+    if (!window.confirm(message)) return
+    try {
+      const result = await deleteServicesByOrganization(org._id)
+      setSuccess(`${result.deletedCount} services removed!`)
+      setOrgs(await getOrganizations())
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (e) { setError(e instanceof Error ? e.message : 'Failed to remove services') }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -172,7 +188,15 @@ function OfficesTab() {
                   <p className="text-xs text-gray-400">{org.serviceCount ?? 0} services</p>
                 </div>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleRemoveAllServices(org)}
+                  disabled={!org.serviceCount}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {language === 'or' ? 'Tajaajila hunda haqii' : language === 'am' ? 'ሁሉንም አስወግድ' : 'Remove all services'}
+                </button>
                 <button
                   onClick={() => {
                     setEditing(org)
@@ -701,7 +725,12 @@ function ServicesTab() {
     } catch { setError('Failed to load data') } finally { setLoading(false) }
   }
 
-  useEffect(() => { loadAll() }, [selectedOrg])
+  useEffect(() => { loadAll() }, [])
+
+  useEffect(() => {
+    setSelectedWindow('')
+    if (selectedOrg) loadWindowsForOrg(selectedOrg)
+  }, [selectedOrg])
 
   const loadReqs = async (sid: string) => {
     try { setRequirements(await getRequirementsByService(sid)); setSelectedService(sid) }
@@ -772,6 +801,28 @@ function ServicesTab() {
       setTimeout(() => setSuccess(''), 3000)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to remove window services')
+    } finally {
+      setSavingBulkServices(false)
+    }
+  }
+
+  const handleDeleteOfficeServices = async (organizationId: string) => {
+    setConfirmDelete(null)
+    if (officeServices.length === 0) return
+    setSavingBulkServices(true)
+    setError('')
+    try {
+      const result = await deleteServicesByOrganization(organizationId)
+      setSelectedService('')
+      setRequirements([])
+      setServices(current => current.filter(service => {
+        const serviceOrganizationId = typeof service.organization === 'string' ? service.organization : (service.organization as any)?._id
+        return serviceOrganizationId !== organizationId
+      }))
+      setSuccess(`${result.deletedCount} services removed from this office.`)
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to remove office services')
     } finally {
       setSavingBulkServices(false)
     }
@@ -916,9 +967,15 @@ function ServicesTab() {
               <p className="font-semibold text-gray-900 dark:text-white">{orgs.find(org => org._id === selectedOrg)?.name[language] || orgs.find(org => org._id === selectedOrg)?.name.en}</p>
               <p className="text-xs text-gray-500">{officeServices.length} {admin.servicesLabel}</p>
             </div>
-            <button type="button" onClick={() => { setBulkSvcTarget('office'); setBulkSvcTexts({ en: '', am: '', or: '' }); setShowBulkSvcForm(true) }} className="flex items-center gap-2 rounded-lg bg-brand-green px-4 py-2 text-sm font-semibold text-white">
-              <Plus className="h-4 w-4" /> {admin.bulkServices}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => { setBulkSvcTarget('office'); setBulkSvcTexts({ en: '', am: '', or: '' }); setShowBulkSvcForm(true) }} className="flex items-center gap-2 rounded-lg bg-brand-green px-4 py-2 text-sm font-semibold text-white">
+                <Plus className="h-4 w-4" /> {admin.bulkServices}
+              </button>
+              <button type="button" onClick={() => setConfirmDelete({ type: 'office-services', id: selectedOrg })} disabled={officeServices.length === 0 || savingBulkServices}
+                className="flex items-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40">
+                <Trash2 className="h-4 w-4" /> Remove all services
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1130,12 +1187,16 @@ function ServicesTab() {
             ? 'Delete this service and all its requirements?'
             : confirmDelete.type === 'window-services'
               ? 'Remove all services listed under this window? Their requirements will also be deleted.'
-              : 'Delete this requirement?'}
+              : confirmDelete.type === 'office-services'
+                ? 'Remove all services listed under this office? Their requirements will also be deleted.'
+                : 'Delete this requirement?' }
           onConfirm={() => confirmDelete.type === 'service'
             ? handleDeleteSvc(confirmDelete.id)
             : confirmDelete.type === 'window-services'
               ? handleDeleteWindowServices(confirmDelete.id)
-              : handleDeleteReq(confirmDelete.id)}
+              : confirmDelete.type === 'office-services'
+                ? handleDeleteOfficeServices(confirmDelete.id)
+                : handleDeleteReq(confirmDelete.id)}
           onCancel={() => setConfirmDelete(null)}
         />
       )}</AnimatePresence>

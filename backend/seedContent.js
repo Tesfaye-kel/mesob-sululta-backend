@@ -91,30 +91,30 @@ const seedAbout = async () => {
     story: [
       {
         paragraph: {
-          en: "MESOB Center was established as part of Ethiopia's digital transformation agenda. The name 'Mesob' symbolizes unity, sharing, and service — just as the traditional mesob basket brings families and communities together, this center brings multiple government services under one roof, making them easily accessible to the public.",
-          am: "MESOB ማዕከል የኢትዮጵያ ዲጂታል ትሩፋት አጀንዳ አካል ሆኖ ተቋቋመ። 'ሜሶብ' የሚለው ስም አሃድነት፣ አጋርነት እና አገልግሎትን ያሳያል — ልክ ሜሶቡ ቤተሰብና ማህበረሰብ እንዲሰባሰቡ እንደሚያደርገው፣ ይህ ማዕከልም ብዙ የመንግሥት አገልግሎቶችን ጣሪያ አንድ ያደርጋቸዋል።",
-          or: "Giddaan MESOB akka kutaa sagantaa jijjiirama dijitaalaa Itoophiyaatti hundaa'e. Maqaan 'Mesob' tokkummaa, qooduu fi tajaajila bakka bu'a — akkuma mesobni maatii fi hawaasa walitti fiduuf itti fayyadamu, giddaan kunis tajaajiloota mootummaa adda addaa walitti qabee, salphaatti ummataaf dhiyeessa.",
+          en: "MESOB Center was established as part of Ethiopia's digital transformation agenda. The name 'Mesob' represents unity, sharing, and service. Just as a traditional mesob brings families and communities together, the center brings essential government services together in one accessible place for the public.",
+          am: "የMESOB ማዕከል እንደ ኢትዮጵያ የዲጂታል ለውጥ አጀንዳ አካል ተቋቋመ። ‘ሜሶብ’ የሚለው ስም አንድነትን፣ መካፈልን እና አገልግሎትን ይወክላል። ባህላዊው ሜሶብ ቤተሰብና ማህበረሰብን እንደሚያቀራርብ ሁሉ፣ ይህ ማዕከልም አስፈላጊ የመንግሥት አገልግሎቶችን በአንድ ቦታ በማሰባሰብ ለሕዝብ በቀላሉ ተደራሽ ያደርጋል።",
+          or: "Giddugalli MESOB akka qaama sagantaa jijjiirama dijitaalaa Itoophiyaa keessatti hundaa'e. Maqaan 'Mesob' tokkummaa, qooddannaa fi tajaajila bakka bu'a. Akkuma mesobni aadaa maatii fi hawaasa walitti fidu, giddugalichi kunis tajaajiloota mootummaa barbaachisoo bakka tokkotti walitti qabuun ummataaf karaa salphaa fi mijataa ta'een dhiyeessa.",
         },
         order: 1,
       },
       {
         paragraph: {
-          en: "The Sululta Branch brings over 50 federal government services under one roof — making government accessible, fast, and transparent for every citizen. Our core goal is to ensure citizens no longer waste time and resources visiting multiple offices to access government services.",
-          am: "ሱሉልታ ቅርንጫፍ ከ50 በላይ የፌዴራሌ አገልግሎቶችን ጣሪያ አንድ ያደርጋቸዋል — መንግሥት ለሁሉም ዜጋ ቀላሉ፣ ቀልጣፋ እና ግልጽ ያደርጋቸዋል። ዋና ዓላማችን ዜጎች ለአገልግሎት ፍለጋ ወደ ብዙ ቢሮዎች ሲሄዱ ጊዜ እና ሀብት እንዳያጠፉ ማረጋገጥ ነው።",
-          or: "Dameen Sululta tajaajila federaalaa 50 ol ta'an takka jalatti argamsiisa — kanaanis mootummaa dhaqqabamaa, saffisaa fi ifa ta'e ummataaf kennuuf hojjeta. Kaayyoon keenya inni guddaan, lammiileen tajaajila mootummaa argachuuf yeroo fi qabeenya baay'ee akka hin balleessine gochuudha.",
+          en: "The Sululta Branch brings more than 164 federal government services together in one place, making public services accessible, efficient, and transparent for every citizen. Our goal is to save citizens the time and resources required to visit multiple offices.",
+          am: "የሱሉልታ ቅርንጫፍ ከ164 በላይ የፌዴራል መንግሥት አገልግሎቶችን በአንድ ቦታ ያቀርባል። ይህም የመንግሥት አገልግሎት ለሁሉም ዜጎች ተደራሽ፣ ቀልጣፋ እና ግልጽ እንዲሆን ያግዛል። ዋና ዓላማችን ዜጎች ብዙ ቢሮዎችን በመጎብኘት የሚያጠፉትን ጊዜና ሀብት ማዳን ነው።",
+          or: "Dameen Sululta tajaajiloota mootummaa federaalaa 164 ol bakka tokkotti walitti qaba. Kunis tajaajila mootummaa saffisaa, iftoominaa fi dhaqqabamaa ta'e lammiilee hundaaf akka dhiyaatu taasisa. Kaayyoon keenya inni guddaan, lammiileen waajjiraalee hedduu daawwachuuf yeroo fi qabeenya isaanii akka hin qisaasne gochuudha.",
         },
         order: 2,
       },
     ],
     // Seed highlights — "Waan Nu Addeessu" bullet list
     highlights: [
-      { text: { en: 'Bring over 50 federal services under one roof', am: 'ከ50 በላይ ፌዴራሌ አገልግሎቶችን አንድ ጣሪያ ስር ማምጣት', or: 'Tajaajila federaalaa 50 ol bakka tokkotti argamsiisuu' }, order: 1 },
-      { text: { en: 'Speed up service delivery through electronic systems', am: 'የኤሌክትሮኒክስ ስርዓትን ተጠቅሞ አገልግሎትን ማፋጠን', or: 'Sirna elektirooniksii fayyadamuun tajaajila saffisiisuu' }, order: 2 },
-      { text: { en: 'Maintain transparency and accountability', am: 'ግልጽነት እና ተጠያቂነት ማቆየት', or: 'Ifa ta\'uu fi itti gaafatamummaa qabaachuu' }, order: 3 },
-      { text: { en: 'Serve citizens in Afaan Oromo, Amharic and English', am: 'ዜጎችን በአፋን ኦሮሞ፣ አማርኛ እና እንግሊዝኛ ማገልገል', or: 'Afaan Oromoo, Amaariffaa fi Ingiliffaan tajaajiluu' }, order: 4 },
-      { text: { en: 'Ensure good governance and public accessibility', am: 'ጥሩ አስተዳደር እና ለህዝብ ተደራሽነት ማረጋገጥ', or: 'Bulchiinsa gaarii fi dhaqqabamummaa uummataaf mirkaneessuu' }, order: 5 },
-      { text: { en: 'Improve service using modern technology', am: 'ዘመናዊ ቴክኖሎጂን ተጠቅሞ አገልግሎትን ማሻሻል', or: 'Teeknooloojii ammayyaa fayyadamuun tajaajila fooyyessuu' }, order: 6 },
-      { text: { en: 'Prioritize respect and service quality above all', am: 'ከሁሉ በላይ ክብርን እና የአገልግሎት ጥራትን ቅድሚያ መስጠት', or: 'Kabajaa fi qulqullina tajaajilaa duraan dursuu' }, order: 7 },
+      { text: { en: 'Bring more than 164 federal services together in one place', am: 'ከ164 በላይ የፌዴራል አገልግሎቶችን በአንድ ቦታ ማሰባሰብ', or: 'Tajaajiloota mootummaa federaalaa 164 ol bakka tokkotti walitti qabuu' }, order: 1 },
+      { text: { en: 'Speed up service delivery through electronic systems', am: 'የኤሌክትሮኒክስ ስርዓትን ተጠቅሞ አገልግሎትን ማፋጠን', or: 'Sirna dijitaalaa fi elektirooniksii fayyadamuun tajaajila saffisiisuu' }, order: 2 },
+      { text: { en: 'Maintain transparency and accountability', am: 'ግልጽነት እና ተጠያቂነት ማቆየት', or: 'Iftoomina, amanamummaa fi itti gaafatamummaa cimsuu' }, order: 3 },
+      { text: { en: 'Serve citizens in Afaan Oromo, Amharic and English', am: 'ዜጎችን በአፋን ኦሮሞ፣ አማርኛ እና እንግሊዝኛ ማገልገል', or: 'Afaan Oromoo, Amaariffaa fi Ingiliffaan lammiilee tajaajiluu' }, order: 4 },
+      { text: { en: 'Ensure good governance and public accessibility', am: 'ጥሩ አስተዳደር እና ለህዝብ ተደራሽነት ማረጋገጥ', or: 'Bulchiinsa gaarii fi tajaajila uummataaf dhaqqabamaa ta\'e mirkaneessuu' }, order: 5 },
+      { text: { en: 'Improve service using modern technology', am: 'ዘመናዊ ቴክኖሎጂን ተጠቅሞ አገልግሎትን ማሻሻል', or: 'Teknooloojii ammayyaa fayyadamuun qulqullina tajaajilaa fooyyessuu' }, order: 6 },
+      { text: { en: 'Prioritize respect and service quality above all', am: 'ከሁሉ በላይ ክብርን እና የአገልግሎት ጥራትን ቅድሚያ መስጠት', or: 'Kabajaa lammiilee fi qulqullina tajaajilaa waan hundumaa dura dursuu' }, order: 7 },
     ],
     // Seed core values from frontend
     values: [
@@ -147,7 +147,7 @@ const seedAbout = async () => {
     storyTitle: { en: 'Our Story', am: 'ታሪካችን', or: 'Seenaa Keenya' },
     missionTitle: { en: 'Mission', am: 'ተልዕኮ', or: 'Ergama' },
     visionTitle: { en: 'Vision', am: 'ራዕይ', or: "Mul'ata" },
-    valuesTitle: { en: 'Core Values', am: 'መሠረታዊ እሴቶች', or: 'Gatiileen Ijoo' },
+    valuesTitle: { en: 'Core Values', am: 'መሠረታዊ እሴቶች', or: 'Sonawwan Ijoo' },
     valuesSubtitle: {
       en: 'The principles that guide everything we do',
       am: 'እያንዳንዱ ሥራ የሚመራበት መርህ',
@@ -172,7 +172,7 @@ const ensureAboutDefaults = async () => {
     storyTitle: { en: 'Our Story', am: 'ታሪካችን', or: 'Seenaa Keenya' },
     missionTitle: { en: 'Mission', am: 'ተልዕኮ', or: 'Ergama' },
     visionTitle: { en: 'Vision', am: 'ራዕይ', or: "Mul'ata" },
-    valuesTitle: { en: 'Core Values', am: 'መሠረታዊ እሴቶች', or: 'Gatiileen Ijoo' },
+    valuesTitle: { en: 'Core Values', am: 'መሠረታዊ እሴቶች', or: 'Sonawwan Ijoo' },
     valuesSubtitle: {
       en: 'The principles that guide everything we do',
       am: 'እያንዳንዱ ሥራ የሚመራበት መርህ',

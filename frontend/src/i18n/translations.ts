@@ -700,7 +700,7 @@ news: {
     govName: 'Rippaabliika Dimookiraatawaa Federaalaa Itiyoophiyaa',
     oneStopShop: 'Giddu-gala Tajaajila Mootummaa Bakka Tokkotti',
     nav: {
-      home: 'Mana', about: "Waa'ee Keenya", services: 'Tajaajiloota',
+      home: 'Fuula jalqabaa', about: "Waa'ee Keenya", services: 'Tajaajiloota',
       offices: 'Waajjiralee',
       news: 'Oduu', gallery: 'suuraawwan',
       faq: 'Gaaffilee', contact: 'Nu Qunnamaa', feedback: 'Yaada',
@@ -708,7 +708,7 @@ news: {
     topBar: { emergency: 'Hatattama: 911', search: 'Barbaadi', darkMode: 'Haala Gurraacha', language: 'Afaan' },
     hero: {
       badge: 'Poortaala Mootummaa Rasmaa', title: 'Baga Gara Wiirtuu  Damee Sulultatti,', titleHighlight: ' Nagaan Dhuftan',
-      subtitle: 'Giddu-gala tajaajila mootummaa bakka tokkotti amansiisaa. Tajaajila federaalaa 50+ ol salphatti argadhaa.',
+      subtitle: 'Giddu-gala tajaajila mootummaa bakka tokkotti amansiisaa. Tajaajila federaalaa 164+ ol salphatti argadhaa.',
       cta1: 'Tajaajiloota Ilaali', cta2: 'Beellama Qabadhu',
       stat1Label: 'Lammiilee Tajaajilaman', stat2Label: 'Tajaajiloota Jiran', stat3Label: 'Kutaalee', stat4Label: 'Sadarkaa Quufinsa',
     },
@@ -731,9 +731,9 @@ news: {
       isMandatory: 'Dirqama', sequenceNo: 'Tartiiba',
     },
     about: {
-      title: "Waa'ee Wirtuu MESOB", subtitle: 'Tajaajiloota  Mootummaa haalaa salphaan dhiheessuu',
-      history: 'Seenaa', mission: 'Ergama', vision: "Mul'ata", values: 'Gatiileen Ijoo',
-      objectives: 'Kaayyoolee', managerMessage: 'Ergaa Hoogganaa Damee',
+      title: "Waa’ee MESOB fi Tajaajila Inni Lammiileef Dhiyeessu", subtitle: 'Tajaajila Mootummaa Hunda Bakka Tokkotti, Haala Salphaa fi Saffisaa Ta’een.',
+      history: 'Seenaa', mission: 'Ergama', vision: "Mul'ata", values: 'Sonawwan Ijoo',
+      objectives: 'Kaayyowwan', managerMessage: 'Ergaa Hoogganaa Damee',
       ourStory: 'Seenaa Keenya', keyMilestones: 'Tarsiimoolee Ijoo',
       futureExpansion: "Babal'ina Gara Fuula Duraa",
       futureExpansionDesc: "Dameen Sululta MESOB kutaalee dabalataa 2026 keessa dabaluuf babal'achaa jira.",

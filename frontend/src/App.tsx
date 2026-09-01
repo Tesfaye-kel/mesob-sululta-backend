@@ -10,6 +10,7 @@ import HomePage from '@/pages/HomePage'
 import NewsDetailPage from '@/pages/NewsDetailPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import GalleryPage from '@/pages/GalleryPage'
+import AboutPage from '@/pages/AboutPage'
 
 // Admin pages
 import AdminLogin from '@/pages/admin/AdminLogin'
@@ -44,6 +45,7 @@ export default function App() {
                   <Route path="tajaajila" element={<Navigate to="/#services" replace />} />
                   <Route path="tajaajila/office" element={<Navigate to="/#services" replace />} />
                   <Route path="gallery" element={<GalleryPage />} />
+                  <Route path="about" element={<AboutPage />} />
                   <Route path="news/:id" element={<NewsDetailPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>

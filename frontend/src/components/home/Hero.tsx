@@ -119,7 +119,7 @@ export default function Hero() {
     { src: '/photo_2026-07-03_10-15-38.jpg', caption: language === 'am' ? 'የኢትዮጵያ ዲጂታዊ ሽግግር' : language === 'or' ? "Jijjiirama Dijitaalaa Itoophiyaa" : "Ethiopia's Digital Transformation" },
   ]
 
-  const searchPlaceholder = language === 'am' ? 'አገልግሎቶችን ፈልጉ...' : language === 'or' ? 'Tajaajilaalee barbaadi...' : 'Search for services...'
+  const searchPlaceholder = language === 'am' ? 'አገልግሎቶችን ፈልጉ...' : language === 'or' ? 'Tajaajiloota Barbaadi' : 'Search for services...'
   const searchBtnLabel    = language === 'am' ? 'ፈልግ' : language === 'or' ? 'Barbaadi' : 'Search'
   const officialBadge     = language === 'am' ? 'ኦፊሴላዊ የመንግሥት ፖርታል' : language === 'or' ? 'Poortaala Mootummaa Rasmaa' : 'Official Government Portal'
   const [current, setCurrent] = useState(0)
@@ -646,12 +646,6 @@ export default function Hero() {
         </AnimatePresence>
       </div>
 
-      {/* Bottom wave */}
-      <div className="absolute bottom-0 left-0 right-0" aria-hidden>
- <svg viewBox="0 0 1440 80" className="w-full h-20 fill-current text-background dark:text-gray-900">
-  <path d="M0,80 L0,30 H240 V50 H520 V25 H880 V60 H1200 V35 H1440 V80 Z" />
-</svg>
-      </div>
     </section>
   )
 }

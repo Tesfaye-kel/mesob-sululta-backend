@@ -88,15 +88,18 @@ const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 // ── Section wrapper ───────────────────────────────────────────────────────────
 function HomeSection({ id, title, subtitle, bg = '', children }: { id: string; title: string; subtitle?: string; bg?: string; children: React.ReactNode }) {
+  const isAbout = id === 'about'
   return (
     <motion.section id={id} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
       viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.45 }}
       style={{ pointerEvents: 'auto' }}
-      className={`section-padding ${bg}`} aria-label={title}>
-      <div className="container-gov mb-6">
-        <h2 className="section-title">{title}</h2>
-        {subtitle && <p className="section-subtitle">{subtitle}</p>}
-      </div>
+      className={`section-padding ${isAbout ? 'pt-0 -mt-1' : ''} ${bg}`} aria-label={title}>
+      {title && (
+        <div className="container-gov mb-6">
+          <h2 className="section-title">{title}</h2>
+          {subtitle && <p className="section-subtitle">{subtitle}</p>}
+        </div>
+      )}
       {children}
     </motion.section>
   )
@@ -710,7 +713,7 @@ export default function HomePage() {
       <Hero />
 
       {/* About */}
-      <HomeSection id="about" title={t.about.title} subtitle={t.about.subtitle} bg="bg-transparent">
+      <HomeSection id="about" title="" bg="bg-transparent">
         <div className="section-padding pt-0"><AboutSection /></div>
       </HomeSection>
 

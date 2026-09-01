@@ -161,6 +161,24 @@ const deleteServicesByWindow = async (req, res, next) => {
   }
 };
 
+// DELETE /api/services/by-organization/:organizationId
+const deleteServicesByOrganization = async (req, res, next) => {
+  try {
+    const { organizationId } = req.params;
+    const services = await Service.find({ organization: organizationId }).select('_id');
+    const serviceIds = services.map(service => service._id);
+
+    if (serviceIds.length > 0) {
+      await Requirement.deleteMany({ service: { $in: serviceIds } });
+      await Service.deleteMany({ _id: { $in: serviceIds } });
+    }
+
+    return res.json({ message: 'Office services removed successfully', deletedCount: serviceIds.length });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/organizations/:organizationId/services
 const getServicesByOrganization = async (req, res, next) => {
   try {
@@ -218,6 +236,7 @@ module.exports = {
   updateService,
   deleteService,
   deleteServicesByWindow,
+  deleteServicesByOrganization,
   getServicesByOrganization,
   getServicesByWindow,
 };

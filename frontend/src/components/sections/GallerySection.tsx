@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ZoomIn, Image, Loader2 } from 'lucide-react'
+import { X, ZoomIn, Image, Loader2, Plus, ArrowRight } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
 import { getImageUrl } from '@/lib/images'
@@ -33,6 +33,7 @@ export default function GallerySection({ compact = false }: { compact?: boolean 
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
+  const [visibleCount, setVisibleCount] = useState(8)
 
   // On homepage (compact=true) show max 8 photos; on full gallery page show all
   const PREVIEW_LIMIT = 8
@@ -54,16 +55,24 @@ export default function GallerySection({ compact = false }: { compact?: boolean 
   }, [])
 
   const filtered = items.filter(g => activeCategory === 'All' || g.category.toLowerCase() === activeCategory.toLowerCase())
-  // Limit photos shown in compact/homepage mode
-  const displayed = compact ? filtered.slice(0, PREVIEW_LIMIT) : filtered
-  // Always show "View All" link in compact mode (even if <= 8 photos)
-  const showViewAll = compact && !loading
+  const displayed = compact ? filtered.slice(0, visibleCount) : filtered
+  const hasMore = compact && displayed.length < filtered.length
 
   // "View All" label in selected language
   const viewAllLabel =
     language === 'or' ? 'Hunda Ilaaluu' :
     language === 'am' ? 'ሁሉንም ሥዕሎች ተመልከት' :
     'View All Photos'
+
+  const loadMoreLabel =
+    language === 'or' ? 'Dabalata agarsiisi' :
+    language === 'am' ? 'ተጨማሪ አሳይ' :
+    'Load More Photos'
+
+  const remainingLabel =
+    language === 'or' ? 'suuraa hafan' :
+    language === 'am' ? 'ቀሪ ፎቶዎች' :
+    'photos remaining'
 
   const getCaption = (item: GalleryItem) => {
     if (language === 'am' && item.caption?.am) return item.caption.am
@@ -82,7 +91,7 @@ export default function GallerySection({ compact = false }: { compact?: boolean 
       {/* Filter tabs */}
       <div className="flex flex-wrap gap-2 mb-6 justify-center">
         {categories.map(cat => (
-          <button key={cat} onClick={() => setActiveCategory(cat)}
+          <button key={cat} onClick={() => { setActiveCategory(cat); setVisibleCount(PREVIEW_LIMIT) }}
             className={cn('px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200',
               activeCategory === cat
                 ? 'bg-brand-green text-white shadow-gov'
@@ -157,19 +166,23 @@ export default function GallerySection({ compact = false }: { compact?: boolean 
         </AnimatePresence>
       </motion.div>
 
-      {/* "View All" link — always shown in compact/homepage mode */}
-      {showViewAll && (
-        <div className="mt-8 text-center relative z-20 pointer-events-auto">
-          <a
-            href="/gallery"
-            className="inline-flex items-center gap-2 px-8 py-3 rounded-xl bg-brand-green text-white text-sm font-semibold hover:bg-brand-green-dark hover:shadow-lg transition-all duration-200 cursor-pointer relative z-20"
-          >
+      {/* Progressive controls — keep the homepage light while making more content discoverable. */}
+      {compact && !loading && filtered.length > 0 && (
+        <div className="mt-8 flex flex-col items-center gap-3 relative z-20">
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setVisibleCount(count => count + PREVIEW_LIMIT)}
+              className="inline-flex items-center gap-2 rounded-xl border border-brand-green/30 bg-brand-green/5 px-6 py-3 text-sm font-semibold text-brand-green shadow-sm transition-all hover:-translate-y-0.5 hover:bg-brand-green hover:text-white hover:shadow-lg"
+            >
+              <Plus className="h-4 w-4" />
+              {loadMoreLabel}
+              <span className="rounded-full bg-current/10 px-2 py-0.5 text-xs font-bold">{filtered.length - displayed.length} {remainingLabel}</span>
+            </button>
+          )}
+          <a href="/gallery" className="inline-flex items-center gap-2 text-sm font-semibold text-gray-500 transition-colors hover:text-brand-green dark:text-gray-400 dark:hover:text-brand-green-light">
             {viewAllLabel}
-            {filtered.length > 0 && (
-              <span className="bg-white/20 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                {filtered.length}
-              </span>
-            )}
+            <ArrowRight className="h-4 w-4" />
           </a>
         </div>
       )}

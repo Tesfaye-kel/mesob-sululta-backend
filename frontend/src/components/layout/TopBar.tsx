@@ -1,4 +1,4 @@
-import { Phone, Globe, Sun, Moon, Search, AlertTriangle } from 'lucide-react'
+import { Phone, Globe, Sun, Moon, AlertTriangle } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { cn } from '@/lib/utils'
@@ -10,11 +10,7 @@ const languages = [
   { code: 'or' as Language, label: 'Afaan Oromo', short: 'OR' },
 ]
 
-interface TopBarProps {
-  onSearchOpen: () => void
-}
-
-export default function TopBar({ onSearchOpen }: TopBarProps) {
+export default function TopBar() {
   const { language, setLanguage, t } = useLanguage()
   const { toggleTheme, isDark } = useTheme()
 
@@ -38,7 +34,7 @@ export default function TopBar({ onSearchOpen }: TopBarProps) {
           </a>
         </div>
 
-        {/* Right: Language, Dark Mode, Search */}
+        {/* Right: Language and Dark Mode */}
         <div className="flex items-center gap-1">
           {/* Language Selector */}
           <div className="flex items-center gap-0.5" role="group" aria-label="Select language">
@@ -71,16 +67,6 @@ export default function TopBar({ onSearchOpen }: TopBarProps) {
             title={t.topBar.darkMode}
           >
             {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-          </button>
-
-          {/* Search */}
-          <button
-            onClick={onSearchOpen}
-            className="p-1.5 rounded hover:bg-white/20 transition-colors"
-            aria-label={t.topBar.search}
-            title={t.topBar.search}
-          >
-            <Search className="h-3.5 w-3.5" />
           </button>
 
           {/* Emergency phone */}

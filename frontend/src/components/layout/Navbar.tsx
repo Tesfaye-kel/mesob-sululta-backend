@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 
-import { Menu, X, Sun, Moon, Search, ChevronDown } from 'lucide-react'
+import { Menu, X, Sun, Moon, ChevronDown } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useActiveRoute } from '@/contexts/ActiveRouteContext'
@@ -96,10 +96,6 @@ const languages: { code: Language; label: string; short: string }[] = [
   { code: 'or', label: 'Afaan Oromo', short: 'OR' },
 ]
 
-interface NavbarProps {
-  onSearchOpen: () => void
-}
-
 const scrollableOnHomeKeys: NavItem['key'][] = [
   'about', 'services', 'news',
   'gallery', 'faq', 'contact',
@@ -114,7 +110,7 @@ const mobileItemVariants = {
   exit: { opacity: 0, x: -20, transition: { duration: 0.12 } },
 }
 
-export default function Navbar({ onSearchOpen }: NavbarProps) {
+export default function Navbar() {
   const { t, language, setLanguage } = useLanguage()
   const { toggleTheme, isDark } = useTheme()
   const { setActiveRoute } = useActiveRoute()
@@ -335,10 +331,6 @@ export default function Navbar({ onSearchOpen }: NavbarProps) {
                     {isDark ? <Sun className="h-[18px] w-[18px] text-yellow-300" /> : <Moon className="h-[18px] w-[18px]" />}
                   </motion.div>
                 </AnimatePresence>
-              </button>
-
-              <button onClick={onSearchOpen} className={iconBtn} aria-label={t.topBar.search}>
-                <Search className="h-[18px] w-[18px]" aria-hidden />
               </button>
 
               <div className="hidden sm:flex items-center gap-1 pl-2 ml-1 border-l border-white/15">
