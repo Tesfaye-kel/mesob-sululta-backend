@@ -42,8 +42,16 @@ app.use(
 // Allow the frontend (different port) to send requests here
 app.use(
   cors({
-    origin: true,
+    origin: [
+      'https://mesob-sululta-frontend-amber.vercel.app',
+      'https://backend-john-dev2.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+    ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
