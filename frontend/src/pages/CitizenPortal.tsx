@@ -10,6 +10,8 @@ import {
   ChevronRight,
   Clock3,
   ExternalLink,
+  Eye,
+  EyeOff,
   FileCheck2,
   LogOut,
   MessageSquareText,
@@ -131,6 +133,7 @@ export default function CitizenPortal() {
   const [citizenName, setCitizenName] = useState('')
   const [nationalId, setNationalId] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [passwordSetupRequired, setPasswordSetupRequired] = useState(false)
   const [citizenProfile, setCitizenProfile] = useState<CitizenProfile | null>(null)
@@ -430,7 +433,13 @@ export default function CitizenPortal() {
             <button disabled={busy} className="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-50">{busy ? portalCopy.checking : portalCopy.setPassword}</button>
           </form> : <form onSubmit={handleLogin} autoComplete="on" className="space-y-4">
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{portalCopy.fullName}<input className={`${inputClass} mt-1`} name="username" required minLength={2} maxLength={120} autoComplete="username" value={citizenName} onChange={(event) => setCitizenName(event.target.value)} /></label>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">{portalCopy.passwordLabel}<input className={`${inputClass} mt-1`} name="password" type="password" required autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="citizen-password">{portalCopy.passwordLabel}</label>
+            <div className="relative">
+              <input id="citizen-password" className={`${inputClass} pr-11`} name="password" type={showPassword ? 'text' : 'password'} required autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
+              <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? portalCopy.hidePassword : portalCopy.showPassword} aria-pressed={showPassword} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-emerald-700 dark:hover:text-emerald-300">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</p>}
             <button disabled={busy} className="w-full rounded-xl bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-50">{busy ? portalCopy.checking : portalCopy.signIn}</button>
           </form>

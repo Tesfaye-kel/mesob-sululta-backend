@@ -10,7 +10,6 @@ import {
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/LanguageContext'
-import type { Language } from '@/i18n/translations'
 import { cn } from '@/lib/utils'
 import { adminWorkflowRequest } from '@/api/adminWorkflows'
 
@@ -53,7 +52,6 @@ export default function AdminLayout() {
 
   const { language, setLanguage, t } = useLanguage()
 
-  const langLabels: Record<Language, string> = { en: 'EN', am: 'አማ', or: 'OR' }
   const nav = t.admin
   const navLabel = (key: string) => {
     const value = nav[key as keyof typeof nav]
@@ -207,15 +205,14 @@ export default function AdminLayout() {
             <Shield className="h-5 w-5 text-brand-green" />
             <span className="font-bold text-sm text-gray-900 dark:text-white">{nav.admin}</span>
           </div>
-          <div className="flex items-center gap-1" aria-label={nav.language}>
-            {(['en', 'am', 'or'] as const).map(lang => (
-              <button key={lang} type="button" onClick={() => setLanguage(lang)}
-                aria-label={lang === 'en' ? t.admin.portal.languageEnglish : lang === 'am' ? t.admin.portal.languageAmharic : t.admin.portal.languageOromo}
-                aria-pressed={language === lang}
-                className={cn('rounded px-1.5 py-1 text-[10px] font-semibold', language === lang ? 'bg-brand-green text-white' : 'text-gray-500')}>
-                {langLabels[lang]}
-              </button>
-            ))}
+          <div className="flex items-center gap-1">
+            <label className="sr-only" htmlFor="admin-mobile-language">{nav.language}</label>
+            <select id="admin-mobile-language" value={language} onChange={event => setLanguage(event.target.value as 'en' | 'am' | 'or')}
+              className="w-28 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+              <option value="en">{t.admin.portal.languageEnglish}</option>
+              <option value="am">{t.admin.portal.languageAmharic}</option>
+              <option value="or">{t.admin.portal.languageOromo}</option>
+            </select>
             <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
@@ -304,23 +301,13 @@ export default function AdminLayout() {
       )}>
         {/* Top bar (desktop) */}
         <div className="hidden lg:flex items-center justify-end h-14 px-6 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 gap-3">
-          {/* Language Switcher */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
-            {(['en', 'am', 'or'] as const).map(lang => (
-              <button
-                key={lang}
-                onClick={() => setLanguage(lang as Language)}
-                className={cn(
-                  'px-2.5 py-1 rounded-md text-xs font-semibold transition-all duration-200',
-                  language === lang
-                    ? 'bg-white dark:bg-gray-700 text-brand-green shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                )}
-              >
-                {langLabels[lang]}
-              </button>
-            ))}
-          </div>
+          <label className="sr-only" htmlFor="admin-desktop-language">{nav.language}</label>
+          <select id="admin-desktop-language" value={language} onChange={event => setLanguage(event.target.value as 'en' | 'am' | 'or')}
+            className="w-36 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+            <option value="en">{t.admin.portal.languageEnglish}</option>
+            <option value="am">{t.admin.portal.languageAmharic}</option>
+            <option value="or">{t.admin.portal.languageOromo}</option>
+          </select>
           <div className="flex items-center gap-3">
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name || nav.admin}</p>

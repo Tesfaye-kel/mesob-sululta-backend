@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, Sun, Moon, Globe, LogOut, Loader2, CheckCircle } from 'lucide-react'
+import { Sun, Moon, Globe, LogOut, CheckCircle } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -64,24 +64,20 @@ export default function AdminSettings() {
         <h2 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
           <Globe className="h-5 w-5 text-brand-green" /> {admin.language}
         </h2>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { code: 'en' as const, label: portal.languageEnglish, short: 'EN' },
-            { code: 'am' as const, label: portal.languageAmharic, short: 'አማ' },
-            { code: 'or' as const, label: portal.languageOromo, short: 'OR' },
-          ].map(lang => (
-            <button key={lang.code}
-              onClick={() => { setLanguage(lang.code); copySuccess(admin.languageSetTo.replace('{language}', lang.label)) }}
-              className={`px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                language === lang.code
-                  ? 'bg-brand-green text-white shadow-md'
-                  : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}>
-              <span className="block font-bold">{lang.short}</span>
-              <span className="block text-xs mt-0.5 opacity-80">{lang.label}</span>
-            </button>
-          ))}
-        </div>
+        <label className="sr-only" htmlFor="admin-settings-language">{admin.language}</label>
+        <select id="admin-settings-language" value={language}
+          onChange={event => {
+            const nextLanguage = event.target.value as typeof language
+            setLanguage(nextLanguage)
+            const label = nextLanguage === 'en' ? portal.languageEnglish
+              : nextLanguage === 'am' ? portal.languageAmharic : portal.languageOromo
+            copySuccess(admin.languageSetTo.replace('{language}', label))
+          }}
+          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white">
+          <option value="en">{portal.languageEnglish}</option>
+          <option value="am">{portal.languageAmharic}</option>
+          <option value="or">{portal.languageOromo}</option>
+        </select>
       </motion.div>
 
       {/* Logout */}

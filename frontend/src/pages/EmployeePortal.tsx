@@ -4,6 +4,8 @@ import {
   CalendarDays,
   Building2,
   Clock3,
+  Eye,
+  EyeOff,
   History,
   LayoutDashboard,
   LogOut,
@@ -174,6 +176,7 @@ export default function EmployeePortal() {
   })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [nationalId, setNationalId] = useState('')
   const [initialPassword, setInitialPassword] = useState('')
   const [initialPasswordConfirmation, setInitialPasswordConfirmation] = useState('')
@@ -626,7 +629,13 @@ export default function EmployeePortal() {
             <label className="block text-sm">{portalCopy.newPassword}<input className={`${inputClass} mt-1`} type="password" required minLength={8} maxLength={128} autoComplete="new-password" value={initialPassword} onChange={(event) => setInitialPassword(event.target.value)} /></label>
             <label className="block text-sm">{portalCopy.employeeResetConfirmPassword}<input className={`${inputClass} mt-1`} type="password" required minLength={8} maxLength={128} autoComplete="new-password" value={initialPasswordConfirmation} onChange={(event) => setInitialPasswordConfirmation(event.target.value)} /></label>
           </> : <>
-            <label className="block text-sm">{portalCopy.password}<input className={`${inputClass} mt-1`} name="password" type="password" required autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+            <label className="block text-sm" htmlFor="employee-password">{portalCopy.password}</label>
+            <div className="relative">
+              <input id="employee-password" className={`${inputClass} pr-11`} name="password" type={showPassword ? 'text' : 'password'} required autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} />
+              <button type="button" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? portalCopy.hidePassword : portalCopy.showPassword} aria-pressed={showPassword} className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-emerald-700 dark:hover:text-emerald-300">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </>}
           {loginNotice && <p role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">{loginNotice}</p>}
           {error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</p>}

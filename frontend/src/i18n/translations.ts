@@ -68,7 +68,7 @@ news: {
       compliment: 'Send Compliment', anonymous: 'Submit Anonymously', submit: 'Submit Feedback',
     },
     citizenPortal: {
-      language: 'Language', serviceFeedback: 'Service feedback',
+      language: 'Language', showPassword: 'Show password', hidePassword: 'Hide password', serviceFeedback: 'Service feedback',
       attendancePending: 'Feedback becomes available after an authorized officer approves a delivered service.',
       approvedService: 'Approved service delivery', chooseService: 'Choose a service', type: 'Type',
       category: 'Category', rating: 'Rating', feedbackPlaceholder: 'At least 20 characters about your service experience',
@@ -235,6 +235,7 @@ news: {
       resetPasswordSubmit: 'Set new password', resettingPassword: 'Updating password…',
       backToSignIn: 'Back to employee sign in',
       employeeUi: {
+      showPassword: 'Show password', hidePassword: 'Hide password',
       employeePortal: 'Employee Portal', signedInAs: 'Signed in as', dashboardNavigation: 'Employee dashboard',
       workEmailOrNationalId: 'Work email or 12-digit National ID',
       addisAbaba: 'Addis Ababa',
@@ -842,7 +843,7 @@ news: {
       compliment: 'ምስጋና ያቅርቡ', anonymous: 'ስም ሳይጠቀሙ ያስገቡ', submit: 'አስተያየት ያስገቡ',
     },
     citizenPortal: {
-      language: 'ቋንቋ', serviceFeedback: 'የአገልግሎት አስተያየት',
+      language: 'ቋንቋ', showPassword: 'የይለፍ ቃል አሳይ', hidePassword: 'የይለፍ ቃል ደብቅ', serviceFeedback: 'የአገልግሎት አስተያየት',
       attendancePending: 'የአገልግሎት አሰጣጥ በተፈቀደ ባለሥልጣን ከጸደቀ በኋላ አስተያየት ማቅረብ ይችላሉ።',
       approvedService: 'የጸደቀ የአገልግሎት አሰጣጥ', chooseService: 'አገልግሎት ይምረጡ', type: 'አይነት',
       category: 'ምድብ', rating: 'ደረጃ', feedbackPlaceholder: 'ስለ አገልግሎትዎ ቢያንስ 20 ቁምፊ ይጻፉ',
@@ -1017,6 +1018,7 @@ news: {
       resetPasswordSubmit: 'አዲስ የይለፍ ቃል ያዘጋጁ', resettingPassword: 'የይለፍ ቃሉን በማዘመን ላይ…',
       backToSignIn: 'ወደ ሰራተኛ መግቢያ ተመለስ',
       employeeUi: {
+      showPassword: 'የይለፍ ቃል አሳይ', hidePassword: 'የይለፍ ቃል ደብቅ',
       employeePortal: 'የሰራተኛ ፖርታል', signedInAs: 'ገብተዋል፡', dashboardNavigation: 'የሰራተኛ ዳሽቦርድ',
       workEmailOrNationalId: 'የሥራ ኢሜይል ወይም 12 አሃዝ ያለው ብሔራዊ መታወቂያ',
       addisAbaba: 'አዲስ አበባ',
@@ -1606,7 +1608,7 @@ news: {
       compliment: 'Galateeffannaa Ergi', anonymous: 'Maqaa Osoo Hin Eeriin Galchi', submit: 'Yaada Galchi',
     },
     citizenPortal: {
-      language: 'Afaan', serviceFeedback: 'Yaada tajaajilaa',
+      language: 'Afaan', showPassword: 'Jecha iccitii agarsiisi', hidePassword: 'Jecha iccitii dhoksi', serviceFeedback: 'Yaada tajaajilaa',
       attendancePending: 'Tajaajilli kenname erga qaama hayyamameen mirkanaa\'ee booda yaada kennuun ni danda\'ama.',
       approvedService: 'Tajaajila mirkanaa\'e', chooseService: 'Tajaajila filadhu', type: 'Gosa',
       category: 'Ramaddii', rating: 'Sadarkaa', feedbackPlaceholder: 'Muuxannoo tajaajilaa kee irratti yoo xiqqaate qubee 20 barreessi',
@@ -1781,6 +1783,7 @@ news: {
       resetPasswordSubmit: 'Jecha iccitii haaraa qindeessi', resettingPassword: 'Jecha iccitii haaromsaa jira…',
       backToSignIn: 'Gara seensa hojjetaa deebi’i',
       employeeUi: {
+      showPassword: 'Jecha iccitii agarsiisi', hidePassword: 'Jecha iccitii dhoksi',
       employeePortal: 'Poortaalii Hojjetaa', signedInAs: 'Seenteetta', dashboardNavigation: 'Daashboordii hojjetaa',
       workEmailOrNationalId: 'Imeelii hojii ykn waraqaa eenyummaa dijiitii 12',
       addisAbaba: 'Finfinnee',
