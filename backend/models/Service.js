@@ -27,6 +27,14 @@ const serviceSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    resourceLinks: {
+      type: [{ type: String, maxlength: 500 }],
+      default: [],
+      validate: {
+        validator: (links) => links.length <= 10 && links.every((link) => /^https?:\/\/[^\s]+$/i.test(link)),
+        message: 'Provide no more than 10 resource links, each using HTTP or HTTPS.',
+      },
+    },
     fee: {
       type: Number,
       default: 0,
@@ -44,6 +52,7 @@ const serviceSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    isActive: { type: Boolean, default: true, index: true },
   },
   { timestamps: true }
 );

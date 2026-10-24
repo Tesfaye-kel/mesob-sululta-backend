@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 export default function AdminContactMessages() {
   const { t } = useLanguage()
   const admin = t.admin
+  const copy = admin.portal.messages
   const [items, setItems] = useState<ContactMessage[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -33,8 +34,8 @@ export default function AdminContactMessages() {
       const updated = await markContactMessageRead(id)
       setItems(prev => prev.map(i => i._id === id ? updated : i))
       if (selected?._id === id) setSelected(updated)
-    } catch (err) {
-      setError('Failed to mark as read')
+    } catch {
+      setError(admin.failedToSave)
     }
   }
 
@@ -43,10 +44,10 @@ export default function AdminContactMessages() {
       await deleteContactMessage(id)
       setItems(prev => prev.filter(i => i._id !== id))
       if (selected?._id === id) setSelected(null)
-      setSuccess('Message deleted!')
+      setSuccess(admin.messageDeleted)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete')
+      setError(err instanceof Error ? err.message : admin.failedToDelete)
     }
     setConfirmDelete(null)
   }
@@ -81,7 +82,7 @@ export default function AdminContactMessages() {
           <button key={f} onClick={() => setFilter(f)}
             className={cn('px-4 py-1.5 rounded-lg text-xs font-medium transition-all capitalize',
               filter === f ? 'bg-brand-green text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400')}>
-            {f}
+            {copy[f]}
           </button>
         ))}
       </div>
@@ -116,7 +117,7 @@ export default function AdminContactMessages() {
                       <span className="font-medium text-sm text-gray-900 dark:text-white truncate">{msg.name}</span>
                       <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium uppercase',
                         msg.type === 'feedback' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400')}>
-                        {msg.type}
+                        {msg.type === 'feedback' ? copy.feedback : copy.contact}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 truncate mt-0.5">{msg.subject || msg.email}</p>
@@ -137,13 +138,13 @@ export default function AdminContactMessages() {
                     {!selected.isRead && (
                       <button onClick={() => handleMarkRead(selected._id)}
                         className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-brand-green transition-colors"
-                        title="Mark as read">
+                        title={copy.markRead}>
                         <Eye className="h-4 w-4" />
                       </button>
                     )}
                     <button onClick={() => setConfirmDelete(selected._id)}
                       className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-red-600 transition-colors"
-                      title="Delete">
+                      title={admin.delete}>
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
@@ -162,18 +163,18 @@ export default function AdminContactMessages() {
                   <div className="flex items-center gap-2">
                     <span className={cn('px-2 py-0.5 rounded text-xs font-medium',
                       selected.type === 'feedback' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700')}>
-                      {selected.type}
+                      {selected.type === 'feedback' ? copy.feedback : copy.contact}
                     </span>
                     <span className="text-xs text-gray-400">{new Date(selected.createdAt).toLocaleString()}</span>
                   </div>
                   {selected.subject && (
                     <div>
-                      <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Subject</p>
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-1">{admin.subject}</p>
                       <p className="text-gray-900 dark:text-white font-medium">{selected.subject}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Message</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-1">{admin.message}</p>
                     <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">{selected.message}</p>
                   </div>
                 </div>
@@ -181,7 +182,7 @@ export default function AdminContactMessages() {
             ) : (
               <div className="text-center py-12 text-gray-400">
                 <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-40" />
-                <p>Select a message to view</p>
+                <p>{copy.selectMessage}</p>
               </div>
             )}
           </div>
@@ -195,8 +196,8 @@ export default function AdminContactMessages() {
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}
             className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Message?</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{copy.deleteTitle}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{copy.deleteConfirm}</p>
             <div className="flex items-center justify-center gap-3">
               <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
               <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">{admin.delete}</button>

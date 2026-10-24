@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Loader2, AlertCircle, Building2, Layers, X, CheckCircle2, Circle, Search } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 
 import Hero from '@/components/home/Hero'
 import WhyMesob from '@/components/home/WhyMesob'
@@ -16,8 +16,8 @@ import ContactSection from '@/components/sections/ContactSection'
 import OfficeCard from '@/components/tajaajila/OfficeCard'
 import { CardGrid, CardItem } from '@/components/tajaajila/CardGrid'
 
-import { getWindowsGroupedByFloor, getServiceRequirements, searchServices, getOrganizations } from '@/api/tajaajila'
-import type { WindowGroupedByFloorWithName, WindowSummary, Service, Requirement } from '@/api/tajaajila'
+import { getFloors, getServiceRequirements, searchServices, getOrganizations } from '@/api/tajaajila'
+import type { FloorData, Service, Requirement, WindowSummary } from '@/api/tajaajila'
 import { saveCache, loadCache } from '@/lib/cache'
 import { cn } from '@/lib/utils'
 
@@ -86,14 +86,31 @@ function getOrgIcon(name: string): string | null {
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
+type PortalLanguage = 'en' | 'am' | 'or'
+
+function localizedText(
+  value: Partial<Record<PortalLanguage, string>> | null | undefined,
+  language: string,
+): string {
+  const preferred = language === 'am' || language === 'or' ? language : 'en'
+  return value?.[preferred]?.trim() || value?.en?.trim() || value?.am?.trim() || value?.or?.trim() || ''
+}
+
 // ── Section wrapper ───────────────────────────────────────────────────────────
 function HomeSection({ id, title, subtitle, bg = '', children }: { id: string; title: string; subtitle?: string; bg?: string; children: React.ReactNode }) {
   const isAbout = id === 'about'
+  const prefersReducedMotion = useReducedMotion()
+  const sectionSurface = ['services', 'gallery', 'contact'].includes(id)
+    ? 'bg-gradient-to-b from-slate-50/90 to-white dark:from-gray-900 dark:to-gray-950'
+    : 'bg-white dark:bg-gray-950'
   return (
-    <motion.section id={id} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }}
-      viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.45 }}
+    <motion.section id={id}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
       style={{ pointerEvents: 'auto' }}
-      className={`section-padding ${isAbout ? 'pt-0 -mt-1' : ''} ${bg}`} aria-label={title}>
+      className={`section-padding ${isAbout ? 'pt-0 -mt-1' : ''} ${sectionSurface} ${bg}`} aria-label={title}>
       {title && (
         <div className="container-gov mb-6">
           <h2 className="section-title">{title}</h2>
@@ -237,20 +254,18 @@ function WinModal({ win, floorName, index, language, onClose, autoOpenServiceId 
   const [reqs, setReqs]           = useState<Record<string, Requirement[]>>({})
   const [loadingReqs, setLoadingReqs] = useState<Record<string, boolean>>({})
 
-  const name =
-    language === 'or' ? (win.name?.or || `Foddaa ${win.number}ffaa`) :
-    language === 'am' ? (win.name?.am || `ፎዳ ${win.number}ኛ`) :
-    (win.name?.en || `Window ${win.number}`)
+  const name = localizedText(win.name, language) || (
+    language === 'or' ? `Foddaa ${win.number}ffaa` :
+    language === 'am' ? `ፎዳ ${win.number}ኛ` :
+    `Window ${win.number}`
+  )
 
   const pill =
     language === 'or' ? `FODDAA ${win.number}` :
     language === 'am' ? `ፎዳ ${win.number}` :
     `WINDOW ${win.number}`
 
-  const floor =
-    language === 'or' ? (floorName.or || floorName.en) :
-    language === 'am' ? (floorName.am || floorName.en) :
-    floorName.en
+  const floor = localizedText(floorName, language)
 
   const reqLabel  = language === 'or' ? 'Wantoota Barbaachisoo' : language === 'am' ? 'ያስፈልጋሉ ሰነዶች' : 'Requirements'
   const hintLabel = language === 'or' ? 'Tajaajila kamiyyuu cuqaasuun wantoota barbaachisoo argadhaa' : language === 'am' ? 'ያስፈልጉ ሰነዶችን ለማየት ማናቸውንም አገልግሎት ጠቅ ያድርጉ' : 'Click any service to see requirements'
@@ -342,7 +357,7 @@ function WinModal({ win, floorName, index, language, onClose, autoOpenServiceId 
           {loadingSvc && <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-brand-green" /></div>}
           {!loadingSvc && services.length === 0 && <div className="text-center py-10 text-gray-400 text-sm">{noSvc}</div>}
           {!loadingSvc && services.map(svc => {
-            const svcName = language === 'am' ? (svc.name.am || svc.name.or || svc.name.en) : language === 'or' ? (svc.name.or || svc.name.en) : svc.name.en
+            const svcName = localizedText(svc.name, language)
             const isOpen  = expandedSvc === svc._id
             const rList   = reqs[svc._id]
             return (
@@ -398,7 +413,7 @@ function OrgModal({ id, name, index, language, onClose, autoOpenServiceId }: { i
   const [reqs, setReqs] = useState<Record<string, Requirement[]>>({})
   const [loadingReqs, setLoadingReqs] = useState<Record<string, boolean>>({})
 
-  const orgName = language === 'am' ? (name.am || name.or || name.en) : language === 'or' ? (name.or || name.en) : name.en
+  const orgName = localizedText(name, language)
   const reqLabel = language === 'or' ? 'Wantoota Barbaachisoo' : language === 'am' ? 'ያስፈልጋሉ ሰነዶች' : 'Requirements'
   const hintLabel = language === 'or' ? 'Tajaajila kamiyyuu cuqaasuun wantoota barbaachisoo argadhaa' : language === 'am' ? 'ያስፈልጉ ሰነዶችን ለማየት ያናቸውንም ጠቅ ያድርጉ' : 'Click any service to see requirements'
   const noSvc = language === 'or' ? 'Tajaajilli hin jiru' : language === 'am' ? 'ምንም አገልግሎቶች የሉም' : 'No services available'
@@ -485,11 +500,18 @@ function OrgModal({ id, name, index, language, onClose, autoOpenServiceId }: { i
           {loading && <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-brand-green" /></div>}
           {!loading && services.length === 0 && <div className="text-center py-10 text-gray-400 text-sm">{noSvc}</div>}
           {!loading && services.map(svc => {
-            const svcName = language === 'am' ? (svc.name.am || svc.name.or || svc.name.en) : language === 'or' ? (svc.name.or || svc.name.en) : svc.name.en
+            const svcName = localizedText(svc.name, language)
             const isOpen = expandedSvc === svc._id
             const rList = reqs[svc._id]
+            const locationLabel = svc.window
+              ? `${language === 'or' ? 'Darbii' : language === 'am' ? 'ወለል' : 'Floor'} ${svc.window.floor} · ${language === 'or' ? 'Foddaa' : language === 'am' ? 'መስኮት' : 'Window'} ${svc.window.number}`
+              : ''
             return (
               <div key={svc._id} className="rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                {locationLabel && <p className="flex items-center gap-1.5 border-b border-gray-100 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-600 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-300">
+                  <Layers className="h-3.5 w-3.5 text-brand-green" aria-hidden />
+                  {locationLabel}
+                </p>}
                 <button onClick={() => handleSvc(svc._id)}
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left gap-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -534,102 +556,44 @@ function OrgModal({ id, name, index, language, onClose, autoOpenServiceId }: { i
 // ── Main HomePage ─────────────────────────────────────────────────────────────
 export default function HomePage() {
   const { t, language } = useLanguage()
-  const navigate = useNavigate()
   const location = useLocation()
-  // When arriving from the hero search, auto-open the correct card
-  const locationState = location.state as { openWindowId?: string; openServiceId?: string; openOrgId?: string } | null
-  const [groups, setGroups]   = useState<WindowGroupedByFloorWithName[]>([])
+  const locationState = location.state as { openServiceId?: string; openOrgId?: string } | null
+  const [floors, setFloors] = useState<FloorData[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(false)
-  const [modal, setModal]     = useState<{ win: WindowSummary; floorName: { en: string; am: string; or: string }; index: number; autoOpenServiceId?: string } | null>(null)
+  const [error, setError] = useState(false)
   const [orgModal, setOrgModal] = useState<{ id: string; name: { en: string; am: string; or: string }; index: number; autoOpenServiceId?: string } | null>(null)
-  const [activeView, setActiveView] = useState<'windows' | 'offices'>('windows')
-  const [orgs, setOrgs] = useState<Array<{ _id: string; name: { en: string; am: string; or: string }; serviceCount: number }>>([])
-  const [loadingOrgs, setLoadingOrgs] = useState(false)
+  const [orgs, setOrgs] = useState<Array<{ _id: string; name: { en: string; am: string; or: string }; serviceCount: number; floorId?: string | { _id: string } | null }>>([])
 
-  const loadWindows = () => {
-    // Show cached data immediately if available
-    const cached = loadCache<WindowGroupedByFloorWithName[]>('windows_grouped')
-    if (cached && cached.length > 0) {
-      setGroups(cached)
+  const loadOffices = () => {
+    const cachedOrgs = loadCache<typeof orgs>('orgs')
+    const cachedFloors = loadCache<FloorData[]>('floors')
+    const hasCachedData = Boolean(cachedOrgs && cachedFloors)
+    if (cachedOrgs && cachedFloors) {
+      setOrgs(cachedOrgs)
+      setFloors(cachedFloors)
       setLoading(false)
-    } else {
-      setLoading(true)
-    }
+    } else setLoading(true)
     setError(false)
-    getWindowsGroupedByFloor()
-      .then(d => {
-        const data = Array.isArray(d) ? d : []
-        setGroups(data)
-        saveCache('windows_grouped', data)
+    Promise.all([getOrganizations(), getFloors()])
+      .then(([officeData, floorData]) => {
+        const nextOffices = Array.isArray(officeData) ? officeData : []
+        const nextFloors = Array.isArray(floorData) ? floorData : []
+        setOrgs(nextOffices)
+        setFloors(nextFloors)
+        saveCache('orgs', nextOffices)
+        saveCache('floors', nextFloors)
       })
-      .catch(() => { if (!cached) setError(true) })
+      .catch(() => { if (!hasCachedData) setError(true) })
       .finally(() => setLoading(false))
-  }
-
-  const handleViewChange = (view: 'windows' | 'offices') => {
-    setActiveView(view)
-    setQuery('')
-    if (view === 'offices' && orgs.length === 0) {
-      setLoadingOrgs(true)
-      // Show cached orgs immediately
-      const cachedOrgs = loadCache<typeof orgs>('orgs')
-      if (cachedOrgs && cachedOrgs.length > 0) {
-        setOrgs(cachedOrgs)
-        setLoadingOrgs(false)
-      }
-      getOrganizations()
-        .then(d => {
-          const data = Array.isArray(d) ? d : []
-          setOrgs(data)
-          saveCache('orgs', data)
-        })
-        .catch(() => {})
-        .finally(() => setLoadingOrgs(false))
-    }
   }
 
   useEffect(() => {
     document.title = `${t.siteName} – ${t.siteTagline} | ${t.govName}`
-    loadWindows()
-    // Load organizations eagerly so the search can always match office cards
-    setLoadingOrgs(true)
-    const cachedOrgs = loadCache<typeof orgs>('orgs')
-    if (cachedOrgs && cachedOrgs.length > 0) setOrgs(cachedOrgs)
-    getOrganizations()
-      .then(d => {
-        const data = Array.isArray(d) ? d : []
-        setOrgs(data)
-        saveCache('orgs', data)
-      })
-      .catch(() => {})
-      .finally(() => setLoadingOrgs(false))
+    loadOffices()
   }, [t])
 
-  // Flatten + sort windows by number
-  const flat = groups
-    .flatMap(g => g.windows.map(win => ({ win, floorName: g.floorName, floorNum: g.floor })))
-    .sort((a, b) => Number(a.win.number) - Number(b.win.number))
-
-  // ── Pre-fetch all services in background for instant modal opening ──
-  const prefetchedRef = useRef(false)
   useEffect(() => {
-    if (prefetchedRef.current) return
-    if (flat.length === 0 && orgs.length === 0) return
-    prefetchedRef.current = true
-    // Pre-fetch services for all windows
-    flat.forEach(({ win }) => {
-      if (loadCache<Service[]>(`win_services_${win._id}`)) return
-      fetch(`${BASE}/windows/${win._id}/services`)
-        .then(r => r.json())
-        .then(d => {
-          const list = Array.isArray(d) ? d : []
-          if (list.length > 0) saveCache(`win_services_${win._id}`, list)
-        })
-        .catch(() => {})
-    })
-    // Pre-fetch services for all organizations
-    orgs.forEach(org => {
+    orgs.forEach((org) => {
       if (loadCache<Service[]>(`org_services_${org._id}`)) return
       fetch(`${BASE}/services/by-organization/${org._id}`)
         .then(r => r.json())
@@ -639,11 +603,11 @@ export default function HomePage() {
         })
         .catch(() => {})
     })
-  }, [flat, orgs])
+  }, [orgs])
 
   // ── Search state ──────────────────────────────────────────────
   const [query, setQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Array<{ svc: Service; win: typeof flat[0] | null; org: typeof orgs[0] | null }>>([])
+  const [searchResults, setSearchResults] = useState<Array<{ svc: Service; org: typeof orgs[0] | null }>>([])
   const [searching, setSearching] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -655,58 +619,37 @@ export default function HomePage() {
       setSearching(true)
       try {
         const results = await searchServices(q)
-        // For each service, find its window (for window card) OR its organization (for office card)
         const enriched = results.map(svc => {
-          const winId = typeof svc.window === 'object' && svc.window ? svc.window._id : svc.window as string | null
-          const orgId = typeof svc.organization === 'object' && svc.organization ? String((svc.organization as any)._id || '') : typeof svc.organization === 'string' ? svc.organization : ''
-          const win = flat.find(f => f.win._id === winId) || null
+          const orgId = typeof svc.organization === 'object' && svc.organization ? svc.organization._id : typeof svc.organization === 'string' ? svc.organization : ''
           const org = orgs.find(o => o._id === orgId) || null
-          return { svc, win, org }
+          return { svc, org }
         })
-        // Filter by active tab: windows → only services assigned to a window card;
-        // offices → only services assigned to an office card
-        const filteredResults = activeView === 'windows'
-          ? enriched.filter(r => r.win !== null)
-          : enriched.filter(r => r.org !== null)
-        setSearchResults(filteredResults)
+        setSearchResults(enriched.filter((result) => result.org !== null))
       } catch { setSearchResults([]) }
       finally { setSearching(false) }
     }, 300)
-  }, [query, flat, orgs, activeView])
+  }, [query, orgs])
 
-  // After initial windows load, if we arrived from hero search, open the right card.
-  // location.key ensures this re-runs even when already on the home page
   useEffect(() => {
-    if (loading || !locationState) return
-    if (locationState.openWindowId) {
-      const idx = flat.findIndex(f => f.win._id === locationState.openWindowId)
-      if (idx !== -1) {
-        setActiveView('windows')
-        document.getElementById('services')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        const selected = flat[idx]
-        const timer = window.setTimeout(() => {
-          setModal({ win: selected.win, floorName: selected.floorName, index: idx, autoOpenServiceId: locationState.openServiceId })
-        }, 450)
-        window.history.replaceState({}, '')
-        return () => window.clearTimeout(timer)
-      }
-    }
-    if (locationState.openOrgId && orgs.length > 0) {
+    if (!locationState || !locationState.openOrgId || orgs.length === 0) return
+    if (locationState.openOrgId) {
       const oIdx = orgs.findIndex(o => o._id === locationState.openOrgId)
       if (oIdx !== -1) {
-        setActiveView('offices')
         setOrgModal({ id: orgs[oIdx]._id, name: orgs[oIdx].name, index: oIdx, autoOpenServiceId: locationState.openServiceId })
       }
     }
     window.history.replaceState({}, '')
-  }, [loading, orgs, flat, locationState, location.key])
+  }, [orgs, locationState, location.key])
 
   const svcTitle    = language === 'or' ? 'Tajaajiloota'     : language === 'am' ? 'አገልግሎቶቻችን'    : 'Our Services'
-  const svcSubtitle = language === 'or' ? 'Foddaa yookan Wajjiralee filachuudhaan tajaajila Barbaddan argadhaa' : language === 'am' ? 'ፎዳ ምርጡ አገልግሎቱን ያግኙ' : 'Select a window to find available services'
-  const officeBtn   = language === 'or' ? 'Wajjiraaleedhaan' : language === 'am' ? 'ቢሮዎቻቸን'        : 'Offices'
-  const viewAll     = language === 'or' ? 'Foddaadhaan'      : language === 'am' ? 'በፎዳ ያግኙ'       : 'By Window'
-  const retryLabel  = language === 'or' ? "Irra deebi'ii yaalii" : language === 'am' ? 'እንደገና ሞክር' : 'Try Again'
+  const svcSubtitle = language === 'or' ? 'Tajaajiloota waajjira isaaniitiin barbaadi' : language === 'am' ? 'አገልግሎቶችን በየቢሮው ያስሱ' : 'Browse services by office and floor'
   const searchPlaceholder = language === 'or' ? 'Tajaajila barbaadi...' : language === 'am' ? 'አገልግሎት ፈልግ...' : 'Search services...'
+  const officesForFloor = (floorId: string) => orgs.filter((office) =>
+    (typeof office.floorId === 'string' ? office.floorId : office.floorId?._id) === floorId
+  )
+  const unassignedOffices = orgs.filter((office) =>
+    !floors.some((floor) => floor._id === (typeof office.floorId === 'string' ? office.floorId : office.floorId?._id))
+  )
 
   return (
     <>
@@ -717,38 +660,10 @@ export default function HomePage() {
         <div className="section-padding pt-0"><AboutSection /></div>
       </HomeSection>
 
-      {/* Services — 11 window cards, modal opens inline */}
+      {/* Services — offices grouped by their assigned floor */}
       <HomeSection id="services" title={svcTitle} subtitle={svcSubtitle} bg="bg-transparent">
         <div className="section-padding pt-0">
           <div className="container-gov">
-
-            {/* Toggle buttons — Foddaadhaan / Waajjiralee */}
-            <div className="flex flex-wrap gap-3 justify-center mb-6">
-              <button
-                onClick={() => handleViewChange('windows')}
-                className={cn(
-                  'inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all',
-                  activeView === 'windows'
-                    ? 'bg-[#1a2744] dark:bg-brand-green text-white'
-                    : 'border-2 border-[#1a2744] dark:border-brand-green text-[#1a2744] dark:text-brand-green hover:bg-[#1a2744]/5'
-                )}
-              >
-                {viewAll}
-              </button>
-              <button
-                onClick={() => handleViewChange('offices')}
-                className={cn(
-                  'inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all',
-                  activeView === 'offices'
-                    ? 'bg-[#1a2744] dark:bg-brand-green text-white'
-                    : 'border-2 border-[#1a2744] dark:border-brand-green text-[#1a2744] dark:text-brand-green hover:bg-[#1a2744]/5'
-                )}
-              >
-                <Building2 className="h-4 w-4" />
-                {officeBtn}
-              </button>
-            </div>
-
             {/* Search bar */}
             <div className="relative max-w-xl mx-auto mb-8">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
@@ -778,21 +693,15 @@ export default function HomePage() {
                     </p>
                   ) : (
                     <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-                      {searchResults.slice(0, 8).map(({ svc, win: w, org }) => {
-                        const svcName = language === 'am' ? (svc.name.am || svc.name.or || svc.name.en) : language === 'or' ? (svc.name.or || svc.name.en) : svc.name.en
-                        const winLabel = w ? (language === 'or' ? (w.win.name?.or || `Foddaa ${w.win.number}ffaa`) : language === 'am' ? (w.win.name?.am || `ፎዳ ${w.win.number}ኛ`) : (w.win.name?.en || `Window ${w.win.number}`)) : null
-                        const orgLabel = org ? (language === 'or' ? (org.name.or || org.name.en) : language === 'am' ? (org.name.am || org.name.en) : org.name.en) : null
+                      {searchResults.slice(0, 8).map(({ svc, org }) => {
+                        const svcName = localizedText(svc.name, language)
+                        const orgLabel = org ? localizedText(org.name, language) : null
                         return (
                           <li key={svc._id}>
                             <button
                               onClick={() => {
                                 setQuery('')
-                                // If service has a window → open window card; else if has an org → open office card
-                                if (w) {
-                                  setActiveView('windows')
-                                  setModal({ win: w.win, floorName: w.floorName, index: flat.findIndex(f => f.win._id === w.win._id), autoOpenServiceId: svc._id })
-                                } else if (org) {
-                                  setActiveView('offices')
+                                if (org) {
                                   const oIdx = orgs.findIndex(o => o._id === org._id)
                                   setOrgModal({ id: org._id, name: org.name, index: oIdx === -1 ? 0 : oIdx, autoOpenServiceId: svc._id })
                                 }
@@ -800,11 +709,7 @@ export default function HomePage() {
                               className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left gap-3"
                             >
                               <span className="text-sm font-medium text-gray-900 dark:text-white leading-snug">{svcName}</span>
-                              {winLabel ? (
-                                <span className="text-xs text-brand-green dark:text-green-400 shrink-0 font-semibold">
-                                  {winLabel} →
-                                </span>
-                              ) : orgLabel ? (
+                              {orgLabel ? (
                                 <span className="text-xs text-orange-600 dark:text-orange-400 shrink-0 font-semibold">
                                   {orgLabel} →
                                 </span>
@@ -819,49 +724,39 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Animated content — windows OR offices */}
             <AnimatePresence mode="wait">
               <motion.div
-                key={activeView}
+                key="offices"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25 }}
               >
-                {/* ── WINDOWS tab ── */}
-                {activeView === 'windows' && (
-                  <>
-                    {loading && <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-brand-green" /></div>}
-                    {!loading && error && (
-                      <div className="flex flex-col items-center gap-4 py-12 text-center">
-                        <AlertCircle className="h-12 w-12 text-red-400" />
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {language === 'or' ? 'Server waliin walqunnamuu hin dandeenye.' : 'Could not connect to server.'}
-                        </p>
-                        <button onClick={loadWindows} className="px-5 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green/90">
-                          {retryLabel}
-                        </button>
-                      </div>
-                    )}
-                    {!loading && !error && flat.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {flat.map(({ win, floorName }, idx) => (
-                          <WinCard key={win._id} win={win} floorName={floorName} index={idx} language={language}
-                            onClick={() => setModal({ win, floorName, index: idx })} />
-                        ))}
-                      </div>
-                    )}
-                  </>
+                {loading && <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-brand-green" /></div>}
+                {!loading && error && (
+                  <div className="flex flex-col items-center gap-4 py-12 text-center">
+                    <AlertCircle className="h-12 w-12 text-red-400" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {language === 'or' ? 'Server waliin walqunnamuu hin dandeenye.' : language === 'am' ? 'ከሰርቨሩ ጋር መገናኘት አልተቻለም።' : 'Could not connect to server.'}
+                    </p>
+                    <button onClick={loadOffices} className="rounded-lg bg-brand-green px-5 py-2 text-sm font-semibold text-white hover:bg-brand-green/90">
+                      {language === 'or' ? "Irra deebi'ii yaalii" : language === 'am' ? 'እንደገና ሞክር' : 'Try Again'}
+                    </button>
+                  </div>
                 )}
-
-                {/* ── OFFICES tab ── */}
-                {activeView === 'offices' && (
-                  <>
-                    {loadingOrgs && <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-brand-green" /></div>}
-                    {!loadingOrgs && orgs.length > 0 && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {orgs.map((org, idx) => {
-                          const orgName = language === 'am' ? (org.name.am || org.name.or || org.name.en) : language === 'or' ? (org.name.or || org.name.en) : org.name.en
+                {!loading && !error && floors.map((floor) => {
+                  const floorOffices = officesForFloor(floor._id)
+                  if (!floorOffices.length) return null
+                  const floorLabel = language === 'am'
+                    ? floor.name.am || floor.name.en
+                    : language === 'or'
+                      ? floor.name.or || floor.name.om || floor.name.en
+                      : floor.name.en
+                  return <section key={floor._id} className="mb-8">
+                    <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">{floorLabel}</h3>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                      {floorOffices.map((org, idx) => {
+                          const orgName = localizedText(org.name, language)
                           const count = org.serviceCount ?? 0
                           const svcLabel = language === 'or' ? `Tajaajila ${count}` : language === 'am' ? `${count} አገልግሎት` : `${count} Services`
                           const colors = [
@@ -879,7 +774,7 @@ export default function HomePage() {
                               initial={{ opacity: 0, y: 16 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: idx * 0.04 }}
-                              onClick={() => setOrgModal({ id: org._id, name: org.name, index: idx })}
+                              onClick={() => setOrgModal({ id: org._id, name: org.name, index: orgs.findIndex((item) => item._id === org._id) })}
                               whileHover={{ y: -4, scale: 1.02 }}
                               whileTap={{ scale: 0.97 }}
                               className={cn('w-full rounded-xl shadow-md hover:shadow-lg flex flex-col items-center justify-center gap-3 p-6 h-48 cursor-pointer transition-shadow focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-green/50', col)}
@@ -894,24 +789,23 @@ export default function HomePage() {
                               <p className="font-bold text-gray-900 dark:text-white text-base leading-snug line-clamp-2 text-center">{orgName}</p>
                             </motion.button>
                           )
-                        })}
-                      </div>
-                    )}
-                    {!loadingOrgs && orgs.length === 0 && (
-                      <p className="text-center text-gray-400 text-sm py-12">
-                        {language === 'or' ? 'Waajjiraaleen hin argamne' : language === 'am' ? 'ምንም ቢሮ አልተገኘም' : 'No offices found'}
-                      </p>
-                    )}
-                  </>
+                      })}
+                    </div>
+                  </section>
+                })}
+                {!loading && !error && unassignedOffices.length > 0 && <section className="mb-8">
+                  <h3 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">{language === 'am' ? 'ወለል ያልተመደበላቸው ቢሮዎች' : language === 'or' ? 'Waajjiraalee darbii hin ramadamne' : 'Offices without an assigned floor'}</h3>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {unassignedOffices.map((org, idx) => <OfficeCard key={org._id} id={org._id} name={org.name} serviceCount={org.serviceCount} index={idx} onClick={() => setOrgModal({ id: org._id, name: org.name, index: orgs.findIndex((item) => item._id === org._id) })} />)}
+                  </div>
+                </section>}
+                {!loading && !error && orgs.length === 0 && (
+                  <p className="py-12 text-center text-sm text-gray-400">
+                    {language === 'or' ? 'Waajjiraaleen hin argamne' : language === 'am' ? 'ምንም ቢሮ አልተገኘም' : 'No offices found'}
+                  </p>
                 )}
               </motion.div>
             </AnimatePresence>
-
-            {!loading && !error && flat.length === 0 && (
-              <div className="text-center py-12 text-gray-400 text-sm">
-                <button type="button" onClick={() => navigate('/tajaajila')} className="text-brand-green hover:underline">{viewAll} →</button>
-              </div>
-            )}
           </div>
         </div>
       </HomeSection>
@@ -945,12 +839,8 @@ export default function HomePage() {
         <div className="section-padding pt-0"><FeedbackSection /></div>
       </HomeSection>
 
-      {/* Inline services modal — opens without navigating away */}
+      {/* Inline office services modal */}
       <AnimatePresence>
-        {modal && (
-          <WinModal win={modal.win} floorName={modal.floorName} index={modal.index} language={language}
-            onClose={() => setModal(null)} autoOpenServiceId={modal.autoOpenServiceId} />
-        )}
         {orgModal && (
           <OrgModal id={orgModal.id} name={orgModal.name} index={orgModal.index} language={language}
             onClose={() => setOrgModal(null)} autoOpenServiceId={orgModal.autoOpenServiceId} />
@@ -959,4 +849,3 @@ export default function HomePage() {
     </>
   )
 }
-

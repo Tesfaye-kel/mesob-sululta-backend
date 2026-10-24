@@ -147,11 +147,21 @@
   }
 
   .section-padding {
-    @apply py-16 md:py-24 lg:py-28;
+    @apply py-14 md:py-20 lg:py-24;
   }
 
   .section-title {
-    @apply text-3xl md:text-4xl font-bold text-gray-900 dark:text-white text-center;
+    @apply text-3xl md:text-4xl font-bold text-[#102b4e] dark:text-white text-center;
+  }
+
+  .section-title::after {
+    content: '';
+    display: block;
+    width: 3.25rem;
+    height: 3px;
+    margin: 0.85rem auto 0;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #1a3a6b, #c8961e);
   }
 
   .section-subtitle {
@@ -166,7 +176,17 @@
     @apply bg-white dark:bg-gray-800 rounded-xl shadow-card border border-cyan-100 dark:border-gray-700 transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5;
 }
 
-  
+  .testimonials-marquee-track {
+    display: flex;
+    width: max-content;
+    animation: testimonials-marquee 48s linear infinite;
+    will-change: transform;
+  }
+
+  @keyframes testimonials-marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
 
   .btn-primary {
     @apply inline-flex items-center gap-2 px-6 py-3 bg-brand-green text-white font-semibold rounded-lg hover:bg-brand-green-dark transition-all duration-200 shadow-gov hover:shadow-lg active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-green;
@@ -232,6 +252,11 @@
   .animation-delay-600 { animation-delay: 600ms; }
 
   @media (prefers-reduced-motion: reduce) {
+    .testimonials-marquee-track {
+      animation: none;
+      transform: none;
+    }
+
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;

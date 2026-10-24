@@ -17,8 +17,9 @@ export default function AdminLogin() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { login, loading: authLoading, isLoggedIn } = useAdminAuth()
-  const { t } = useLanguage()
+  const { t, language, setLanguage } = useLanguage()
   const admin = t.admin
+  const portal = admin.portal
 
   // ── Detect reset token in URL (?resetToken=xxx) ────────────────────────────
   const urlToken = searchParams.get('resetToken') || ''
@@ -97,7 +98,7 @@ export default function AdminLogin() {
       if (msg.toLowerCase().includes('locked')) {
         // Try to extract lockedUntil from the error if the API sends it
         setLockedUntil(new Date(Date.now() + 10 * 60 * 1000))
-        setError(msg)
+        setError(portal.login.accountLocked)
       } else {
         setError(msg)
       }
@@ -107,7 +108,7 @@ export default function AdminLogin() {
   // ── Forgot password: send reset email ─────────────────────────────────────
   const handleForgotSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!fpEmail) { setFpError('Enter your registered email address'); return }
+    if (!fpEmail) { setFpError(admin.enterRegisteredEmail); return }
     setFpError(''); setFpLoading(true)
     try {
       const res = await fetch(`${BASE}/auth/forgot-password`, {
@@ -119,15 +120,15 @@ export default function AdminLogin() {
       if (!res.ok) throw new Error(data.message || 'Request failed')
       setStep('forgot-sent')
     } catch (err: any) {
-      setFpError(err.message || 'Request failed. Please try again.')
+      setFpError(err.message || portal.login.requestFailed)
     } finally { setFpLoading(false) }
   }
 
   // ── Reset password: submit new password ───────────────────────────────────
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!rpToken) { setRpError('Reset token is missing. Please use the link from your email.'); return }
-    if (!rpNewPw || rpNewPw.length < 6) { setRpError('Password must be at least 6 characters'); return }
+    if (!rpToken) { setRpError(portal.login.missingResetToken); return }
+    if (!rpNewPw || rpNewPw.length < 8 || rpNewPw.length > 128) { setRpError(portal.login.passwordLengthError); return }
     setRpError(''); setRpLoading(true)
     try {
       const res = await fetch(`${BASE}/auth/reset-password`, {
@@ -141,7 +142,7 @@ export default function AdminLogin() {
       // Clean the URL
       window.history.replaceState({}, '', '/Admin')
     } catch (err: any) {
-      setRpError(err.message || 'Reset failed. The link may have expired.')
+      setRpError(err.message || portal.login.resetFailed)
     } finally { setRpLoading(false) }
   }
 
@@ -160,6 +161,14 @@ export default function AdminLogin() {
         className="w-full max-w-md"
       >
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 border border-gray-200 dark:border-gray-700">
+          <div className="mb-5 flex justify-end gap-1" aria-label={admin.language}>
+            {(['en', 'am', 'or'] as const).map((option) => (
+              <button key={option} type="button" aria-pressed={language === option} onClick={() => setLanguage(option)}
+                className={`rounded-md px-2 py-1 text-xs font-semibold ${language === option ? 'bg-brand-green text-white' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
+                {option === 'en' ? portal.languageEnglish : option === 'am' ? portal.languageAmharic : portal.languageOromo}
+              </button>
+            ))}
+          </div>
           <AnimatePresence mode="wait">
 
             {/* ────────────────── LOGIN ────────────────── */}
@@ -170,7 +179,7 @@ export default function AdminLogin() {
                     <Lock className="h-8 w-8 text-brand-green" />
                   </div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.adminLogin}</h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">MESOB Sululta Branch Management</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{portal.login.managementDescription}</p>
                 </div>
 
                 {/* Lockout banner */}
@@ -180,9 +189,9 @@ export default function AdminLogin() {
                       className="flex items-center gap-3 mb-4 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
                       <Clock className="h-5 w-5 text-red-600 shrink-0" />
                       <div>
-                        <p className="text-sm font-semibold text-red-700 dark:text-red-400">Account temporarily locked</p>
+                        <p className="text-sm font-semibold text-red-700 dark:text-red-400">{portal.login.accountLocked}</p>
                         <p className="text-xs text-red-600 dark:text-red-500 mt-0.5">
-                          Too many failed attempts. Try again in{' '}
+                          {portal.login.tooManyAttempts}{' '}
                           <span className="font-bold font-mono text-red-700 dark:text-red-300">{fmtCountdown(countdown)}</span>
                         </p>
                       </div>
@@ -200,13 +209,13 @@ export default function AdminLogin() {
                   )}
                 </AnimatePresence>
 
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleLogin} autoComplete="on" className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{t.common.emailLabel}</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                        placeholder="admin@example.com" autoComplete="email" disabled={!!lockedUntil}
+                      <input type="email" name="username" value={email} onChange={e => setEmail(e.target.value)}
+                        placeholder="admin@example.com" autoComplete="username" disabled={!!lockedUntil}
                         className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-green disabled:opacity-50 disabled:cursor-not-allowed" />
                     </div>
                   </div>
@@ -215,7 +224,7 @@ export default function AdminLogin() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{admin.passwordLabel}</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input type={showPassword ? 'text' : 'password'} value={password}
+                      <input type={showPassword ? 'text' : 'password'} name="password" value={password}
                         onChange={e => setPassword(e.target.value)} placeholder={admin.enterPassword}
                         autoComplete="current-password" disabled={!!lockedUntil}
                         className="w-full pl-10 pr-12 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-green disabled:opacity-50 disabled:cursor-not-allowed" />
@@ -243,7 +252,7 @@ export default function AdminLogin() {
                 </form>
 
                 <p className="mt-6 text-center text-xs text-gray-400 dark:text-gray-500">
-                  Authorized personnel only · Unauthorized access is prohibited
+                  {portal.login.authorizedOnly}
                 </p>
               </motion.div>
             )}
@@ -257,7 +266,7 @@ export default function AdminLogin() {
                   </div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.forgotPassword}</h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-                    Enter your admin email. We'll send a reset link to that address.
+                    {portal.login.forgotPasswordHint}
                   </p>
                 </div>
 
@@ -302,11 +311,10 @@ export default function AdminLogin() {
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{admin.checkEmail}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">
-                  If <span className="font-medium text-gray-700 dark:text-gray-300">{fpEmail}</span> is registered,
-                  a password reset link has been sent to that address.
+                  {portal.login.resetSentIfRegistered.replace('{email}', fpEmail)}
                 </p>
                 <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
-                  The link expires in 1 hour. Check your spam folder if you don't see it.
+                  {portal.login.resetLinkExpiry}
                 </p>
 
                 <button onClick={() => { setStep('login'); setFpEmail('') }}
@@ -324,7 +332,7 @@ export default function AdminLogin() {
                     <KeyRound className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                   </div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.setNewPassword}</h1>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Enter your new password below.</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{portal.login.newPasswordHint}</p>
                 </div>
 
                 {rpError && (
@@ -338,7 +346,7 @@ export default function AdminLogin() {
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">{admin.newPasswordLabel}</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <input type={rpShowPw ? 'text' : 'password'} value={rpNewPw}
+                      <input type={rpShowPw ? 'text' : 'password'} value={rpNewPw} minLength={8} maxLength={128}
                         onChange={e => setRpNewPw(e.target.value)} placeholder={admin.minPassword} autoFocus
                         className="w-full pl-10 pr-12 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500" />
                       <button type="button" onClick={() => setRpShowPw(!rpShowPw)} tabIndex={-1}
@@ -372,7 +380,7 @@ export default function AdminLogin() {
                 </div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{admin.passwordUpdated}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                  Your password has been reset successfully. You can now log in.
+                  {portal.login.resetSuccess}
                 </p>
                 <button onClick={() => setStep('login')}
                   className="flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-lg font-semibold text-white bg-brand-green hover:bg-brand-green-dark">

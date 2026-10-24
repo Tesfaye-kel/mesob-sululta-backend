@@ -213,8 +213,9 @@ export default function Navbar() {
         <motion.div
           className={cn(
             'pointer-events-auto',
-            'bg-[#1a3a6b]/95 dark:bg-[#0f1f3d]/95',
-            'backdrop-blur-md border-b border-white/10'
+            'bg-gradient-to-r from-[#1a3a6b]/95 via-[#173b68]/95 to-[#a97520]/95',
+            'dark:from-[#0f1f3d]/95 dark:via-[#13294a]/95 dark:to-[#775b26]/95',
+            'backdrop-blur-md border-b-2 border-brand-gold/70'
           )}
           animate={{ opacity: scrolled ? 1 : 0.92 }}
           transition={{ duration: 0.25, ease: 'easeInOut' }}
@@ -333,11 +334,12 @@ export default function Navbar() {
                 </AnimatePresence>
               </button>
 
-              <div className="hidden sm:flex items-center gap-1 pl-2 ml-1 border-l border-white/15">
-                <span className="w-2 h-2 rounded-full bg-black" aria-hidden />
-                <span className="w-2 h-2 rounded-full bg-red-600" aria-hidden />
-                <span className="w-2 h-2 rounded-full bg-white" aria-hidden />
-              </div>
+              <NavLink
+                to="/citizen/"
+                className="ml-2 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              >
+                Sign In
+              </NavLink>
 
               <button
                 onClick={() => setMobileOpen(o => !o)}
@@ -438,6 +440,12 @@ export default function Navbar() {
                   )
                 })}
               </nav>
+
+              <div className="px-4">
+                <NavLink to="/citizen/" onClick={() => setMobileOpen(false)} className="block rounded-xl bg-brand-green px-4 py-3 text-center text-sm font-semibold text-white">
+                  Citizen registration / sign in
+                </NavLink>
+              </div>
 
               <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-2">

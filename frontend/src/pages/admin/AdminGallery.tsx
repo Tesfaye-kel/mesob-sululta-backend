@@ -8,7 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-const categories = ['events', 'building', 'community', 'activities']
+const categories = ['events', 'building', 'community', 'activities'] as const
 const langs = ['en', 'am', 'or'] as const
 
 const emptyForm = {
@@ -21,8 +21,9 @@ const emptyForm = {
 }
 
 export default function AdminGallery() {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const admin = t.admin
+  const portal = admin.portal
   const [items, setItems] = useState<GalleryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -50,7 +51,7 @@ export default function AdminGallery() {
       const data = await uploadFile('/gallery/upload', 'image', file)
       setForm(f => ({ ...f, imageUrl: data.imageUrl || data.url || '' }))
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload image')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setUploading(false)
     }
@@ -63,18 +64,18 @@ export default function AdminGallery() {
       if (editing) {
         const updated = await updateGalleryItem(editing._id, form)
         setItems(prev => prev.map(i => i._id === editing._id ? updated : i))
-        setSuccess('Gallery item updated!')
+        setSuccess(admin.galleryUpdated)
       } else {
         const created = await createGalleryItem(form)
         setItems(prev => [created, ...prev])
-        setSuccess('Gallery item created!')
+        setSuccess(admin.galleryCreated)
       }
       setShowForm(false)
       setEditing(null)
       setForm(emptyForm)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setSaving(false)
     }
@@ -84,10 +85,10 @@ export default function AdminGallery() {
     try {
       await deleteGalleryItem(id)
       setItems(prev => prev.filter(i => i._id !== id))
-      setSuccess('Gallery item deleted!')
+      setSuccess(admin.galleryDeleted)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete')
+      setError(err instanceof Error ? err.message : admin.failedToDelete)
     }
     setConfirmDelete(null)
   }
@@ -97,12 +98,12 @@ export default function AdminGallery() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.galleryTitle}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage gallery images with captions and categories</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{admin.galleryDesc}</p>
         </div>
         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
           onClick={() => { setEditing(null); setForm(emptyForm); setShowForm(true) }}
           className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
-          <Plus className="h-4 w-4" /> New Item
+          <Plus className="h-4 w-4" /> {admin.newGalleryItem}
         </motion.button>
       </div>
 
@@ -117,7 +118,7 @@ export default function AdminGallery() {
       {!loading && !error && items.length === 0 && (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Image className="h-12 w-12 mx-auto mb-3 opacity-40" />
-          <p>No gallery items found</p>
+          <p>{admin.noGallery}</p>
         </div>
       )}
 
@@ -165,27 +166,27 @@ export default function AdminGallery() {
             <div className="space-y-4">
               {/* Image Upload */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.photo}</label>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
                     <Upload className="h-4 w-4" />
-                    <span>{uploading ? 'Uploading...' : 'Upload Image'}</span>
+                    <span>{uploading ? admin.uploading : admin.uploadImage}</span>
                     <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
                   </label>
                   {form.imageUrl && (
-                    <span className="text-xs text-gray-500 truncate flex-1">Image selected</span>
+                    <span className="text-xs text-gray-500 truncate flex-1">{admin.imageSelected}</span>
                   )}
                 </div>
                 {form.imageUrl && (
                   <img src={form.imageUrl.startsWith('http') ? form.imageUrl : `${BASE.replace('/api', '')}${form.imageUrl}`}
-                    alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg" />
+                    alt={admin.preview} className="mt-2 w-32 h-32 object-cover rounded-lg" />
                 )}
               </div>
 
               {/* Title fields */}
               {langs.map(lang => (
                 <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title ({lang.toUpperCase()})</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.title} ({lang === 'en' ? portal.languageEnglish : lang === 'am' ? portal.languageAmharic : portal.languageOromo})</label>
                   <input value={form.title[lang]} onChange={e => setForm(f => ({ ...f, title: { ...f.title, [lang]: e.target.value } }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                 </div>
@@ -194,16 +195,16 @@ export default function AdminGallery() {
               {/* Caption fields */}
               {langs.map(lang => (
                 <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Caption ({lang.toUpperCase()})</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.caption} ({lang === 'en' ? portal.languageEnglish : lang === 'am' ? portal.languageAmharic : portal.languageOromo})</label>
                   <input value={form.caption[lang]} onChange={e => setForm(f => ({ ...f, caption: { ...f.caption, [lang]: e.target.value } }))}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" placeholder="Short caption displayed over image" />
+                    className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" placeholder={admin.captionHint} />
                 </div>
               ))}
 
               {/* Description fields */}
               {langs.map(lang => (
                 <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description ({lang.toUpperCase()})</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.description} ({lang === 'en' ? portal.languageEnglish : lang === 'am' ? portal.languageAmharic : portal.languageOromo})</label>
                   <textarea value={form.description[lang]} onChange={e => setForm(f => ({ ...f, description: { ...f.description, [lang]: e.target.value } }))} rows={2}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none" />
                 </div>
@@ -211,26 +212,26 @@ export default function AdminGallery() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.category}</label>
                   <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
-                    {categories.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+                    {categories.map(c => <option key={c} value={c}>{t.gallery[c]}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Order</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.order}</label>
                   <input type="number" value={form.order} onChange={e => setForm(f => ({ ...f, order: Number(e.target.value) }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                 </div>
               </div>
                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                  <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
                   <button onClick={handleSave} disabled={saving || !form.imageUrl}
                     className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
-                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}{editing ? 'Update' : 'Create'}</button>
+                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}{editing ? admin.update : admin.create}</button>
                 </div>
                 {!form.imageUrl && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 text-right mt-1">Please upload an image first</p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 text-right mt-1">{admin.uploadImageFirst}</p>
                 )}
             </div>
           </motion.div>
@@ -244,11 +245,11 @@ export default function AdminGallery() {
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}
             className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete Gallery Item?</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{admin.deleteConfirmTitle.replace('{type}', admin.galleryTitle)}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{admin.deleteConfirmDesc}</p>
             <div className="flex items-center justify-center gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
+              <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">{admin.delete}</button>
             </div>
           </motion.div>
         </motion.div>

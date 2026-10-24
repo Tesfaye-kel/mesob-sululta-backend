@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Star, Search, ChevronLeft, ChevronRight, Loader2, ArrowRight } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -8,46 +8,48 @@ import { Badge } from '@/components/ui/Badge'
 import MesobLogo from '@/components/brand/MesobLogo'
 import { searchServices, Service } from '@/api/tajaajila'
 
+const siteHeroGradient = 'linear-gradient(120deg,rgba(10,31,60,0.94) 0%,rgba(21,53,91,0.82) 58%,rgba(139,94,31,0.76) 100%)'
+
 // ─── Per-route background gradients ──────────────────────────────────────────
 const getRouteConfig = (t: ReturnType<typeof useLanguage>['t']) => ({
   '/': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.45) 0%,rgba(21,101,192,0.45) 100%)',
+    gradient: siteHeroGradient,
     heading: '', subheading: '', showSlideshow: true, showServiceGrid: false,
   },
   '/about': {
-    gradient: 'linear-gradient(135deg,rgba(13,71,161,0.96) 0%,rgba(26,107,60,0.96) 100%)',
+    gradient: siteHeroGradient,
     heading: t.about.title, subheading: t.about.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/services': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.96) 0%,rgba(13,71,161,0.96) 100%)',
+    gradient: siteHeroGradient,
     heading: t.services.title, subheading: t.services.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/tajaajila': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.96) 0%,rgba(13,71,161,0.96) 100%)',
+    gradient: siteHeroGradient,
     heading: t.nav.services, subheading: t.services.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/organization': {
-    gradient: 'linear-gradient(135deg,rgba(21,101,192,0.96) 0%,rgba(106,27,154,0.96) 100%)',
+    gradient: siteHeroGradient,
     heading: t.organization.title, subheading: t.organization.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/announcements': {
-    gradient: 'linear-gradient(135deg,rgba(230,81,0,0.97) 0%,rgba(21,101,192,0.97) 100%)',
+    gradient: siteHeroGradient,
     heading: t.news.title, subheading: t.news.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/gallery': {
-    gradient: 'linear-gradient(135deg,rgba(74,20,140,0.97) 0%,rgba(21,101,192,0.97) 100%)',
+    gradient: siteHeroGradient,
     heading: t.gallery.title, subheading: t.gallery.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/faq': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.97) 0%,rgba(0,131,143,0.97) 100%)',
+    gradient: siteHeroGradient,
     heading: t.faq.title, subheading: t.faq.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/contact': {
-    gradient: 'linear-gradient(135deg,rgba(183,28,28,0.97) 0%,rgba(21,101,192,0.97) 100%)',
+    gradient: siteHeroGradient,
     heading: t.contact.title, subheading: t.contact.subtitle, showSlideshow: false, showServiceGrid: false,
   },
   '/feedback': {
-    gradient: 'linear-gradient(135deg,rgba(26,107,60,0.97) 0%,rgba(183,28,28,0.97) 100%)',
+    gradient: siteHeroGradient,
     heading: t.feedback.title, subheading: t.feedback.subtitle, showSlideshow: false, showServiceGrid: false,
   },
 })
@@ -61,35 +63,16 @@ const quickServices = [
   { label: 'Citizen Support',   color: 'bg-white/15' },
 ]
 
-// ── Cinematic burst slide variants ────────────────────────────────────────────
+// ── Gentle crossfade slide variants ───────────────────────────────────────────
 const slideVariants = {
-  enter: {
-    opacity: 0.35,
-    scale: 1.04,
-    filter: 'brightness(0.8) blur(3px)',
-  },
-  center: {
-    opacity: 1,
-    scale: 1,
-    filter: 'brightness(1) blur(0px)',
-  },
-  exit: {
-    opacity: 0.25,
-    scale: 1.08,
-    filter: 'brightness(0.65) blur(5px)',
-  },
+  enter: { opacity: 0 },
+  center: { opacity: 1 },
+  exit: { opacity: 0 },
 }
 
 const slideTransition = {
-  duration: 1.4,
-  ease: [0.25, 0.46, 0.45, 0.94] as const, // cubic-bezier — cinematic ease-out
-}
-
-// Burst flash overlay — a radial white glow that pulses at the moment of exit
-const burstVariants = {
-  hidden:  { opacity: 0, scale: 0.6 },
-  visible: { opacity: 0.18, scale: 2.2 },
-  gone:    { opacity: 0, scale: 3.0 },
+  duration: 0.8,
+  ease: [0.22, 1, 0.36, 1] as const,
 }
 
 // ── Debounce hook ─────────────────────────────────────────────────────────────
@@ -106,6 +89,7 @@ export default function Hero() {
   const { t, language } = useLanguage()
   const { activeRoute } = useActiveRoute()
   const navigate = useNavigate()
+  const prefersReducedMotion = useReducedMotion()
 
   const routeConfig = getRouteConfig(t)
 
@@ -124,31 +108,20 @@ export default function Hero() {
   const officialBadge     = language === 'am' ? 'ኦፊሴላዊ የመንግሥት ፖርታል' : language === 'or' ? 'Poortaala Mootummaa Rasmaa' : 'Official Government Portal'
   const [current, setCurrent] = useState(0)
   const [paused,  setPaused]  = useState(false)
-  const [burst,   setBurst]   = useState(false)   // triggers the flash overlay
-  const prevRef               = useRef(current)
 
   // Narrow activeRoute to keys we know to satisfy TS.
   type RouteKey = keyof typeof routeConfig
   const config = routeConfig[(activeRoute as RouteKey) ?? '/'] ?? routeConfig['/']
 
 
-  // Fire burst flash whenever the slide changes
-  useEffect(() => {
-    if (prevRef.current === current) return
-    prevRef.current = current
-    setBurst(true)
-    const t = setTimeout(() => setBurst(false), 700)
-    return () => clearTimeout(t)
-  }, [current])
-
   // auto-advance slideshow every 5 s
   useEffect(() => {
-    if (!config.showSlideshow || paused) return
+    if (!config.showSlideshow || paused || prefersReducedMotion) return
     const id = setInterval(() => {
       setCurrent(c => (c + 1) % slides.length)
     }, 5000)
     return () => clearInterval(id)
-  }, [config.showSlideshow, paused])
+  }, [config.showSlideshow, paused, prefersReducedMotion])
 
   const goTo = (idx: number) => {
     setCurrent(idx)
@@ -184,8 +157,7 @@ export default function Hero() {
     searchServices(q)
       .then(data => {
         if (!cancelled) {
-          // Hero search leads directly to a window card, where floor and requirements are available.
-          setResults(data.filter(service => service.window))
+          setResults(data.filter(service => service.organization))
           setShowDropdown(true)
           setIsSearching(false)
         }
@@ -225,16 +197,12 @@ export default function Hero() {
   const handleSelectService = useCallback((service: Service) => {
     setShowDropdown(false)
     setQuery('')
-    const windowId = typeof service.window === 'object' && service.window
-      ? service.window._id
-      : typeof service.window === 'string' ? service.window : ''
     const orgId = typeof service.organization === 'object' && service.organization
-      ? String((service.organization as any)._id || '')
+      ? service.organization._id
       : typeof service.organization === 'string' ? service.organization : ''
-    // Navigate home (cards live on the home page) and auto-open the correct card
+    // Open the service from its office card on the home page.
     navigate('/', {
       state: {
-        openWindowId: windowId || undefined,
         openOrgId: orgId || undefined,
         openServiceId: service._id,
       },
@@ -259,13 +227,13 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative min-h-[92vh] flex items-center overflow-hidden w-full"
+      className="relative min-h-[82vh] flex items-center overflow-hidden w-full border-b-4 border-brand-gold/80"
       aria-label="Hero section"
     >
-      {/* ── Layer 1: Photo slideshow — cinematic burst/zoom crossfade (home only) ── */}
+      {/* ── Layer 1: Photo slideshow with a gentle crossfade (home only) ── */}
       {config.showSlideshow && (
         <div className="absolute inset-0 overflow-hidden" aria-hidden>
-          {/* Slide images with burst-zoom exit + bloom enter */}
+          {/* Fade between images without flash or zoom effects */}
           <AnimatePresence mode="sync">
             <motion.div
               key={slides[current].src}
@@ -274,7 +242,7 @@ export default function Hero() {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={slideTransition}
+              transition={{ ...slideTransition, duration: prefersReducedMotion ? 0 : slideTransition.duration }}
             >
               <img
                 src={slides[current].src}
@@ -293,25 +261,6 @@ export default function Hero() {
             </motion.div>
           </AnimatePresence>
 
-          {/* Burst flash — blue radial bloom that pulses at the moment of transition */}
-          <AnimatePresence>
-            {burst && (
-              <motion.div
-                key="burst"
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    'radial-gradient(ellipse at 50% 50%, rgba(21,101,192,0.85) 0%, rgba(21,101,192,0.35) 35%, transparent 70%)',
-                  mixBlendMode: 'screen',
-                }}
-                variants={burstVariants}
-                initial="hidden"
-                animate="visible"
-                exit="gone"
-                transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-              />
-            )}
-          </AnimatePresence>
         </div>
       )}
 
@@ -329,7 +278,7 @@ export default function Hero() {
       {/* ── Layer 3: subtle vignette ─────────────────────────────── */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%)' }}
+        style={{ background: 'radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,0.38) 100%)' }}
         aria-hidden
       />
 
@@ -351,17 +300,17 @@ export default function Hero() {
           {config.showSlideshow && (
             <motion.div
               key="home"
-              initial={{ opacity: 0, y: 28 }}
+              initial={prefersReducedMotion ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.45 }}
+              exit={prefersReducedMotion ? undefined : { opacity: 0, y: -8 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
               className="flex flex-col items-center text-center text-white max-w-3xl mx-auto"
             >
               {/* Logo row */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.85 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1, duration: 0.4 }}
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: prefersReducedMotion ? 0 : 0.1, duration: prefersReducedMotion ? 0 : 0.4 }}
                 className="mb-6 flex items-center justify-center gap-6"
               >
                 <img
@@ -384,28 +333,19 @@ export default function Hero() {
               </motion.div>
 
               {/* Headline */}
-              <AnimatePresence mode="wait">
-                <motion.h1
-                  key={current}
-                  className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 drop-shadow-lg"
-                  initial={{ opacity: 0, scale: 0.92, filter: 'blur(4px)' }}
-                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, scale: 1.05, filter: 'blur(2px)' }}
-                  transition={{ duration: 0.8, ease: 'easeOut' }}
-                >
-                  {t.hero.title}{' '}
-                  <span className="text-brand-gold">{t.hero.titleHighlight}</span>
-                </motion.h1>
-              </AnimatePresence>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4 drop-shadow-lg">
+                {t.hero.title}{' '}
+                <span className="text-brand-gold">{t.hero.titleHighlight}</span>
+              </h1>
 
               {/* Slide caption */}
               <AnimatePresence mode="wait">
                 <motion.p
                   key={current}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.4 }}
+                  exit={prefersReducedMotion ? undefined : { opacity: 0, y: -4 }}
+                  transition={{ duration: prefersReducedMotion ? 0 : 0.35, ease: [0.22, 1, 0.36, 1] }}
                   className="text-white/85 text-lg leading-relaxed mb-8 max-w-xl font-medium drop-shadow"
                 >
                   {slides[current].caption}
@@ -415,9 +355,9 @@ export default function Hero() {
               {/* Search bar with live results dropdown */}
               <motion.div
                 className="w-full max-w-xl mb-10 relative"
-                initial={{ opacity: 0, y: 20 }}
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
+                transition={{ delay: prefersReducedMotion ? 0 : 0.2, duration: prefersReducedMotion ? 0 : 0.45 }}
                 ref={searchRef}
               >
                 <form onSubmit={handleSearch} role="search">
@@ -508,11 +448,6 @@ export default function Hero() {
                                     {getLocalizedOrgName(service) && (
                                       <span className="text-xs text-gray-400 truncate">
                                         {getLocalizedOrgName(service)}
-                                      </span>
-                                    )}
-                                    {service.window && (
-                                      <span className="text-xs text-brand-green font-medium shrink-0">
-                                        {language === 'am' ? `ፎዳ ${service.window.number} (ወለል ${service.window.floor})` : language === 'or' ? `Foddaa ${service.window.number} (Darbii ${service.window.floor})` : `Window ${service.window.number} (Floor ${service.window.floor})`}
                                       </span>
                                     )}
                                   </div>

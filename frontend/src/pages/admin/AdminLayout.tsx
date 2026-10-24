@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -12,12 +12,18 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import type { Language } from '@/i18n/translations'
 import { cn } from '@/lib/utils'
+import { adminWorkflowRequest } from '@/api/adminWorkflows'
 
 const sidebarLinks = [
   { to: '/Admin/dashboard', labelKey: 'dashboard', icon: LayoutDashboard },
+  { to: '/Admin/registrars', labelKey: 'systemAdministrators', icon: Shield },
+  { to: '/Admin/employees', labelKey: 'employees', icon: Users },
+  { to: '/Admin/citizens', labelKey: 'citizens', icon: UserCircle },
+  { to: '/Admin/feedback-inbox', labelKey: 'feedbackInbox', icon: MessageSquare },
+  { to: '/Admin/services', labelKey: 'services', icon: Wrench },
+  { to: '/Admin/appointments', labelKey: 'appointments', icon: Users },
   { to: '/Admin/about', labelKey: 'about', icon: Info },
   { to: '/Admin/news', labelKey: 'news', icon: Newspaper },
-  { to: '/Admin/services', labelKey: 'services', icon: Wrench },
   { to: '/Admin/gallery', labelKey: 'gallery', icon: Image },
   { to: '/Admin/faqs', labelKey: 'faqs', icon: HelpCircle },
   { to: '/Admin/contact', labelKey: 'contact', icon: Phone },
@@ -43,11 +49,42 @@ export default function AdminLayout() {
   const { toggleTheme, isDark } = useTheme()
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileSidebar, setMobileSidebar] = useState(false)
+  const [unreadInboxItems, setUnreadInboxItems] = useState(0)
 
   const { language, setLanguage, t } = useLanguage()
 
-  const langLabels: Record<string, string> = { en: 'EN', am: 'አማ', or: 'AF' }
+  const langLabels: Record<Language, string> = { en: 'EN', am: 'አማ', or: 'OR' }
   const nav = t.admin
+  const navLabel = (key: string) => {
+    const value = nav[key as keyof typeof nav]
+    return typeof value === 'string' ? value : key
+  }
+  const feedbackInboxPath = '/Admin/feedback-inbox'
+
+  useEffect(() => {
+    if (!user) return
+    let active = true
+    const loadUnreadCount = async () => {
+      try {
+        const result = await adminWorkflowRequest<{ count: number }>('/admin/feedback-inbox/unread-count')
+        if (active) setUnreadInboxItems(result.count)
+      } catch (error) {
+        if (active) console.error('Could not load unread employee message count.', error)
+      }
+    }
+    void loadUnreadCount()
+    const timer = window.setInterval(() => void loadUnreadCount(), 30_000)
+    const handleInboxCountUpdate = (event: Event) => {
+      const count = (event as CustomEvent<number>).detail
+      if (active && Number.isInteger(count) && count >= 0) setUnreadInboxItems(count)
+    }
+    window.addEventListener('admin-inbox-unread-count', handleInboxCountUpdate)
+    return () => {
+      active = false
+      window.clearInterval(timer)
+      window.removeEventListener('admin-inbox-unread-count', handleInboxCountUpdate)
+    }
+  }, [user])
 
   const handleLogout = () => {
     logout()
@@ -101,7 +138,7 @@ export default function AdminLayout() {
                 <NavLink
                   to={link.to}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
+                    'relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
                     isActive
                       ? 'bg-brand-green/10 text-brand-green dark:bg-brand-green/20 dark:text-brand-green-light'
                       : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
@@ -115,8 +152,16 @@ export default function AdminLayout() {
                       exit={{ opacity: 0 }}
                       className="whitespace-nowrap"
                     >
-                      {(nav as any)[link.labelKey] || link.labelKey}
+                      {navLabel(link.labelKey)}
                     </motion.span>
+                  )}
+                  {link.to === feedbackInboxPath && unreadInboxItems > 0 && (
+                    <span aria-label={nav.unreadMessages.replace('{count}', String(unreadInboxItems))} className={cn(
+                      'ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white',
+                      !sidebarOpen && 'absolute right-1 top-1 h-2.5 min-w-0 w-2.5 p-0'
+                    )}>
+                      {sidebarOpen ? unreadInboxItems > 99 ? '99+' : unreadInboxItems : ''}
+                    </span>
                   )}
                 </NavLink>
               </motion.div>
@@ -162,7 +207,15 @@ export default function AdminLayout() {
             <Shield className="h-5 w-5 text-brand-green" />
             <span className="font-bold text-sm text-gray-900 dark:text-white">{nav.admin}</span>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" aria-label={nav.language}>
+            {(['en', 'am', 'or'] as const).map(lang => (
+              <button key={lang} type="button" onClick={() => setLanguage(lang)}
+                aria-label={lang === 'en' ? t.admin.portal.languageEnglish : lang === 'am' ? t.admin.portal.languageAmharic : t.admin.portal.languageOromo}
+                aria-pressed={language === lang}
+                className={cn('rounded px-1.5 py-1 text-[10px] font-semibold', language === lang ? 'bg-brand-green text-white' : 'text-gray-500')}>
+                {langLabels[lang]}
+              </button>
+            ))}
             <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
@@ -217,7 +270,12 @@ export default function AdminLayout() {
                       )}
                     >
                       <link.icon className="h-5 w-5 shrink-0" />
-                      {(nav as any)[link.labelKey] || link.labelKey}
+                      {navLabel(link.labelKey)}
+                      {link.to === feedbackInboxPath && unreadInboxItems > 0 && (
+                        <span aria-label={nav.unreadMessages.replace('{count}', String(unreadInboxItems))} className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                          {unreadInboxItems > 99 ? '99+' : unreadInboxItems}
+                        </span>
+                      )}
                     </NavLink>
                   )
                 })}
@@ -265,7 +323,7 @@ export default function AdminLayout() {
           </div>
           <div className="flex items-center gap-3">
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name || 'Admin'}</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{user?.name || nav.admin}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email || ''}</p>
             </div>
             <div className="w-8 h-8 rounded-full bg-brand-green/20 flex items-center justify-center">

@@ -889,51 +889,57 @@ function buildFallback(service) {
   ];
 }
 
+function getDefaultRequirementsForService(service) {
+  return findRequirementsForService(service) || buildFallback(service);
+}
+
+async function seedMissingRequirements() {
+  const services = await Service.find().select('_id name');
+  const servicesWithRequirements = new Set(
+    (await Requirement.distinct('service')).map(serviceId => String(serviceId))
+  );
+  const missingServices = services.filter(
+    service => !servicesWithRequirements.has(String(service._id))
+  );
+
+  if (missingServices.length === 0) {
+    return { services: services.length, inserted: 0, skipped: services.length };
+  }
+
+  const docs = missingServices.flatMap(service =>
+    getDefaultRequirementsForService(service).map(requirement => ({
+      service: service._id,
+      ...requirement,
+    }))
+  );
+
+  await Requirement.insertMany(docs);
+  return {
+    services: services.length,
+    inserted: docs.length,
+    skipped: services.length - missingServices.length,
+  };
+}
+
 // ─── Main seed function ───────────────────────────────────────────────────────
 async function seedRequirements() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log('Connected to MongoDB');
-
-  const services = await Service.find().populate('organization', 'name');
-  console.log(`Found ${services.length} services`);
-
-  let inserted = 0;
-  let skipped = 0;
-  let fallback = 0;
-
-  for (const service of services) {
-    // Skip if this service already has requirements
-    const existing = await Requirement.countDocuments({ service: service._id });
-    if (existing > 0) {
-      skipped++;
-      continue;
-    }
-
-    const reqs = findRequirementsForService(service) || (fallback++, buildFallback(service));
-
-    const docs = reqs.map(r => ({
-      service: service._id,
-      requirementText: r.requirementText,
-      notes: r.notes,
-      isMandatory: r.isMandatory,
-      sequenceNo: r.sequenceNo,
-    }));
-
-    await Requirement.insertMany(docs);
-    inserted += docs.length;
-
-    const orgName = service.organization?.name?.or || service.organization?.name?.en || '?';
-    console.log(`  ✓ [${orgName}] "${service.name.or.substring(0, 60)}" → ${docs.length} requirements`);
+  try {
+    const result = await seedMissingRequirements();
+    console.log(`Found ${result.services} services`);
+    console.log(`Inserted ${result.inserted} default requirements`);
+    console.log(`Skipped ${result.skipped} services that already have requirements`);
+  } finally {
+    await mongoose.disconnect();
   }
-
-  console.log('\n─────────────────────────────────────────');
-  console.log(`Done! Inserted: ${inserted} requirements across services`);
-  console.log(`Skipped (already had requirements): ${skipped}`);
-  console.log(`Used fallback requirements: ${fallback}`);
-  await mongoose.disconnect();
 }
 
-seedRequirements().catch(err => {
-  console.error('Seed failed:', err);
-  process.exit(1);
-});
+if (require.main === module) {
+  seedRequirements().catch(err => {
+    console.error('Seed failed:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = { getDefaultRequirementsForService, seedMissingRequirements };

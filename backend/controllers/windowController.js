@@ -33,16 +33,21 @@ const createWindow = async (req, res, next) => {
 const getAllWindows = async (req, res, next) => {
   try {
     const { organization } = req.query;
-    const match = {};
-    if (organization) match.organization = new mongoose.Types.ObjectId(organization);
+    const match = { isActive: { $ne: false } };
+    if (organization) {
+      const organizationId = new mongoose.Types.ObjectId(organization);
+      match.$or = [{ organization: organizationId }, { assignedOrganizations: organizationId }];
+    }
 
     const windows = await Window.aggregate([
+      { $match: { isActive: { $ne: false } } },
       { $match: match },
       {
         $lookup: {
           from: 'services',
           localField: '_id',
           foreignField: 'window',
+          pipeline: [{ $match: { isActive: { $ne: false } } }],
           as: 'services',
         },
       },
@@ -54,6 +59,17 @@ const getAllWindows = async (req, res, next) => {
           localField: 'organization',
           foreignField: '_id',
           as: 'orgInfo',
+        },
+      },
+      {
+        $lookup: {
+          from: 'organizations',
+          let: { assignedIds: '$assignedOrganizations' },
+          pipeline: [
+            { $match: { $expr: { $in: ['$_id', { $ifNull: ['$$assignedIds', []] }] } } },
+            { $project: { _id: 1, name: 1 } },
+          ],
+          as: 'assignedOrganizations',
         },
       },
       { $addFields: { organization: { $arrayElemAt: ['$orgInfo', 0] } } },
@@ -81,11 +97,13 @@ const getAllWindowsGroupedByFloor = async (req, res, next) => {
   try {
     // Fetch all windows with service counts
     const windows = await Window.aggregate([
+      { $match: { isActive: { $ne: false } } },
       {
         $lookup: {
           from: 'services',
           localField: '_id',
           foreignField: 'window',
+          pipeline: [{ $match: { isActive: { $ne: false } } }],
           as: 'services',
         },
       },
@@ -107,7 +125,7 @@ const getAllWindowsGroupedByFloor = async (req, res, next) => {
         grouped.set(floorNum, {
           floor: floorNum,
           floorName: floorDoc
-            ? { en: floorDoc.name.en, am: floorDoc.name.am, or: floorDoc.name.om }
+            ? { en: floorDoc.name.en, am: floorDoc.name.am, or: floorDoc.name.or || floorDoc.name.om }
             : { en: `Floor ${floorNum}`, am: `ወለል ${floorNum}`, or: `Darbii ${floorNum}ffaa` },
           windows: [],
         });
@@ -128,13 +146,22 @@ const getWindowsByOrganization = async (req, res, next) => {
     const { orgId } = req.params;
 
     const windows = await Window.aggregate([
-      { $match: { organization: new mongoose.Types.ObjectId(orgId) } },
+      {
+        $match: {
+          isActive: { $ne: false },
+          $or: [
+            { organization: new mongoose.Types.ObjectId(orgId) },
+            { assignedOrganizations: new mongoose.Types.ObjectId(orgId) },
+          ],
+        },
+      },
       { $sort: { floor: 1, number: 1 } },
       {
         $lookup: {
           from: 'services',
           localField: '_id',
           foreignField: 'window',
+          pipeline: [{ $match: { isActive: { $ne: false } } }],
           as: 'services',
         },
       },
@@ -192,7 +219,7 @@ const getWindowById = async (req, res, next) => {
 const getServicesByWindow = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const services = await Service.find({ window: id })
+    const services = await Service.find({ window: id, isActive: { $ne: false } })
       .populate('organization', 'name')
       .populate('window', 'number floor name')
       .sort({ createdAt: 1 });
@@ -275,8 +302,11 @@ const getAvailableServicesForWindow = async (req, res, next) => {
     const win = await Window.findById(id);
     if (!win) return res.status(404).json({ message: 'Window not found' });
 
+    const organizationIds = win.assignedOrganizations?.length
+      ? win.assignedOrganizations
+      : win.organization ? [win.organization] : [];
     const services = await Service.find({
-      organization: win.organization,
+      organization: { $in: organizationIds },
       $or: [{ window: null }, { window: { $ne: id } }],
     })
       .populate('organization', 'name')

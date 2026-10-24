@@ -38,6 +38,7 @@ export interface WindowGroupedByFloor {
 export interface Organization {
   _id: string
   name: MultiLang
+  floorId?: string | { _id: string } | null
   description: MultiLang
   logoUrl: string
   serviceCount: number
@@ -117,8 +118,8 @@ async function get<T>(path: string): Promise<T> {
 export interface FloorData {
   _id: string
   floorNumber: number
-  name: { en: string; am: string; om: string }
-  description: { en: string; am: string; om: string }
+  name: { en: string; am: string; or?: string; om?: string }
+  description: { en: string; am: string; or?: string; om?: string }
 }
 
 export interface WindowGroupedByFloorWithName {

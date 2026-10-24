@@ -6,10 +6,10 @@ export const ADMIN_USER_KEY = 'admin-user'
 // Legacy key from an older implementation — cleaned up on logout
 const LEGACY_TOKEN_KEY = 'token'
 
-// ─── Safe localStorage helpers ─────────────────────────────────
+// ─── Safe sessionStorage helpers ───────────────────────────────
 function safeGet(key: string): string | null {
   try {
-    return localStorage.getItem(key)
+    return sessionStorage.getItem(key)
   } catch {
     return null
   }
@@ -17,7 +17,7 @@ function safeGet(key: string): string | null {
 
 function safeSet(key: string, value: string): void {
   try {
-    localStorage.setItem(key, value)
+    sessionStorage.setItem(key, value)
   } catch {
     // localStorage unavailable — fail silently
   }
@@ -25,7 +25,7 @@ function safeSet(key: string, value: string): void {
 
 function safeRemove(key: string): void {
   try {
-    localStorage.removeItem(key)
+    sessionStorage.removeItem(key)
   } catch {
     // localStorage unavailable — fail silently
   }
@@ -99,6 +99,7 @@ export const isAuthenticated = () => !!getToken()
 export interface DashboardStats {
 stats: {
     users: number
+    employees: number
     organizations: number
     services: number
     windows: number
@@ -276,6 +277,7 @@ export const deleteTestimonial = (id: string) => authFetch<{ message: string }>(
 export interface OrganizationSummary {
   _id: string
   name: MultiLang
+  floorId?: string | { _id: string } | null
   description: MultiLang
   logoUrl: string
   displayOrder: number
@@ -439,8 +441,9 @@ export const deleteGalleryItem = (id: string) => authFetch<{ message: string }>(
 export interface FloorAdmin {
   _id: string
   floorNumber: number
-  name: { en: string; am: string; or: string }
-  description: { en: string; am: string; or: string }
+  name: { en: string; am: string; or?: string; om?: string }
+  description: { en: string; am: string; or?: string; om?: string }
+  isActive?: boolean
 }
 
 export const getFloorsAdmin = () => authFetch<FloorAdmin[]>('/floors')
@@ -455,6 +458,7 @@ export interface WindowAdmin {
   name?: { en?: string; am?: string; or?: string }
   floor: number
   organization: { _id: string; name: MultiLang }
+  assignedOrganizations?: Array<{ _id: string; name: MultiLang }>
   serviceCount?: number
   description?: { en: string; am: string; or: string }
   createdAt: string
@@ -505,11 +509,12 @@ export interface RequirementAdmin {
   requirementText: MultiLang
   notes: MultiLang
   isMandatory: boolean
+  isActive?: boolean
   sequenceNo: number
   createdAt: string
 }
 
-export const getRequirementsByService = (serviceId: string) => authFetch<RequirementAdmin[]>(`/requirements?serviceId=${serviceId}`)
+export const getRequirementsByService = (serviceId: string) => authFetch<RequirementAdmin[]>(`/requirements/manage/by-service/${encodeURIComponent(serviceId)}`)
 export const createRequirement = (data: Partial<RequirementAdmin>) => authFetch<RequirementAdmin>('/requirements', { method: 'POST', body: JSON.stringify(data) })
 export const updateRequirement = (id: string, data: Partial<RequirementAdmin>) => authFetch<RequirementAdmin>(`/requirements/${id}`, { method: 'PUT', body: JSON.stringify(data) })
 export const deleteRequirement = (id: string) => authFetch<{ message: string }>(`/requirements/${id}`, { method: 'DELETE' })

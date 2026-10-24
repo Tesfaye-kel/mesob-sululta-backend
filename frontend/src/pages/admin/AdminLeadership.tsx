@@ -69,7 +69,7 @@ export default function AdminLeadership() {
 
     setUploading(true)
     try {
-      const token = localStorage.getItem('admin-token')
+      const token = sessionStorage.getItem('admin-token')
       const formData = new FormData()
       formData.append('avatar', file)
 

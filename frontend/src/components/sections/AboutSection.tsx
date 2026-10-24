@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { saveCache, loadCache } from '@/lib/cache'
-import { motion, useInView } from 'framer-motion'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Target, Eye, Heart, Award, TrendingUp, History, Loader2, CheckCircle2 } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { cn } from '@/lib/utils'
@@ -10,12 +10,13 @@ import { getImageUrl } from '@/lib/images'
 function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
+  const prefersReducedMotion = useReducedMotion()
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0 }}
-      animate={inView ? { opacity: 1 } : { opacity: 0 }}
-      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+      animate={prefersReducedMotion || inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.5, delay: prefersReducedMotion ? 0 : delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
       {children}
@@ -47,8 +48,12 @@ function getValueColor(color = '') {
 }
 
 const STAT_COLORS: Record<string, string> = {
-  red: 'text-red-600', gold: 'text-amber-600', blue: 'text-blue-700',
-  green: 'text-brand-green', purple: 'text-violet-700', teal: 'text-teal-600',
+  red: 'text-red-600 dark:text-red-400',
+  gold: 'text-amber-600 dark:text-amber-400',
+  blue: 'text-blue-700 dark:text-blue-400',
+  green: 'text-brand-green dark:text-brand-green-light',
+  purple: 'text-violet-700 dark:text-violet-400',
+  teal: 'text-teal-600 dark:text-teal-400',
 }
 function getStatColor(color = '') {
   const c = color.toLowerCase()
@@ -133,32 +138,28 @@ export default function AboutSection() {
       ══════════════════════════════════════════════════════════ */}
       <Reveal className="mb-14" delay={0.05}>
         <section
-          className="relative isolate -mx-4 overflow-hidden border-y border-gray-200 px-4 py-10 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 md:py-14"
-          style={{ backgroundImage: "url('/photo_2026-07-03_10-15-27.jpg')", backgroundPosition: 'center', backgroundSize: 'cover' }}
+          className="relative -mx-4 overflow-hidden border-y border-gray-200 bg-white px-4 py-10 sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10 md:py-14 dark:border-gray-700 dark:bg-gray-900"
         >
-          <div className="absolute inset-0 -z-10 bg-white/78 backdrop-blur-[1px]" aria-hidden />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white/95 via-white/80 to-white/55" aria-hidden />
-
           <div className="relative mx-auto max-w-6xl">
             <div className="flex flex-col items-center text-center">
-              <h1 className="max-w-5xl text-3xl font-extrabold leading-tight tracking-tight text-[#102b4e] md:text-5xl">
+              <h1 className="max-w-5xl text-3xl font-extrabold leading-tight tracking-tight text-[#102b4e] dark:text-white md:text-5xl">
                 {t.about.title}
               </h1>
-              <p className="mt-4 max-w-3xl text-base leading-7 text-gray-700 md:text-lg">
+              <p className="mt-4 max-w-3xl text-base leading-7 text-gray-700 dark:text-gray-300 md:text-lg">
                 {t.about.subtitle}
               </p>
-              <span className="mt-8 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-green">
+              <span className="mt-8 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-brand-green dark:text-brand-green-light">
                 <span className="h-px w-8 bg-brand-gold" aria-hidden />
                 {get(about?.storyBadge) || (language === 'or' ? 'Seenaa' : language === 'am' ? 'ታሪክ' : 'History')}
                 <span className="h-px w-8 bg-brand-gold" aria-hidden />
               </span>
-              <h2 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[#102b4e] md:text-5xl">
+              <h2 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight text-[#102b4e] dark:text-white md:text-5xl">
                 {get(about?.storyTitle) || (language === 'or' ? 'Seenaa Keenya' : language === 'am' ? 'ታሪካችን' : 'Our Story')}
               </h2>
             </div>
 
             <div className="mt-10 grid grid-cols-1 gap-8 pt-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
-              <div className="space-y-5 text-base leading-8 text-gray-800 md:text-lg">
+              <div className="space-y-5 text-base leading-8 text-gray-800 dark:text-gray-200 md:text-lg">
                 {story.length > 0
                   ? story.map((s, i) => <p key={s._id || i}>{get(s.paragraph)}</p>)
                   : (
@@ -170,8 +171,8 @@ export default function AboutSection() {
               </div>
 
               {highlights.length > 0 && (
-                <div className="self-start border-l-4 border-brand-green bg-white/65 p-6 shadow-sm backdrop-blur-sm md:p-8">
-                <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-green">
+                <div className="self-start border-l-4 border-brand-green bg-gray-50 p-6 shadow-sm dark:bg-gray-800 md:p-8">
+                <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.2em] text-brand-green dark:text-brand-green-light">
                   {get(about?.highlightsTitle) || (language === 'or' ? 'Waan Nu Addeessu' : language === 'am' ? 'የሚለየን ነገር' : 'What Distinguishes Us')}
                 </p>
                 <ul className="space-y-4">
@@ -184,8 +185,8 @@ export default function AboutSection() {
                       transition={{ delay: i * 0.07, duration: 0.35 }}
                       className="flex items-start gap-3"
                     >
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-green" aria-hidden />
-                      <span className="text-sm leading-6 text-gray-800 md:text-base">{get(h.text)}</span>
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-green dark:text-brand-green-light" aria-hidden />
+                      <span className="text-sm leading-6 text-gray-800 dark:text-gray-200 md:text-base">{get(h.text)}</span>
                     </motion.li>
                   ))}
                 </ul>

@@ -459,7 +459,7 @@ export default function AdminAbout() {
                 <Plus className="h-3.5 w-3.5" /> {admin.addValue}
               </motion.button>
             </div>
-            {data?.values?.length === 0 && <p className="text-sm text-gray-400">No values added yet.</p>}
+            {data?.values?.length === 0 && <p className="text-sm text-gray-400">{admin.noValues}</p>}
             {data?.values?.map((val, idx) => (
               <motion.div key={val._id || idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
@@ -491,7 +491,7 @@ export default function AdminAbout() {
                 <Plus className="h-3.5 w-3.5" /> {admin.addStat}
               </motion.button>
             </div>
-            {data?.stats?.length === 0 && <p className="text-sm text-gray-400">No stats added yet.</p>}
+            {data?.stats?.length === 0 && <p className="text-sm text-gray-400">{admin.noStats}</p>}
             {data?.stats?.map((stat, idx) => (
               <motion.div key={stat._id || idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                 className="flex items-center gap-3 p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">

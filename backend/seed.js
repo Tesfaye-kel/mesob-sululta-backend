@@ -2,10 +2,10 @@ const mongoose = require('mongoose');
 
 const Organization = require('./models/Organization');
 const Service = require('./models/Service');
+const { withOrganizationTranslations } = require('./data/organizationTranslations');
 
-// NOTE: Source data is from the official Sululta branch office list (Afan Oromo).
-// English (en) and Amharic (am) fields are placeholders ('or' text duplicated)
-// until proper translations are provided -- replace these before going live.
+// Legacy seed names may contain source-language placeholders; known office names
+// are translated before they are saved.
 const seedOrganizations = async () => {
   const orgs = [
     {
@@ -2454,7 +2454,7 @@ const seedOrganizations = async () => {
 
   for (const org of orgs) {
     const createdOrg = await Organization.create({
-      name: org.name,
+      name: withOrganizationTranslations(org.name),
       description: org.description,
       logoUrl: org.logoUrl,
     });

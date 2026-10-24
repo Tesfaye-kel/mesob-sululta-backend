@@ -28,7 +28,7 @@ export interface CreateRequirementPayload {
 // ── helpers ──────────────────────────────────────────────
 function authHeaders(): Record<string, string> {
   // Use the same storage key as the main admin API (single source of truth)
-  const token = localStorage.getItem('admin-token')
+  const token = sessionStorage.getItem('admin-token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 

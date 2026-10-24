@@ -12,10 +12,11 @@ import {
   type SocialMediaPlatform,
 } from '@/api/admin'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-const categories = ['news', 'notice', 'event', 'holiday', 'document', 'update']
+const categories = ['news', 'notice', 'event', 'holiday', 'document', 'update'] as const
 
 const emptyForm = {
   title: { en: '', am: '', or: '' },
@@ -50,6 +51,9 @@ const PLATFORM_PRESETS = [
 ]
 
 export function SocialMediaTab() {
+  const { t } = useLanguage()
+  const admin = t.admin
+  const common = admin.portal.common
   const [items, setItems] = useState<SocialMediaPlatform[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -75,15 +79,15 @@ export function SocialMediaTab() {
       if (editing) {
         const updated = await updateSocialMedia(editing._id, form)
         setItems(prev => prev.map(i => i._id === editing._id ? updated : i))
-        setSuccess('Platform updated!')
+        setSuccess(admin.platformUpdated)
       } else {
         const created = await createSocialMedia(form)
         setItems(prev => [...prev, created].sort((a, b) => a.displayOrder - b.displayOrder))
-        setSuccess('Platform added!')
+        setSuccess(admin.platformAdded)
       }
       setShowForm(false); setEditing(null); setForm(emptySMForm)
       setTimeout(() => setSuccess(''), 3000)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Failed to save') }
+    } catch (e) { setError(e instanceof Error ? e.message : admin.failedToSave) }
     finally { setSaving(false) }
   }
 
@@ -91,8 +95,8 @@ export function SocialMediaTab() {
     try {
       await deleteSocialMedia(id)
       setItems(prev => prev.filter(i => i._id !== id))
-      setSuccess('Platform deleted!'); setTimeout(() => setSuccess(''), 3000)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Failed') }
+      setSuccess(admin.platformDeleted); setTimeout(() => setSuccess(''), 3000)
+    } catch (e) { setError(e instanceof Error ? e.message : admin.failedToDelete) }
     setConfirmDelete(null)
   }
 
@@ -111,12 +115,12 @@ export function SocialMediaTab() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Social Media Platforms</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Manage social media icons displayed on news and other pages</p>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{admin.socialMediaPlatforms}</h2>
+          <p className="text-xs text-gray-500 mt-0.5">{admin.socialMediaDesc}</p>
         </div>
         <button onClick={() => { setEditing(null); setForm(emptySMForm); setShowForm(true) }}
           className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green/90">
-          <Plus className="h-4 w-4" /> Add Platform
+          <Plus className="h-4 w-4" /> {admin.addPlatform}
         </button>
       </div>
 
@@ -125,7 +129,7 @@ export function SocialMediaTab() {
 
       {loading ? <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-brand-green" /></div> : (
         <div className="space-y-2">
-          {items.length === 0 && <p className="text-center text-gray-400 py-8 text-sm">No social media platforms yet.</p>}
+          {items.length === 0 && <p className="text-center text-gray-400 py-8 text-sm">{admin.noSocialPlatforms}</p>}
           {items.sort((a, b) => a.displayOrder - b.displayOrder).map(item => (
             <div key={item._id} className="flex items-center gap-4 p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
               <div className="w-9 h-9 rounded-lg bg-brand-green/10 flex items-center justify-center text-brand-green font-bold text-sm shrink-0">
@@ -141,7 +145,7 @@ export function SocialMediaTab() {
                   className={cn('px-2 py-0.5 rounded-full text-xs font-semibold transition-colors',
                     item.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800')}
                 >
-                  {item.isActive ? 'Active' : 'Inactive'}
+                  {item.isActive ? common.active : common.inactive}
                 </button>
                 <button onClick={() => { setEditing(item); setForm({ platform: item.platform, icon: item.icon, url: item.url, displayOrder: item.displayOrder, isActive: item.isActive, openInNewTab: item.openInNewTab }); setShowForm(true) }}
                   className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 hover:text-blue-600"><Edit3 className="h-3.5 w-3.5" /></button>
@@ -161,14 +165,14 @@ export function SocialMediaTab() {
             onClick={e => e.stopPropagation()}
             className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-200 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? 'Edit Platform' : 'Add Platform'}</h3>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? admin.editPlatform : admin.addPlatform}</h3>
               <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-4">
               {/* Quick presets */}
               {!editing && (
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">Quick Select</label>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase tracking-wide">{admin.quickSelect}</label>
                   <div className="flex flex-wrap gap-1.5">
                     {PLATFORM_PRESETS.map(p => (
                       <button key={p.name} onClick={() => applyPreset(p)}
@@ -181,42 +185,42 @@ export function SocialMediaTab() {
                 </div>
               )}
               <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Platform Name</label>
-                <input value={form.platform} onChange={e => setForm(f => ({ ...f, platform: e.target.value }))} placeholder="e.g. Facebook"
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">{admin.platformName}</label>
+                <input value={form.platform} onChange={e => setForm(f => ({ ...f, platform: e.target.value }))} placeholder={admin.platformExample}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Icon Name (Lucide)</label>
-                <input value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} placeholder="e.g. Facebook, Twitter, Youtube"
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">{admin.iconName}</label>
+                <input value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} placeholder={admin.iconExample}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">URL</label>
+                <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">{admin.url}</label>
                 <input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} placeholder="https://..."
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">Display Order</label>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase">{admin.displayOrder}</label>
                   <input type="number" min="0" value={form.displayOrder} onChange={e => setForm(f => ({ ...f, displayOrder: Number(e.target.value) }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                 </div>
                 <div className="flex items-end gap-3 pb-1">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.isActive} onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))} className="w-4 h-4 rounded text-brand-green" />
-                    <span className="text-sm">Active</span>
+                    <span className="text-sm">{common.active}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.openInNewTab} onChange={e => setForm(f => ({ ...f, openInNewTab: e.target.checked }))} className="w-4 h-4 rounded text-brand-green" />
-                    <span className="text-sm">New tab</span>
+                    <span className="text-sm">{admin.openInNewTab}</span>
                   </label>
                 </div>
               </div>
             </div>
             <div className="flex gap-3 mt-6 justify-end">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
+              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">{admin.cancel}</button>
               <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-brand-green text-white hover:bg-brand-green/90 disabled:opacity-50">
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />} {admin.save}
               </button>
             </div>
           </motion.div>
@@ -229,11 +233,11 @@ export function SocialMediaTab() {
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}
             className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-3 text-red-500" />
-            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">Delete Platform?</h3>
-            <p className="text-sm text-gray-500 mb-5">This cannot be undone.</p>
+            <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white">{admin.deleteConfirmTitle.replace('{type}', admin.platformName)}</h3>
+            <p className="text-sm text-gray-500 mb-5">{admin.deleteConfirmDesc}</p>
             <div className="flex justify-center gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700">Delete</button>
+              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800">{admin.cancel}</button>
+              <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700">{admin.delete}</button>
             </div>
           </motion.div>
         </motion.div>
@@ -244,6 +248,9 @@ export function SocialMediaTab() {
 
 // ── News Tab (original AdminNews content, renamed to NewsTab) ────────────────
 function NewsTab() {
+  const { t, language } = useLanguage()
+  const admin = t.admin
+  const languageName = (lang: typeof language) => lang === 'en' ? admin.portal.languageEnglish : lang === 'am' ? admin.portal.languageAmharic : admin.portal.languageOromo
   const [items, setItems] = useState<NewsItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -279,7 +286,7 @@ function NewsTab() {
     setUploading(true)
     setError('')
     try {
-      const token = localStorage.getItem('admin-token')
+      const token = sessionStorage.getItem('admin-token')
 
       // Use upload-multiple endpoint when more than one file, single otherwise
       if (files.length === 1) {
@@ -325,7 +332,7 @@ function NewsTab() {
         }))
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload media')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setUploading(false)
       // Reset file input so the same file can be selected again
@@ -357,18 +364,18 @@ function NewsTab() {
       if (editing) {
         const updated = await updateNews(editing._id, payload)
         setItems(prev => prev.map(i => i._id === editing._id ? updated : i))
-        setSuccess('News updated successfully!')
+        setSuccess(admin.newsUpdated)
       } else {
         const created = await createNews(payload)
         setItems(prev => [created, ...prev])
-        setSuccess('News created successfully!')
+        setSuccess(admin.newsCreated)
       }
       setShowForm(false)
       setEditing(null)
       setForm(emptyForm)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setSaving(false)
     }
@@ -378,10 +385,10 @@ function NewsTab() {
     try {
       await deleteNews(id)
       setItems(prev => prev.filter(i => i._id !== id))
-      setSuccess('News deleted successfully!')
+      setSuccess(admin.newsDeleted)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete')
+      setError(err instanceof Error ? err.message : admin.failedToDelete)
     }
     setConfirmDelete(null)
   }
@@ -435,13 +442,13 @@ function NewsTab() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">News</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Publish news, updates, and media-rich content</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.newsTitle}</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{admin.newsDesc}</p>
         </div>
         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
           onClick={openCreate}
           className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all">
-          <Plus className="h-4 w-4" /> New Post
+          <Plus className="h-4 w-4" /> {admin.newPost}
         </motion.button>
       </div>
 
@@ -453,7 +460,7 @@ function NewsTab() {
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Search news..."
+          placeholder={admin.searchNews}
           className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
       </div>
 
@@ -463,7 +470,7 @@ function NewsTab() {
       {!loading && !error && filtered.length === 0 && (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Megaphone className="h-12 w-12 mx-auto mb-3 opacity-40" />
-          <p>No news posts found</p>
+          <p>{admin.noNews}</p>
         </div>
       )}
 
@@ -489,11 +496,11 @@ function NewsTab() {
                     item.category === 'document' && 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
                     item.category === 'update' && 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400',
                   )}>
-                    {item.category}
+                    {t.news.categories[item.category as keyof typeof t.news.categories] || item.category}
                   </span>
-                  {item.isFeatured && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-green/10 text-brand-green">Featured</span>}
-                  {!item.isPublished && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Draft</span>}
-                  {item.media?.length > 0 && <span className="text-xs text-gray-400">{item.media.length} media</span>}
+                  {item.isFeatured && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-brand-green/10 text-brand-green">{admin.featured}</span>}
+                  {!item.isPublished && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">{admin.draft}</span>}
+                  {item.media?.length > 0 && <span className="text-xs text-gray-400">{item.media.length} {admin.media}</span>}
                 </div>
                 <p className="font-medium text-gray-900 dark:text-white truncate">{item.title.en}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{new Date(item.publishedAt).toLocaleDateString()}</p>
@@ -515,14 +522,14 @@ function NewsTab() {
             onClick={e => e.stopPropagation()}
             className="w-full max-w-3xl bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? 'Edit News Post' : 'New News Post'}</h2>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">{editing ? admin.editNewsPost : admin.newNewsPost}</h2>
               <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><X className="h-5 w-5" /></button>
             </div>
             <div className="space-y-4">
               {/* Title */}
               {(['en', 'am', 'or'] as const).map(lang => (
                 <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title ({lang.toUpperCase()})</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.title} ({languageName(lang)})</label>
                   <input value={form.title[lang]} onChange={e => setForm(f => ({ ...f, title: { ...f.title, [lang]: e.target.value } }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                 </div>
@@ -531,7 +538,7 @@ function NewsTab() {
               {/* Content */}
               {(['en', 'am', 'or'] as const).map(lang => (
                 <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content ({lang.toUpperCase()})</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.content} ({languageName(lang)})</label>
                   <textarea value={form.content[lang]} onChange={e => setForm(f => ({ ...f, content: { ...f.content, [lang]: e.target.value } }))} rows={4}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none" />
                 </div>
@@ -540,7 +547,7 @@ function NewsTab() {
               {/* Excerpt */}
               {(['en', 'am', 'or'] as const).map(lang => (
                 <div key={lang}>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Excerpt ({lang.toUpperCase()}) <span className="text-gray-400 font-normal">(short summary, optional)</span></label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.excerpt} ({languageName(lang)}) <span className="text-gray-400 font-normal">{admin.excerptOptional}</span></label>
                   <textarea value={form.excerpt[lang]} onChange={e => setForm(f => ({ ...f, excerpt: { ...f.excerpt, [lang]: e.target.value } }))} rows={2}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none" />
                 </div>
@@ -548,12 +555,12 @@ function NewsTab() {
 
               {/* Media Gallery */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Media Gallery</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{admin.mediaGallery}</label>
 
                 {/* Multi-file upload */}
                 <label className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-sm rounded-lg cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors w-fit mb-3">
                   <Upload className="h-4 w-4" />
-                  <span>{uploading ? 'Uploading...' : 'Add Files (select multiple at once)'}</span>
+                  <span>{uploading ? admin.uploading : admin.addMultipleFiles}</span>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -574,7 +581,7 @@ function NewsTab() {
                       value={urlInput}
                       onChange={e => setUrlInput(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addUrlMedia() } }}
-                      placeholder="Paste YouTube or any media URL..."
+                      placeholder={admin.pasteMediaUrl}
                       className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
                     />
                   </div>
@@ -584,7 +591,7 @@ function NewsTab() {
                     disabled={!urlInput.trim()}
                     className="px-3 py-2 text-sm bg-brand-green text-white rounded-lg hover:bg-brand-green/90 disabled:opacity-40 transition-colors"
                   >
-                    Add URL
+                    {admin.addUrl}
                   </button>
                 </div>
 
@@ -610,35 +617,35 @@ function NewsTab() {
               {/* Category & Status */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.category}</label>
                   <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                     className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green">
-                    {categories.map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+                    {categories.map(c => <option key={c} value={c}>{t.news.categories[c]}</option>)}
                   </select>
                 </div>
                 <div className="flex items-end gap-4 pb-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.isFeatured} onChange={e => setForm(f => ({ ...f, isFeatured: e.target.checked }))}
                       className="rounded border-gray-300 text-brand-green focus:ring-brand-green" />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Featured</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{admin.featured}</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" checked={form.isPublished} onChange={e => setForm(f => ({ ...f, isPublished: e.target.checked }))}
                       className="rounded border-gray-300 text-brand-green focus:ring-brand-green" />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{form.isPublished ? 'Published' : 'Draft'}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{form.isPublished ? admin.published : admin.draft}</span>
                   </label>
                 </div>
               </div>
 
               {/* Tags */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.tags}</label>
                 <div className="flex items-center gap-2">
                   <input value={tagInput} onChange={e => setTagInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag() } }}
-                    placeholder="Add a tag and press Enter"
+                    placeholder={admin.addTagPlaceholder}
                     className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
-                  <button onClick={addTag} className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Add</button>
+                  <button onClick={addTag} className="px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">{admin.addTag}</button>
                 </div>
                 {form.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2">
@@ -653,10 +660,10 @@ function NewsTab() {
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
                 <button onClick={handleSave} disabled={saving}
                   className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
-                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}{editing ? 'Update' : 'Publish'}</button>
+                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}{editing ? admin.update : admin.publish}</button>
               </div>
             </div>
           </motion.div>
@@ -670,11 +677,11 @@ function NewsTab() {
           <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} exit={{ scale: 0.95 }} onClick={e => e.stopPropagation()}
             className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl text-center">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete News Post?</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{admin.deleteConfirmTitle.replace('{type}', admin.newsTitle)}</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{admin.deleteConfirmDesc}</p>
             <div className="flex items-center justify-center gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
-              <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
+              <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">{admin.delete}</button>
             </div>
           </motion.div>
         </motion.div>
@@ -687,6 +694,8 @@ function NewsTab() {
 type TabKey = 'news' | 'social'
 
 export default function AdminNews() {
+  const { t } = useLanguage()
+  const admin = t.admin
   const [tab, setTab] = useState<TabKey>('news')
 
   return (
@@ -696,12 +705,12 @@ export default function AdminNews() {
         <button onClick={() => setTab('news')}
           className={cn('flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors',
             tab === 'news' ? 'border-brand-green text-brand-green dark:text-green-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300')}>
-          <Newspaper className="h-4 w-4" /> News Posts
+          <Newspaper className="h-4 w-4" /> {admin.newsPostsTab}
         </button>
         <button onClick={() => setTab('social')}
           className={cn('flex items-center gap-2 px-4 py-3 text-sm font-semibold border-b-2 transition-colors',
             tab === 'social' ? 'border-brand-green text-brand-green dark:text-green-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300')}>
-          <Share2 className="h-4 w-4" /> Social Media
+          <Share2 className="h-4 w-4" /> {admin.socialMediaTab}
         </button>
       </div>
 

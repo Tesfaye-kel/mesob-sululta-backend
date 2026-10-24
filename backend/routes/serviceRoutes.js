@@ -1,17 +1,16 @@
 const express = require('express');
 const { authenticateJWT } = require('../middleware/authMiddleware');
-const { requireAdmin } = require('../middleware/roleMiddleware');
+const { requireServiceManager } = require('../middleware/requireServiceManager');
 const Requirement = require('../models/Requirement');
 
 const {
   createService,
   getAllServices,
+  getManageableServices,
   searchServices,
   getServiceById,
   updateService,
   deleteService,
-  deleteServicesByWindow,
-  deleteServicesByOrganization,
   getServicesByOrganization,
   getServicesByWindow,
 } = require('../controllers/serviceController');
@@ -22,9 +21,11 @@ router.get('/', getAllServices);
 router.get('/search', searchServices);
 router.get('/by-organization/:organizationId', getServicesByOrganization);
 router.get('/by-window/:windowId', getServicesByWindow);
+router.get('/manage', authenticateJWT, requireServiceManager, getManageableServices);
 router.get('/:id/requirements', async (req, res, next) => {
   try {
     const requirements = await Requirement.find({ service: req.params.id })
+      .where({ isActive: { $ne: false } })
       .sort({ sequenceNo: 1 });
     return res.json(requirements);
   } catch (err) {
@@ -33,11 +34,8 @@ router.get('/:id/requirements', async (req, res, next) => {
 });
 router.get('/:id', getServiceById);
 
-router.post('/', authenticateJWT, requireAdmin, createService);
-router.put('/:id', authenticateJWT, requireAdmin, updateService);
-router.delete('/by-window/:windowId', authenticateJWT, requireAdmin, deleteServicesByWindow);
-router.delete('/by-organization/:organizationId', authenticateJWT, requireAdmin, deleteServicesByOrganization);
-router.delete('/:id', authenticateJWT, requireAdmin, deleteService);
+router.post('/', authenticateJWT, requireServiceManager, createService);
+router.put('/:id', authenticateJWT, requireServiceManager, updateService);
+router.delete('/:id', authenticateJWT, requireServiceManager, deleteService);
 
 module.exports = router;
-

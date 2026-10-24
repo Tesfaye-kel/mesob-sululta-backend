@@ -1,6 +1,4 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, Star, Quote } from 'lucide-react'
+import { Star, Quote } from 'lucide-react'
 import AnimatedSection from '@/components/common/AnimatedSection'
 import { useLanguage } from '@/contexts/LanguageContext'
 
@@ -54,24 +52,48 @@ const testimonials = [
 
 export default function Testimonials() {
   const { language, t } = useLanguage()
-  const [current, setCurrent] = useState(0)
-  const [autoPlay, setAutoPlay] = useState(true)
-
-  useEffect(() => {
-    if (!autoPlay) return
-    const timer = setInterval(() => setCurrent(c => (c + 1) % testimonials.length), 5000)
-    return () => clearInterval(timer)
-  }, [autoPlay])
-
-  const prev = () => { setAutoPlay(false); setCurrent(c => (c - 1 + testimonials.length) % testimonials.length) }
-  const next = () => { setAutoPlay(false); setCurrent(c => (c + 1) % testimonials.length) }
-  const visible = Array.from({ length: 3 }, (_, i) => testimonials[(current + i) % testimonials.length])
 
   const getText = (item: typeof testimonials[0]) => ({
     role:    language === 'am' ? item.roleAm    : language === 'or' ? item.roleOr    : item.roleEn,
     location:language === 'am' ? item.locationAm: language === 'or' ? item.locationOr: item.locationEn,
     content: language === 'am' ? item.contentAm : language === 'or' ? item.contentOr : item.contentEn,
   })
+
+  const renderCards = (duplicate = false) => (
+    <div className="flex w-max shrink-0 gap-6 pr-6" role={duplicate ? undefined : 'list'} aria-hidden={duplicate || undefined}>
+      {testimonials.map(item => {
+        const tx = getText(item)
+        return (
+          <article
+            key={`${duplicate ? 'duplicate-' : ''}${item.id}`}
+            role={duplicate ? undefined : 'listitem'}
+            className="relative flex min-h-[250px] w-[min(82vw,22rem)] shrink-0 flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-card dark:border-gray-700 dark:bg-gray-800"
+          >
+            <Quote className="absolute right-4 top-4 h-8 w-8 text-brand-green/10" aria-hidden />
+            <div className="mb-4 flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white ${item.avatarColor}`}>
+                {item.avatar}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{tx.role} • {tx.location}</p>
+              </div>
+            </div>
+            <div className="mb-3 flex gap-0.5" aria-label={`Rating: ${item.rating} out of 5`}>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <Star
+                  key={index}
+                  className={`h-4 w-4 ${index < item.rating ? 'fill-brand-gold text-brand-gold' : 'text-gray-200 dark:text-gray-600'}`}
+                  aria-hidden
+                />
+              ))}
+            </div>
+            <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">"{tx.content}"</p>
+          </article>
+        )
+      })}
+    </div>
+  )
 
   return (
     <section className="section-padding" aria-label={t.common.testimonials}>
@@ -82,77 +104,10 @@ export default function Testimonials() {
           </span>
         </AnimatedSection>
 
-        <div className="relative">
-          {/* Desktop */}
-          <div className="hidden md:grid grid-cols-3 gap-6">
-            <AnimatePresence mode="wait">
-              {visible.map((item, i) => {
-                const tx = getText(item)
-                return (
-                  <motion.div key={`${item.id}-${current}-${i}`}
-                    initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.4, delay: i * 0.1 }}
-                    className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 shadow-card relative"
-                  >
-                    <Quote className="absolute top-4 right-4 h-8 w-8 text-brand-green/10" aria-hidden />
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${item.avatarColor}`}>{item.avatar}</div>
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-white text-sm">{item.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{tx.role} • {tx.location}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-0.5 mb-3" aria-label={`Rating: ${item.rating} out of 5`}>
-                      {Array.from({ length: 5 }).map((_, j) => (
-                        <Star key={j} className={`h-4 w-4 ${j < item.rating ? 'text-brand-gold fill-brand-gold' : 'text-gray-200 dark:text-gray-600'}`} aria-hidden />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">"{tx.content}"</p>
-                  </motion.div>
-                )
-              })}
-            </AnimatePresence>
-          </div>
-
-          {/* Mobile */}
-          <div className="md:hidden">
-            <AnimatePresence mode="wait">
-              <motion.div key={current}
-                initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-100 dark:border-gray-700 shadow-card"
-              >
-                {(() => { const tx = getText(testimonials[current]); return (
-                  <>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${testimonials[current].avatarColor}`}>{testimonials[current].avatar}</div>
-                      <div>
-                        <p className="font-semibold text-gray-900 dark:text-white text-sm">{testimonials[current].name}</p>
-                        <p className="text-xs text-gray-500">{tx.role}</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">"{tx.content}"</p>
-                  </>
-                )})()}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <button onClick={prev} className="p-2 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-brand-green hover:text-white hover:border-brand-green transition-all duration-200" aria-label="Previous">
-              <ChevronLeft className="h-5 w-5" aria-hidden />
-            </button>
-            <div className="flex gap-2" role="tablist">
-              {testimonials.map((_, i) => (
-                <button key={i} onClick={() => { setAutoPlay(false); setCurrent(i) }}
-                  className={`transition-all duration-200 rounded-full ${i === current ? 'w-6 h-2 bg-brand-green' : 'w-2 h-2 bg-gray-300 dark:bg-gray-600 hover:bg-brand-green/50'}`}
-                  aria-label={`Go to testimonial ${i + 1}`} role="tab" aria-selected={i === current} />
-              ))}
-            </div>
-            <button onClick={next} className="p-2 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-brand-green hover:text-white hover:border-brand-green transition-all duration-200" aria-label="Next">
-              <ChevronRight className="h-5 w-5" aria-hidden />
-            </button>
+        <div className="overflow-hidden" aria-label={t.common.testimonials}>
+          <div className="testimonials-marquee-track">
+            {renderCards()}
+            {renderCards(true)}
           </div>
         </div>
       </div>

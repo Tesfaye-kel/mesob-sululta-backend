@@ -7,24 +7,29 @@ const User = require('./models/User');
 
 async function seedAdmin() {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    const password = process.env.ADMIN_PASSWORD;
+    if (!email || !password) {
+      throw new Error('Set ADMIN_EMAIL and ADMIN_PASSWORD to seed the initial administrator.');
+    }
+
+    await mongoose.connect(process.env.MONGODB_URI || process.env.MONGO_URI);
     console.log('Connected to MongoDB');
 
-    const existing = await User.findOne({ email: 'admin@mesob.et' });
+    const existing = await User.findOne({ email });
     if (existing) {
       console.log('Admin user already exists:');
-      console.log(`  Email: admin@mesob.et`);
+      console.log(`  Email: ${email}`);
       console.log('  (Use existing password or create a new user)');
     } else {
       await User.create({
-        name: 'Admin',
-        email: 'admin@mesob.et',
-        password: 'admin123',
+        name: process.env.ADMIN_NAME || 'Admin',
+        email,
+        password,
         role: 'admin',
       });
       console.log('✅ Admin user created successfully!');
-      console.log('   Email: admin@mesob.et');
-      console.log('   Password: admin123');
+      console.log(`   Email: ${email}`);
     }
 
     await mongoose.disconnect();

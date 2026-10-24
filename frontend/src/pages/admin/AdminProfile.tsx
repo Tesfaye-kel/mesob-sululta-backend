@@ -8,6 +8,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 export default function AdminProfile() {
   const { t } = useLanguage()
   const admin = t.admin
+  const copy = admin.portal.profile
   const { user } = useAdminAuth()
   const [name, setName] = useState(user?.name || '')
   const [email, setEmail] = useState(user?.email || '')
@@ -27,30 +28,30 @@ export default function AdminProfile() {
     setSaving(true); setError('')
     try {
       await updateProfile({ name, email })
-      setSuccess('Profile updated!')
+      setSuccess(copy.profileUpdated)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally { setSaving(false) }
   }
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
-      setPasswordError('Passwords do not match')
+      setPasswordError(copy.passwordsMismatch)
       return
     }
     if (newPassword.length < 6) {
-      setPasswordError('Password must be at least 6 characters')
+      setPasswordError(copy.minimumPassword)
       return
     }
     setSavingPassword(true); setPasswordError('')
     try {
       await changePassword({ currentPassword, newPassword, confirmPassword })
-      setPasswordSuccess('Password changed!')
+      setPasswordSuccess(copy.passwordChanged)
       setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
       setTimeout(() => setPasswordSuccess(''), 3000)
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to change password')
+      setPasswordError(err instanceof Error ? err.message : admin.failedToSave)
     } finally { setSavingPassword(false) }
   }
 
@@ -58,7 +59,7 @@ export default function AdminProfile() {
     <div className="max-w-2xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.profileTitle}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your account settings</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{copy.description}</p>
       </div>
 
       {/* Profile card */}
@@ -80,18 +81,18 @@ export default function AdminProfile() {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{copy.name}</label>
             <input value={name} onChange={e => setName(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{copy.email}</label>
             <input value={email} onChange={e => setEmail(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
           </div>
           <div className="flex justify-end">
             <button onClick={handleUpdateProfile} disabled={saving}
               className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Save Changes
+              {copy.saveChanges}
             </button>
           </div>
         </div>
@@ -101,7 +102,7 @@ export default function AdminProfile() {
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-          <Lock className="h-5 w-5 text-brand-green" /> Change Password
+          <Lock className="h-5 w-5 text-brand-green" /> {copy.changePassword}
         </h2>
 
         <AnimatePresence>{passwordSuccess && <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-sm"><CheckCircle className="h-4 w-4 shrink-0" /><span>{passwordSuccess}</span></motion.div>}</AnimatePresence>
@@ -109,17 +110,17 @@ export default function AdminProfile() {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{copy.currentPassword}</label>
             <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{copy.newPassword}</label>
             <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{copy.confirmPassword}</label>
             <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
           </div>
@@ -127,7 +128,7 @@ export default function AdminProfile() {
             <button onClick={handleChangePassword} disabled={savingPassword}
               className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
               {savingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-              Change Password
+              {copy.changePassword}
             </button>
           </div>
         </div>

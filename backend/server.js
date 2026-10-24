@@ -15,6 +15,7 @@ const apiRoutes = require('./routes');
 const { uploadRoot } = require('./utils/uploadPaths');
 const User = require('./models/User');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
+const { ensureDefaultOfficeWindows } = require('./utils/ensureDefaultOfficeWindows');
 
 const app = express();
 
@@ -42,18 +43,8 @@ app.use(
 // Allow the frontend (different port) to send requests here
 app.use(
   cors({
-    origin: [
-      'https://mesob-sululta-frontend.vercel.app',
-      'https://mesob-sululta-frontend-amber.vercel.app',
-      'https://backend-john-dev2.vercel.app',
-      'https://backend-bxa57fe6t-john-dev2.vercel.app',
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'http://127.0.0.1:5173',
-    ],
+    origin: true,
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 
@@ -73,51 +64,99 @@ app.use(errorMiddleware);
 const PORT = process.env.PORT || 5000;
 
 async function ensureDefaultAdmin() {
-  const email = 'admin@mesob.et';
-  const password = 'admin123';
+  const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD;
+  if (!email || !password) {
+    console.warn('Admin bootstrap skipped; configure ADMIN_EMAIL and ADMIN_PASSWORD to create an initial administrator.');
+    return;
+  }
 
   try {
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const existing = await User.findOne({ email });
 
     if (!existing && !(await User.exists({ role: 'admin' }))) {
       await User.create({
-        name: 'Admin',
-        email: email.toLowerCase(),
+        name: process.env.ADMIN_NAME || 'Admin',
+        email,
         password,
         role: 'admin',
       });
-      console.log('✅ Default admin user created successfully.');
-      console.log(`   Email: ${email}`);
-      console.log(`   Password: ${password}`);
+      console.log('Initial admin account created from configured environment values.');
       return;
     }
 
     if (!existing) {
-      console.log('Admin account already exists; default admin creation skipped.');
+      console.log('An administrator already exists; initial admin creation skipped.');
       return;
     }
 
     if (existing.role !== 'admin') {
-      existing.role = 'admin';
-      await existing.save();
-      console.log('ℹ️ Existing admin email corrected to admin role.');
+      console.warn('Configured ADMIN_EMAIL belongs to a non-admin account; no role changes were made.');
     }
-
-    console.log(`Admin account ready for ${email}`);
   } catch (err) {
     console.error('Failed to ensure default admin:', err.message);
+  }
+}
+
+async function ensureDefaultPortalAccounts() {
+  const portalUsers = [
+    {
+      email: process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase(),
+      password: process.env.SUPER_ADMIN_PASSWORD,
+      name: 'Super Admin',
+      role: 'super_admin',
+    },
+    {
+      email: process.env.OFFICE_ADMIN_EMAIL?.trim().toLowerCase(),
+      password: process.env.OFFICE_ADMIN_PASSWORD,
+      name: 'Office Admin',
+      role: 'office_admin',
+    },
+    {
+      email: process.env.FEEDBACK_OFFICER_EMAIL?.trim().toLowerCase(),
+      password: process.env.FEEDBACK_OFFICER_PASSWORD,
+      name: 'Feedback Officer',
+      role: 'feedback_officer',
+    },
+  ];
+
+  for (const portalUser of portalUsers) {
+    if (!portalUser.email || !portalUser.password) continue;
+    try {
+      const existing = await User.findOne({ email: portalUser.email });
+      if (!existing) {
+        await User.create({
+          name: portalUser.name,
+          email: portalUser.email,
+          password: portalUser.password,
+          role: portalUser.role,
+          status: 'active',
+        });
+        console.log(`✅ Default ${portalUser.role} created: ${portalUser.email}`);
+        continue;
+      }
+
+      if (existing.role !== portalUser.role) {
+        console.warn(`Configured ${portalUser.role} email belongs to another role; no role changes were made.`);
+      }
+    } catch (error) {
+      console.error(`Failed to ensure ${portalUser.role} account:`, error.message);
+    }
   }
 }
 
 async function connectWithRetry(retries = 5, delay = 3000) {
   for (let i = 1; i <= retries; i++) {
     try {
-      await mongoose.connect(process.env.MONGODB_URI, {
+      const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+      if (!mongoUri) throw new Error('Set MONGODB_URI or MONGO_URI before starting the server.');
+      await mongoose.connect(mongoUri, {
         serverSelectionTimeoutMS: 10000,
         connectTimeoutMS: 10000,
       });
       console.log('MongoDB connected successfully');
       await ensureDefaultAdmin();
+      await ensureDefaultPortalAccounts();
       return;
     } catch (err) {
       console.error(`MongoDB connection attempt ${i}/${retries} failed:`, err.message);
@@ -135,8 +174,17 @@ async function connectWithRetry(retries = 5, delay = 3000) {
   }
 }
 
-connectWithRetry().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+connectWithRetry()
+  .then(async () => {
+    const officeWindows = await ensureDefaultOfficeWindows();
+    console.log(
+      `Default office windows ready: ${officeWindows.createdWindows} created, ${officeWindows.assignedServices} services assigned`
+    );
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to initialize default office windows:', err);
+    process.exit(1);
   });
-});

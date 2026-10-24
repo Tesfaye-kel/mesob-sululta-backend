@@ -1,13 +1,8 @@
 const express = require('express');
-const { authenticateJWT } = require('../middleware/authMiddleware');
-const { requireAdmin } = require('../middleware/roleMiddleware');
 
 const {
-  createOrganization,
   getAllOrganizations,
   getOrganizationById,
-  updateOrganization,
-  deleteOrganization,
   getServicesByOrganization,
   getOrganizationWithWindows,
 } = require('../controllers/organizationController');
@@ -19,9 +14,4 @@ router.get('/:id/services', getServicesByOrganization);
 router.get('/:id/with-windows', getOrganizationWithWindows);
 router.get('/:id', getOrganizationById);
 
-router.post('/', authenticateJWT, requireAdmin, createOrganization);
-router.put('/:id', authenticateJWT, requireAdmin, updateOrganization);
-router.delete('/:id', authenticateJWT, requireAdmin, deleteOrganization);
-
 module.exports = router;
-

@@ -19,18 +19,30 @@ const windowSchema = new mongoose.Schema(
       default: 1,
       min: 1,
     },
+    floorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Floor',
+      default: null,
+      index: true,
+    },
 
     organization: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Organization',
       default: null,
     },
+    assignedOrganizations: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Organization',
+    }],
+    initialSetupWindow: { type: Boolean, default: false, index: true },
 
     description: {
       en: { type: String, default: '' },
       am: { type: String, default: '' },
       or: { type: String, default: '' },
     },
+    isActive: { type: Boolean, default: true, index: true },
   },
   { timestamps: true }
 );

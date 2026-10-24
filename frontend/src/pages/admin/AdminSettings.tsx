@@ -12,6 +12,7 @@ export default function AdminSettings() {
   const { toggleTheme, isDark } = useTheme()
   const { language, setLanguage, t } = useLanguage()
   const admin = t.admin
+  const portal = admin.portal
   const [success, setSuccess] = useState('')
 
   const handleLogout = () => {
@@ -65,9 +66,9 @@ export default function AdminSettings() {
         </h2>
         <div className="grid grid-cols-3 gap-2">
           {[
-            { code: 'en' as const, label: 'English', short: 'EN' },
-            { code: 'am' as const, label: 'አማርኛ', short: 'አማ' },
-            { code: 'or' as const, label: 'Afaan Oromo', short: 'OR' },
+            { code: 'en' as const, label: portal.languageEnglish, short: 'EN' },
+            { code: 'am' as const, label: portal.languageAmharic, short: 'አማ' },
+            { code: 'or' as const, label: portal.languageOromo, short: 'OR' },
           ].map(lang => (
             <button key={lang.code}
               onClick={() => { setLanguage(lang.code); copySuccess(admin.languageSetTo.replace('{language}', lang.label)) }}

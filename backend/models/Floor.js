@@ -11,13 +11,16 @@ const floorSchema = new mongoose.Schema({
   name: {
     en: { type: String, required: true },
     am: { type: String, required: true },
-    om: { type: String, required: true }
+    or: { type: String, default: '' },
+    om: { type: String, default: '' },
   },
   description: {
     en: { type: String, default: '' },
     am: { type: String, default: '' },
-    om: { type: String, default: '' }
-  }
+    or: { type: String, default: '' },
+    om: { type: String, default: '' },
+  },
+  isActive: { type: Boolean, default: true, index: true },
 }, { timestamps: true }); // adds createdAt and updatedAt automatically
 
 module.exports = mongoose.model('Floor', floorSchema);

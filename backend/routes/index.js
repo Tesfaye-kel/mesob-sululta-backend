@@ -18,10 +18,22 @@ const socialMediaRoutes = require('./socialMediaRoutes');
 const floorRoutes = require('./floorRoutes');
 const officeRoutes = require('./officeRoutes');
 const feedbackRoutes = require('./feedbackRoutes');
+const employeeRoutes = require('./employeeRoutes');
+const citizenAuthRoutes = require('./citizenAuthRoutes');
+const appointmentRoutes = require('./appointmentRoutes');
+const feedbackWorkflowRoutes = require('./feedbackWorkflowRoutes');
+const registrarRoutes = require('./registrarRoutes');
+const appointmentManagementController = require('../controllers/appointmentManagementController');
 
 const router = express.Router();
 
 router.use('/auth', authRoutes);
+router.use('/auth/citizen', citizenAuthRoutes);
+router.use('/appointments', appointmentRoutes);
+router.use('/feedback-workflow', feedbackWorkflowRoutes);
+router.get('/receipts/verify/:receiptNumber', appointmentManagementController.verifyReceipt);
+router.use('/employees', employeeRoutes);
+router.use('/registrar', registrarRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/services', serviceRoutes);
 router.use('/windows', windowRoutes);

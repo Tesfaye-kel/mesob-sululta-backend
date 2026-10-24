@@ -21,6 +21,11 @@ const requirementSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
     notes: {
       en: { type: String, default: '' },
       am: { type: String, default: '' },

@@ -10,6 +10,7 @@ const langs = ['en', 'am', 'or'] as const
 export default function AdminContact() {
   const { t } = useLanguage()
   const admin = t.admin
+  const portal = admin.portal
   const [data, setData] = useState<ContactContent | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -45,10 +46,10 @@ export default function AdminContact() {
     try {
       const updated = await updateContact(form)
       setData(updated)
-      setSuccess('Contact information updated successfully!')
+      setSuccess(admin.contactSaved)
       setTimeout(() => setSuccess(''), 3000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save')
+      setError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setSaving(false)
     }
@@ -63,7 +64,7 @@ export default function AdminContact() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.contactTitle}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage contact details, address, and working hours</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{admin.contactDesc}</p>
         </div>
       </div>
 
@@ -90,12 +91,12 @@ export default function AdminContact() {
           className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center gap-2 mb-4">
             <MapPin className="h-5 w-5 text-brand-green" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">Address</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">{admin.address}</h3>
           </div>
           <div className="space-y-3">
             {langs.map(lang => (
               <div key={lang}>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase">{lang}</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase">{lang === 'en' ? portal.languageEnglish : lang === 'am' ? portal.languageAmharic : portal.languageOromo}</label>
                 <input value={form.address[lang]} onChange={e => setForm(f => ({ ...f, address: { ...f.address, [lang]: e.target.value } }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
@@ -109,7 +110,7 @@ export default function AdminContact() {
             className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center gap-2 mb-4">
               <Phone className="h-5 w-5 text-brand-green" />
-              <h3 className="font-semibold text-gray-900 dark:text-white">Phone</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">{admin.phone}</h3>
             </div>
             <input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
@@ -120,7 +121,7 @@ export default function AdminContact() {
             className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center gap-2 mb-4">
               <Mail className="h-5 w-5 text-brand-green" />
-              <h3 className="font-semibold text-gray-900 dark:text-white">Email</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white">{admin.email}</h3>
             </div>
             <input value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
@@ -133,12 +134,12 @@ export default function AdminContact() {
           className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="h-5 w-5 text-brand-green" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">Working Hours</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">{admin.workingHours}</h3>
           </div>
           <div className="space-y-3">
             {langs.map(lang => (
               <div key={lang}>
-                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase">{lang}</label>
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase">{lang === 'en' ? portal.languageEnglish : lang === 'am' ? portal.languageAmharic : portal.languageOromo}</label>
                 <input value={form.workingHours[lang]} onChange={e => setForm(f => ({ ...f, workingHours: { ...f.workingHours, [lang]: e.target.value } }))}
                   className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
               </div>
@@ -151,7 +152,7 @@ export default function AdminContact() {
           className="rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center gap-2 mb-4">
             <MapPin className="h-5 w-5 text-brand-green" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">Map Embed URL</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">{admin.mapEmbedUrl}</h3>
           </div>
           <input value={form.mapEmbedUrl} onChange={e => setForm(f => ({ ...f, mapEmbedUrl: e.target.value }))}
             className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
@@ -168,7 +169,7 @@ export default function AdminContact() {
         <button onClick={handleSave} disabled={saving}
           className="flex items-center gap-2 px-6 py-2.5 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
           {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-          Save Changes
+          {admin.saveChanges}
         </button>
       </div>
     </div>

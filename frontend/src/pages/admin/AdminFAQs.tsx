@@ -15,6 +15,7 @@ const emptyForm = {
 export default function AdminFAQs() {
   const { t } = useLanguage()
   const admin = t.admin
+  const portal = admin.portal
   const [items, setItems] = useState<FAQ[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -46,11 +47,11 @@ export default function AdminFAQs() {
       if (editing) {
         const updated = await updateFAQ(editing._id, form)
         setItems(prev => prev.map(i => i._id === editing._id ? updated : i))
-        setSuccess('FAQ updated successfully!')
+        setSuccess(portal.faq.updated)
       } else {
         const created = await createFAQ(form)
         setItems(prev => [created, ...prev])
-        setSuccess('FAQ created successfully!')
+        setSuccess(portal.faq.created)
       }
       setShowForm(false)
       setEditing(null)
@@ -80,7 +81,7 @@ export default function AdminFAQs() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{admin.faqsTitle}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage frequently asked questions</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{portal.faq.description}</p>
         </div>
         <motion.button
           whileHover={{ scale: 1.02 }}
@@ -105,7 +106,7 @@ export default function AdminFAQs() {
 
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={admin.search} className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={portal.faq.search} className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
       </div>
 
       {loading && <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-brand-green" /></div>}
@@ -113,7 +114,7 @@ export default function AdminFAQs() {
       {!loading && !error && filtered.length === 0 && (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <HelpCircle className="h-12 w-12 mx-auto mb-3 opacity-40" />
-          <p>No FAQs found</p>
+          <p>{admin.noFAQs}</p>
         </div>
       )}
 
@@ -124,11 +125,11 @@ export default function AdminFAQs() {
               className="flex items-center gap-4 p-4 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  {item.isPopular && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">Popular</span>}
+                  {item.isPopular && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{portal.faq.popular}</span>}
                   {item.category && <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">{item.category}</span>}
                 </div>
                 <p className="font-medium text-gray-900 dark:text-white truncate">{item.question.en}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Order: {item.order}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{portal.faq.orderLabel} {item.order}</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button onClick={() => { setEditing(item); setForm({ question: { ...item.question }, answer: { ...item.answer }, category: item.category, order: item.order, isPopular: item.isPopular }); setShowForm(true) }}
@@ -160,26 +161,26 @@ export default function AdminFAQs() {
               <div className="space-y-4">
                 {(['en', 'am', 'or'] as const).map(lang => (
                   <div key={lang}>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Question ({lang.toUpperCase()})</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.question} ({lang === 'en' ? portal.languageEnglish : lang === 'am' ? portal.languageAmharic : portal.languageOromo})</label>
                     <input value={form.question[lang]} onChange={e => setForm(f => ({ ...f, question: { ...f.question, [lang]: e.target.value } }))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                   </div>
                 ))}
                 {(['en', 'am', 'or'] as const).map(lang => (
                   <div key={lang}>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Answer ({lang.toUpperCase()})</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.answer} ({lang === 'en' ? portal.languageEnglish : lang === 'am' ? portal.languageAmharic : portal.languageOromo})</label>
                     <textarea value={form.answer[lang]} onChange={e => setForm(f => ({ ...f, answer: { ...f.answer, [lang]: e.target.value } }))} rows={3}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none" />
                   </div>
                 ))}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.category}</label>
                     <input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Order</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{admin.order}</label>
                     <input type="number" value={form.order} onChange={e => setForm(f => ({ ...f, order: Number(e.target.value) }))}
                       className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green" />
                   </div>
@@ -187,15 +188,15 @@ export default function AdminFAQs() {
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input type="checkbox" checked={form.isPopular} onChange={e => setForm(f => ({ ...f, isPopular: e.target.checked }))}
                     className="rounded border-gray-300 text-brand-green focus:ring-brand-green" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Popular question</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{admin.popularQuestionLabel}</span>
                 </label>
                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <button onClick={() => setShowForm(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
                   <button onClick={handleSave} disabled={saving}
                     className="flex items-center gap-2 px-4 py-2 bg-brand-green text-white text-sm font-semibold rounded-lg hover:bg-brand-green-dark transition-all disabled:opacity-50">
                     {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {editing ? 'Update' : 'Create'}
+                    {editing ? admin.update : admin.create}
                   </button>
                 </div>
               </div>
@@ -213,13 +214,13 @@ export default function AdminFAQs() {
               onClick={e => e.stopPropagation()}
               className="w-full max-w-sm bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-xl text-center">
               <AlertCircle className="h-12 w-12 mx-auto mb-4 text-red-500" />
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Delete FAQ?</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">This action cannot be undone.</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{portal.faq.deleteTitle}</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">{admin.deleteConfirmDesc}</p>
               <div className="flex items-center justify-center gap-3">
                 <button onClick={() => setConfirmDelete(null)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">Cancel</button>
+                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">{admin.cancel}</button>
                 <button onClick={() => handleDelete(confirmDelete)}
-                  className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">Delete</button>
+                  className="px-4 py-2 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">{admin.delete}</button>
               </div>
             </motion.div>
           </motion.div>

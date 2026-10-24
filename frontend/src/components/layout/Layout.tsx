@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import { motion, useReducedMotion } from 'framer-motion'
 
 import Navbar from './Navbar'
 import Footer from './Footer'
@@ -9,6 +10,7 @@ import AccessibilityToolbar from '@/components/common/AccessibilityToolbar'
 
 export default function Layout() {
   const location = useLocation()
+  const prefersReducedMotion = useReducedMotion()
 
   const isHomeRoute = location.pathname === '/'
 
@@ -29,7 +31,14 @@ export default function Layout() {
       <Navbar />
 
       <main id="main-content" className="flex-1" tabIndex={-1}>
-        <Outlet />
+        <motion.div
+          key={location.pathname}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <Outlet />
+        </motion.div>
       </main>
 
       <Footer />

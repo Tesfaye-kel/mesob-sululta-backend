@@ -11,6 +11,11 @@ import NewsDetailPage from '@/pages/NewsDetailPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import GalleryPage from '@/pages/GalleryPage'
 import AboutPage from '@/pages/AboutPage'
+import FeedbackPage from '@/pages/FeedbackPage'
+import CitizenPortal, { CitizenFirstPasswordPage } from '@/pages/CitizenPortal'
+import EmployeePortal, { EmployeeActivationPage } from '@/pages/EmployeePortal'
+import ReceiptVerificationPage from '@/pages/ReceiptVerificationPage'
+import RegistrarPortal from '@/pages/RegistrarPortal'
 
 // Admin pages
 import AdminLogin from '@/pages/admin/AdminLogin'
@@ -26,6 +31,11 @@ import AdminContactMessages from '@/pages/admin/AdminContactMessages'
 import AdminUsers from '@/pages/admin/AdminUsers'
 import AdminProfile from '@/pages/admin/AdminProfile'
 import AdminSettings from '@/pages/admin/AdminSettings'
+import AdminAppointments from '@/pages/admin/AdminAppointments'
+import AdminRegistrars from '@/pages/admin/AdminRegistrars'
+import AdminEmployees from '@/pages/admin/AdminEmployees'
+import AdminCitizens from '@/pages/admin/AdminCitizens'
+import AdminFeedbackInbox from '@/pages/admin/AdminFeedbackInbox'
 import AdminRoute from '@/components/admin/AdminRoute'
 
 import ScrollToTop from '@/components/common/ScrollToTop'
@@ -46,11 +56,24 @@ export default function App() {
                   <Route path="tajaajila/office" element={<Navigate to="/#services" replace />} />
                   <Route path="gallery" element={<GalleryPage />} />
                   <Route path="about" element={<AboutPage />} />
+                  <Route path="feedback" element={<FeedbackPage />} />
+                  <Route path="portal" element={<Navigate to="/citizen/" replace />} />
+                  <Route path="portal/admin" element={<Navigate to="/Admin" replace />} />
+                  <Route path="portal/employee" element={<Navigate to="/employe/" replace />} />
+                  <Route path="portal/activate" element={<Navigate to={`/employe/activate${window.location.search}`} replace />} />
                   <Route path="news/:id" element={<NewsDetailPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Route>
 
-                {/* Admin login */}
+                <Route path="/citizen/*" element={<CitizenPortal />} />
+                <Route path="/citizen/activate" element={<CitizenFirstPasswordPage />} />
+                <Route path="/receipt/verify" element={<ReceiptVerificationPage />} />
+                <Route path="/registrar/*" element={<Navigate to="/employe" replace />} />
+                <Route path="/employe/system-administration" element={<RegistrarPortal />} />
+                <Route path="/employe/activate" element={<EmployeeActivationPage />} />
+                <Route path="/employe/*" element={<EmployeePortal />} />
+
+                  {/* Admin login */}
                 <Route path="/admin" element={<Navigate to="/Admin" replace />} />
                 <Route path="/Admin" element={<AdminLogin />} />
 
@@ -67,6 +90,11 @@ export default function App() {
                     <Route path="contact" element={<AdminContact />} />
                     <Route path="contact-messages" element={<AdminContactMessages />} />
                     <Route path="users" element={<AdminUsers />} />
+                    <Route path="appointments" element={<AdminAppointments />} />
+                    <Route path="registrars" element={<AdminRegistrars />} />
+                    <Route path="employees" element={<AdminEmployees />} />
+                    <Route path="citizens" element={<AdminCitizens />} />
+                    <Route path="feedback-inbox" element={<AdminFeedbackInbox />} />
                     <Route path="profile" element={<AdminProfile />} />
                     <Route path="settings" element={<AdminSettings />} />
                     <Route index element={<Navigate to="/Admin/dashboard" replace />} />

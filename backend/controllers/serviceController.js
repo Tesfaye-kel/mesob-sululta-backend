@@ -1,5 +1,12 @@
 const Service = require('../models/Service');
 const Requirement = require('../models/Requirement');
+const AppointmentBooking = require('../models/AppointmentBooking');
+const FeedbackRequest = require('../models/FeedbackRequest');
+const Receipt = require('../models/Receipt');
+const QueueCheckIn = require('../models/QueueCheckIn');
+const ServiceDelivery = require('../models/ServiceDelivery');
+const User = require('../models/User');
+const { getDefaultRequirementsForService } = require('../seedRequirements');
 
 // POST /api/services
 const createService = async (req, res, next) => {
@@ -10,10 +17,12 @@ const createService = async (req, res, next) => {
       organization,
       window,
       requiredDocuments,
+      resourceLinks,
       fee,
       processingTime,
       workingHours,
       contactPhone,
+      isActive,
     } = req.body;
 
     const service = await Service.create({
@@ -22,11 +31,21 @@ const createService = async (req, res, next) => {
       organization,
       window: window || null,
       requiredDocuments,
+      ...(Array.isArray(resourceLinks) ? { resourceLinks } : {}),
       fee,
       processingTime,
       workingHours,
       contactPhone,
+      ...(typeof isActive === 'boolean' ? { isActive } : {}),
     });
+
+    const defaultRequirements = getDefaultRequirementsForService(service);
+    await Requirement.insertMany(
+      defaultRequirements.map(requirement => ({
+        service: service._id,
+        ...requirement,
+      }))
+    );
 
     return res.status(201).json(service);
   } catch (err) {
@@ -39,7 +58,7 @@ const getAllServices = async (req, res, next) => {
   try {
     const { organizationId, windowId } = req.query;
 
-    const filter = {};
+    const filter = { isActive: { $ne: false } };
     if (organizationId) filter.organization = organizationId;
     if (windowId) filter.window = windowId;
 
@@ -54,12 +73,27 @@ const getAllServices = async (req, res, next) => {
   }
 };
 
+const getManageableServices = async (req, res, next) => {
+  try {
+    const filter = req.user.role === 'admin' || req.serviceManagerAllOffices
+      ? {}
+      : { organization: req.serviceOfficeId };
+    const services = await Service.find(filter)
+      .populate('organization', 'name')
+      .populate('window', 'number floor')
+      .sort({ organization: 1, createdAt: -1 });
+    return res.json(services);
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/services/by-window/:windowId
 const getServicesByWindow = async (req, res, next) => {
   try {
     const { windowId } = req.params;
 
-    const services = await Service.find({ window: windowId })
+    const services = await Service.find({ window: windowId, isActive: { $ne: false } })
       .populate('organization', 'name logoUrl')
       .populate('window', 'number floor')
       .sort({ createdAt: -1 });
@@ -96,10 +130,12 @@ const updateService = async (req, res, next) => {
       organization,
       window,
       requiredDocuments,
+      resourceLinks,
       fee,
       processingTime,
       workingHours,
       contactPhone,
+      isActive,
     } = req.body;
 
     const service = await Service.findByIdAndUpdate(
@@ -110,10 +146,12 @@ const updateService = async (req, res, next) => {
         organization,
         window: window || null,
         requiredDocuments,
+        ...(Array.isArray(resourceLinks) ? { resourceLinks } : {}),
         fee,
         processingTime,
         workingHours,
         contactPhone,
+        ...(typeof isActive === 'boolean' ? { isActive } : {}),
       },
       { new: true, runValidators: true }
     );
@@ -131,11 +169,24 @@ const deleteService = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Also delete associated requirements
-    await Requirement.deleteMany({ service: id });
+    const dependencyCounts = await Promise.all([
+      AppointmentBooking.countDocuments({ serviceId: id }),
+      FeedbackRequest.countDocuments({ serviceId: id }),
+      Receipt.countDocuments({ serviceId: id }),
+      QueueCheckIn.countDocuments({ serviceId: id }),
+      ServiceDelivery.countDocuments({ serviceId: id }),
+      User.countDocuments({ 'profile.services': id }),
+    ]);
+    if (dependencyCounts.some((count) => count > 0)) {
+      return res.status(409).json({
+        message: 'This service has appointment, receipt, queue, delivery, feedback, or employee assignment records. Deactivate it instead of deleting it.',
+      });
+    }
 
-    const service = await Service.findByIdAndDelete(id);
+    const service = await Service.findById(id);
     if (!service) return res.status(404).json({ message: 'Service not found' });
+    await Requirement.deleteMany({ service: id });
+    await service.deleteOne();
 
     return res.json({ message: 'Service deleted successfully' });
   } catch (err) {
@@ -184,7 +235,7 @@ const getServicesByOrganization = async (req, res, next) => {
   try {
     const { organizationId } = req.params;
 
-    const services = await Service.find({ organization: organizationId })
+    const services = await Service.find({ organization: organizationId, isActive: { $ne: false } })
       .populate('window', 'number floor')
       .sort({ createdAt: -1 });
 
@@ -208,6 +259,7 @@ const searchServices = async (req, res, next) => {
     const regex = new RegExp(escaped, 'i');
 
     const services = await Service.find({
+      isActive: { $ne: false },
       $or: [
         { 'name.en': regex },
         { 'name.am': regex },
@@ -231,6 +283,7 @@ const searchServices = async (req, res, next) => {
 module.exports = {
   createService,
   getAllServices,
+  getManageableServices,
   searchServices,
   getServiceById,
   updateService,
@@ -240,4 +293,3 @@ module.exports = {
   getServicesByOrganization,
   getServicesByWindow,
 };
-

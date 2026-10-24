@@ -1,6 +1,6 @@
 const express = require('express');
 const { authenticateJWT } = require('../middleware/authMiddleware');
-const { requireAdmin } = require('../middleware/roleMiddleware');
+const { requireServiceManager } = require('../middleware/requireServiceManager');
 
 const {
   createRequirement,
@@ -9,7 +9,7 @@ const {
   updateRequirement,
   deleteRequirement,
   getRequirementsByService,
-  createBulkRequirements,
+  getRequirementsForManagement,
 } = require('../controllers/requirementController');
 
 const router = express.Router();
@@ -17,12 +17,11 @@ const router = express.Router();
 // Public routes
 router.get('/', getAllRequirements);
 router.get('/by-service/:serviceId', getRequirementsByService);
+router.get('/manage/by-service/:serviceId', authenticateJWT, requireServiceManager, getRequirementsForManagement);
 router.get('/:id', getRequirementById);
 
-// Protected routes (admin only)
-router.post('/bulk', authenticateJWT, requireAdmin, createBulkRequirements);
-router.post('/', authenticateJWT, requireAdmin, createRequirement);
-router.put('/:id', authenticateJWT, requireAdmin, updateRequirement);
-router.delete('/:id', authenticateJWT, requireAdmin, deleteRequirement);
+router.post('/', authenticateJWT, requireServiceManager, createRequirement);
+router.put('/:id', authenticateJWT, requireServiceManager, updateRequirement);
+router.delete('/:id', authenticateJWT, requireServiceManager, deleteRequirement);
 
 module.exports = router;

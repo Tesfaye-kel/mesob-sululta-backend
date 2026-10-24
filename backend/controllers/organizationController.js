@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Organization = require('../models/Organization');
 const Service = require('../models/Service');
 const Window = require('../models/Window');
+const { withOrganizationTranslations } = require('../data/organizationTranslations');
 
 // POST /api/organizations
 const createOrganization = async (req, res, next) => {
@@ -20,7 +21,7 @@ const getAllOrganizations = async (req, res, next) => {
   try {
     const { search } = req.query;
 
-    const filter = {};
+    const filter = { isActive: { $ne: false } };
     if (search) {
       filter.$or = [
         { 'name.en': new RegExp(search, 'i') },
@@ -38,6 +39,7 @@ const getAllOrganizations = async (req, res, next) => {
           from: 'services',
           localField: '_id',
           foreignField: 'organization',
+          pipeline: [{ $match: { isActive: { $ne: false } } }],
           as: 'services',
         },
       },
@@ -49,7 +51,10 @@ const getAllOrganizations = async (req, res, next) => {
       { $project: { services: 0, __v: 0 } },
     ]);
 
-    return res.json(organizations);
+    return res.json(organizations.map((organization) => ({
+      ...organization,
+      name: withOrganizationTranslations(organization.name),
+    })));
   } catch (err) {
     next(err);
   }
@@ -61,7 +66,9 @@ const getOrganizationById = async (req, res, next) => {
     const { id } = req.params;
     const org = await Organization.findById(id);
     if (!org) return res.status(404).json({ message: 'Organization not found' });
-    return res.json(org);
+    const organization = org.toObject();
+    organization.name = withOrganizationTranslations(organization.name);
+    return res.json(organization);
   } catch (err) {
     next(err);
   }
@@ -103,7 +110,7 @@ const deleteOrganization = async (req, res, next) => {
 const getServicesByOrganization = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const services = await Service.find({ organization: id })
+    const services = await Service.find({ organization: id, isActive: { $ne: false } })
       .populate('organization', 'name')
       .sort({ createdAt: 1 });
     return res.json(services);
@@ -121,7 +128,14 @@ const getOrganizationWithWindows = async (req, res, next) => {
     const [org, windows] = await Promise.all([
       Organization.findById(id),
       Window.aggregate([
-        { $match: { organization: new mongoose.Types.ObjectId(id) } },
+        {
+          $match: {
+            $or: [
+              { organization: new mongoose.Types.ObjectId(id) },
+              { assignedOrganizations: new mongoose.Types.ObjectId(id) },
+            ],
+          },
+        },
         { $sort: { floor: 1, number: 1 } },
         {
           $lookup: {
@@ -155,6 +169,9 @@ const getOrganizationWithWindows = async (req, res, next) => {
 
     if (!org) return res.status(404).json({ message: 'Organization not found' });
 
+    const organization = org.toObject();
+    organization.name = withOrganizationTranslations(organization.name);
+
     // Group windows by floor
     const grouped = new Map();
     for (const win of windows) {
@@ -169,7 +186,7 @@ const getOrganizationWithWindows = async (req, res, next) => {
       .sort(([a], [b]) => a - b)
       .map(([floor, wins]) => ({ floor, windows: wins }));
 
-    return res.json({ organization: org, windowGroups });
+    return res.json({ organization, windowGroups });
   } catch (err) {
     next(err);
   }
@@ -184,4 +201,3 @@ module.exports = {
   getServicesByOrganization,
   getOrganizationWithWindows,
 };
-

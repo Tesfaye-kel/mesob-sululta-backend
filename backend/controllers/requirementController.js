@@ -9,6 +9,7 @@ const createRequirement = async (req, res, next) => {
       isMandatory,
       sequenceNo,
       notes,
+      isActive,
     } = req.body;
 
     const requirement = await Requirement.create({
@@ -17,6 +18,7 @@ const createRequirement = async (req, res, next) => {
       isMandatory,
       sequenceNo,
       notes,
+      isActive,
     });
 
     return res.status(201).json(requirement);
@@ -30,7 +32,7 @@ const getAllRequirements = async (req, res, next) => {
   try {
     const { serviceId } = req.query;
 
-    const filter = {};
+    const filter = { isActive: { $ne: false } };
     if (serviceId) filter.service = serviceId;
 
     const requirements = await Requirement.find(filter)
@@ -67,6 +69,7 @@ const updateRequirement = async (req, res, next) => {
       isMandatory,
       sequenceNo,
       notes,
+      isActive,
     } = req.body;
 
     const requirement = await Requirement.findByIdAndUpdate(
@@ -77,6 +80,7 @@ const updateRequirement = async (req, res, next) => {
         isMandatory,
         sequenceNo,
         notes,
+        isActive,
       },
       { new: true, runValidators: true }
     );
@@ -108,9 +112,19 @@ const getRequirementsByService = async (req, res, next) => {
   try {
     const { serviceId } = req.params;
 
-    const requirements = await Requirement.find({ service: serviceId })
+    const requirements = await Requirement.find({ service: serviceId, isActive: { $ne: false } })
       .sort({ sequenceNo: 1 });
 
+    return res.json(requirements);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getRequirementsForManagement = async (req, res, next) => {
+  try {
+    const requirements = await Requirement.find({ service: req.params.serviceId })
+      .sort({ sequenceNo: 1, createdAt: 1 });
     return res.json(requirements);
   } catch (err) {
     next(err);
@@ -141,5 +155,6 @@ module.exports = {
   updateRequirement,
   deleteRequirement,
   getRequirementsByService,
+  getRequirementsForManagement,
   createBulkRequirements,
 };

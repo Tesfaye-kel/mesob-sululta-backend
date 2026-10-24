@@ -11,6 +11,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 
 const statCards = [
   { key: 'organizations', labelKey: 'organizations', icon: Building2, color: 'blue' },
+  { key: 'employees', labelKey: 'employees', icon: Users, color: 'teal' },
   { key: 'services', labelKey: 'services', icon: Activity, color: 'green' },
   { key: 'windows', labelKey: 'windows', icon: LayoutDashboard, color: 'rose' },
   { key: 'news', labelKey: 'news', icon: Newspaper, color: 'purple' },
@@ -32,6 +33,16 @@ const colorMap: Record<string, { bg: string; text: string; iconBg: string }> = {
 export default function AdminDashboard() {
   const { t } = useLanguage()
   const admin = t.admin
+  const statLabels: Record<string, string> = {
+    organizations: admin.organizations,
+    employees: admin.employees,
+    services: admin.services,
+    windows: admin.windowsTab,
+    news: admin.news,
+    faqs: admin.faqsTitle,
+    unreadMessages: admin.messages,
+    users: admin.users,
+  }
   const [data, setData] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -94,7 +105,7 @@ export default function AdminDashboard() {
       setEditingRating(null)
       setFeedbackMessage(admin.percentageSaved)
     } catch (err) {
-      setFeedbackError(err instanceof Error ? err.message : 'Could not save percentage.')
+      setFeedbackError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setSavingPercentage(false)
     }
@@ -107,9 +118,9 @@ export default function AdminDashboard() {
     try {
       const feedback = await updateFeedbackPercentages(data.feedback.percentages, !data.feedback.showOverallProjectScore)
       setData(current => current ? { ...current, feedback } : current)
-      setFeedbackMessage('Frontend percentage visibility updated.')
+      setFeedbackMessage(admin.percentageVisibilityUpdated)
     } catch (err) {
-      setFeedbackError(err instanceof Error ? err.message : 'Could not update visibility.')
+      setFeedbackError(err instanceof Error ? err.message : admin.failedToSave)
     } finally {
       setSavingVisibility(false)
     }
@@ -157,7 +168,7 @@ export default function AdminDashboard() {
               </div>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                {key === 'windows' ? 'Windows' : (admin as any)[labelKey]}
+                {statLabels[labelKey] || labelKey}
               </p>
             </motion.div>
           )
@@ -192,7 +203,7 @@ export default function AdminDashboard() {
         <label className="flex items-center gap-3 mb-5 text-sm text-gray-700 dark:text-gray-300">
           <input type="checkbox" checked={data.feedback.showOverallProjectScore} onChange={toggleOverallScore} disabled={savingVisibility}
             className="h-4 w-4 rounded border-gray-300 text-brand-green focus:ring-brand-green" />
-          Show this percentage number on the frontend
+          {admin.showPercentageOnFrontend}
         </label>
 
         <div className="space-y-2">
