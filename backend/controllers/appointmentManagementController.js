@@ -6,6 +6,7 @@ const XLSX = require('xlsx');
 const AppointmentBooking = require('../models/AppointmentBooking');
 const AppointmentSlot = require('../models/AppointmentSlot');
 const AuditLog = require('../models/AuditLog');
+const CitizenIdentity = require('../models/CitizenIdentity');
 const FeedbackRequest = require('../models/FeedbackRequest');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
@@ -103,6 +104,11 @@ const getAdminCitizens = (activeOnly) => async (req, res, next) => {
       total = visible.length;
       bookings = toCitizenRows(visible.slice((page - 1) * limit, page * limit));
     } else {
+      const now = new Date();
+      filter.checkedInAt = {
+        $gte: new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000),
+        $lte: now,
+      };
       const [rows, count] = await Promise.all([
         findCitizenAppointmentRows(filter, { activeOnly, skip: (page - 1) * limit, limit }),
         AppointmentBooking.countDocuments(filter),
@@ -111,6 +117,47 @@ const getAdminCitizens = (activeOnly) => async (req, res, next) => {
       total = count;
     }
     res.json({ bookings, pagination: { page, limit, total, pages: Math.ceil(total / limit) } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getCitizenRegistrations = async (req, res, next) => {
+  try {
+    const { page, limit } = getPageOptions(req.query);
+    const filter = { archivedAt: null };
+    const search = typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 80) : '';
+    if (search) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { displayName: { $regex: escapedSearch, $options: 'i' } },
+        { email: { $regex: escapedSearch, $options: 'i' } },
+        { occupation: { $regex: escapedSearch, $options: 'i' } },
+        { status: { $regex: escapedSearch, $options: 'i' } },
+        ...( /^\d+$/.test(search) ? [{ fanLastFour: { $regex: `${escapedSearch}$` } }] : []),
+      ];
+    }
+    const [registrations, total] = await Promise.all([
+      CitizenIdentity.find(filter)
+        .select('displayName email occupation status createdAt +fanLastFour')
+        .sort({ createdAt: -1, _id: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      CitizenIdentity.countDocuments(filter),
+    ]);
+    res.json({
+      registrations: registrations.map((registration) => ({
+        _id: registration._id,
+        displayName: registration.displayName,
+        email: registration.email,
+        occupation: registration.occupation,
+        status: registration.status,
+        createdAt: registration.createdAt,
+        maskedNationalId: registration.fanLastFour ? `********${registration.fanLastFour}` : '',
+      })),
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
   } catch (error) {
     next(error);
   }
@@ -802,6 +849,7 @@ module.exports = {
   verifyReceipt,
   getActiveCitizens: getAdminCitizens(true),
   getCitizenHistory: getAdminCitizens(false),
+  getCitizenRegistrations,
   getFeedbackInbox,
   archiveFeedbackFromAdminInbox,
   archiveAllFeedbackFromAdminInbox,

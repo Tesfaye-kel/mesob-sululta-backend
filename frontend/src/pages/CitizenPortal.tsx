@@ -54,52 +54,43 @@ type VisibleNotification = { item: CitizenNotification; booking: CitizenBooking 
 const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-slate-900 outline-none focus:border-emerald-600 dark:border-slate-700 dark:bg-slate-950 dark:text-white'
 const panelClass = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900'
 const calendarLocales = { en: 'en-ET', am: 'am-ET', or: 'om-ET' } as const
+const oromoEthiopianMonths = [
+  'Fulbaana', 'Onkololeessa', 'Sadaasa', 'Muddee', 'Amajjii', 'Guraandhala',
+  'Bitooteessa', 'Ebla', 'Caamsa', 'Waxabajjii', 'Adooleessa', 'Hagayya', 'Qaammee',
+]
 
-function getEthiopianDateParts(date: string, language: 'en' | 'am' | 'or') {
+function getLocalizedBookingDateParts(date: string, language: 'en' | 'am' | 'or') {
   const dateValue = new Date(`${date}T12:00:00+03:00`)
+  const calendar = language === 'en' ? 'gregory' : 'ethiopic'
   const parts = new Intl.DateTimeFormat(calendarLocales[language], {
-    calendar: 'ethiopic',
+    calendar,
     day: 'numeric',
-    month: 'short',
+    month: 'long',
     weekday: 'short',
+    year: 'numeric',
+    numberingSystem: 'latn',
     timeZone: 'Africa/Addis_Ababa',
   }).formatToParts(dateValue)
-  const monthNumber = Number(new Intl.DateTimeFormat('en-ET-u-ca-ethiopic', {
-    calendar: 'ethiopic',
-    month: 'numeric',
-    timeZone: 'Africa/Addis_Ababa',
-  }).format(dateValue))
-  const oromoMonths = ['Fulb', 'Onco', 'Sada', 'Mudd', 'Amajj', 'Gura', 'Bito', 'Eeb', 'Caam', 'Waxi', 'Ado', 'Hagay', 'Pag']
+  const monthNumber = language === 'or'
+    ? Number(new Intl.DateTimeFormat('en-ET-u-ca-ethiopic', {
+      calendar: 'ethiopic',
+      month: 'numeric',
+      timeZone: 'Africa/Addis_Ababa',
+    }).format(dateValue))
+    : 0
   return {
     day: parts.find((part) => part.type === 'day')?.value || '',
     month: language === 'or'
-      ? oromoMonths[monthNumber - 1] || parts.find((part) => part.type === 'month')?.value || ''
+      ? oromoEthiopianMonths[monthNumber - 1] || parts.find((part) => part.type === 'month')?.value || ''
       : parts.find((part) => part.type === 'month')?.value || '',
     weekday: parts.find((part) => part.type === 'weekday')?.value || '',
+    year: parts.find((part) => part.type === 'year')?.value || '',
   }
 }
 
-function formatEthiopianDate(date: string, language: 'en' | 'am' | 'or') {
-  const dateValue = new Date(`${date}T12:00:00+03:00`)
-  const day = new Intl.DateTimeFormat(calendarLocales[language], {
-    calendar: 'ethiopic',
-    day: 'numeric',
-    timeZone: 'Africa/Addis_Ababa',
-  }).format(dateValue)
-  const monthNumber = Number(new Intl.DateTimeFormat('en-ET-u-ca-ethiopic', {
-    calendar: 'ethiopic',
-    month: 'numeric',
-    timeZone: 'Africa/Addis_Ababa',
-  }).format(dateValue))
-  const oromoMonths = ['Fulb', 'Onco', 'Sada', 'Mudd', 'Amajj', 'Gura', 'Bito', 'Eeb', 'Caam', 'Waxi', 'Ado', 'Hagay', 'Pag']
-  const month = language === 'or'
-    ? oromoMonths[monthNumber - 1] || ''
-    : new Intl.DateTimeFormat(calendarLocales[language], {
-      calendar: 'ethiopic',
-      month: 'long',
-      timeZone: 'Africa/Addis_Ababa',
-    }).format(dateValue)
-  return `${month} ${day}`
+function formatBookingDate(date: string, language: 'en' | 'am' | 'or') {
+  const parts = getLocalizedBookingDateParts(date, language)
+  return `${parts.month} ${parts.day}, ${parts.year}`
 }
 
 function formatEthiopianLocalTime(time: string) {
@@ -574,10 +565,11 @@ export default function CitizenPortal() {
                 {!availability.length ? <p className="text-sm text-slate-500">{availabilityLoading ? portalCopy.loadingAvailability : portalCopy.noOpenDates}</p> : (
                   <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 lg:grid-cols-6">
                     {availability.map((date) => {
-                      const dateParts = getEthiopianDateParts(date.date, language)
+                      const dateParts = getLocalizedBookingDateParts(date.date, language)
                       return <button type="button" key={date.date} disabled={!date.bookable || !date.sessions.some((item) => item.available)} aria-pressed={selectedDate === date.date} onClick={() => { setSelectedDate(date.date); setSelectedSession('') }} className={`rounded-lg border px-2 py-2 text-center transition disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60 dark:disabled:bg-slate-950 ${selectedDate === date.date ? 'border-emerald-700 bg-emerald-50 dark:bg-emerald-950/40' : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900'}`}>
                         <span className="block text-[11px] text-slate-500">{dateParts.weekday}</span>
                         <span className="mt-0.5 block text-lg font-semibold leading-tight text-slate-900 dark:text-white">{dateParts.day} <span className="text-sm">{dateParts.month}</span></span>
+                        <span className="block text-[10px] text-slate-500">{dateParts.year}</span>
                         <span className="mt-1 block text-[10px] text-slate-500">{date.alreadyBooked ? portalCopy.alreadyBooked : date.bookable ? `${date.sessions.filter((item) => item.available).length} ${portalCopy.sessionsAvailable}` : portalCopy.unavailable}</span>
                       </button>
                     })}
@@ -595,8 +587,8 @@ export default function CitizenPortal() {
                 </div>
               </fieldset>}
               {dateRecord && dateRecord.alreadyBooked && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">{portalCopy.alreadyBookedOfficeDay}</p>}
-              {dateRecord && !dateRecord.alreadyBooked && !dateRecord.sessions.some((item) => item.available) && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">{portalCopy.fullyBooked} {nextAvailableDate ? portalCopy.nextAvailable.replace('{date}', formatEthiopianDate(nextAvailableDate, language)) : portalCopy.noSessionInHorizon}</p>}
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4 dark:bg-slate-800"><p className="text-sm text-slate-600 dark:text-slate-300">{selectedDate && selectedSession ? `${portalCopy.confirmationSummary}: ${formatEthiopianDate(selectedDate, language)} · ${selectedSession === 'session1' ? portalCopy.afternoon : portalCopy.morning}` : portalCopy.selectDateAndSession}</p><button disabled={busy || !selectedOffice || !selectedWindow || !selectedDate || !selectedSession || !dateRecord?.sessions.some((item) => item.id === selectedSession && item.available)} className="rounded-xl bg-emerald-700 px-5 py-3 font-semibold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? portalCopy.confirming : portalCopy.confirmAppointment}</button></div>
+              {dateRecord && !dateRecord.alreadyBooked && !dateRecord.sessions.some((item) => item.available) && <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">{portalCopy.fullyBooked} {nextAvailableDate ? portalCopy.nextAvailable.replace('{date}', formatBookingDate(nextAvailableDate, language)) : portalCopy.noSessionInHorizon}</p>}
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4 dark:bg-slate-800"><p className="text-sm text-slate-600 dark:text-slate-300">{selectedDate && selectedSession ? `${portalCopy.confirmationSummary}: ${formatBookingDate(selectedDate, language)} · ${selectedSession === 'session1' ? portalCopy.afternoon : portalCopy.morning}` : portalCopy.selectDateAndSession}</p><button disabled={busy || !selectedOffice || !selectedWindow || !selectedDate || !selectedSession || !dateRecord?.sessions.some((item) => item.id === selectedSession && item.available)} className="rounded-xl bg-emerald-700 px-5 py-3 font-semibold text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50">{busy ? portalCopy.confirming : portalCopy.confirmAppointment}</button></div>
             </div>}
             {!officeServices.length ? <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-800">{portalCopy.noOfficeServices}</p> : <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
               <div className="hidden grid-cols-[minmax(0,1fr)_auto] items-center border-b bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:bg-slate-800 sm:grid"><span>{portalCopy.service}</span><span>{portalCopy.requirementsAndLinks}</span></div>
@@ -628,7 +620,7 @@ export default function CitizenPortal() {
             const officeName = typeof booking.officeId === 'object'
               ? booking.officeId.name[language] || booking.officeId.name.en
               : portalCopy.office
-            const ticketDate = formatEthiopianDate(booking.slotDate.slice(0, 10), language)
+            const ticketDate = formatBookingDate(booking.slotDate.slice(0, 10), language)
             return <article key={booking._id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
               <div className="flex flex-wrap items-start justify-between gap-3 bg-emerald-50 px-4 py-4 dark:bg-emerald-950/30 sm:px-5">
                 <div className="flex min-w-0 items-start gap-3">
@@ -658,7 +650,7 @@ export default function CitizenPortal() {
           {!visibleNotifications.length ? <p className="text-sm text-slate-500">{portalCopy.noNotifications}</p> : visibleNotifications.map(({ item, booking }) => {
             const delivery = booking && typeof booking.deliveryId === 'object' ? booking.deliveryId : null
             const deadline = delivery?.feedbackDeadlineAt
-              ? formatEthiopianDate(delivery.feedbackDeadlineAt.slice(0, 10), language)
+              ? formatBookingDate(delivery.feedbackDeadlineAt.slice(0, 10), language)
               : ''
             const message = item.type === 'feedback_request'
               ? portalCopy.employeeFeedbackInvitation.replace('{date}', deadline)

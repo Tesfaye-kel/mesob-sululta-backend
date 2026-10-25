@@ -20,7 +20,6 @@ const sidebarLinks = [
   { to: '/Admin/citizens', labelKey: 'citizens', icon: UserCircle },
   { to: '/Admin/feedback-inbox', labelKey: 'feedbackInbox', icon: MessageSquare },
   { to: '/Admin/services', labelKey: 'services', icon: Wrench },
-  { to: '/Admin/appointments', labelKey: 'appointments', icon: Users },
   { to: '/Admin/about', labelKey: 'about', icon: Info },
   { to: '/Admin/news', labelKey: 'news', icon: Newspaper },
   { to: '/Admin/gallery', labelKey: 'gallery', icon: Image },
@@ -53,6 +52,14 @@ export default function AdminLayout() {
   const { language, setLanguage, t } = useLanguage()
 
   const nav = t.admin
+  const isSidebarLinkActive = (to: string) => {
+    const [path, hash] = to.split('#')
+    if (location.pathname !== path) return false
+    if (hash === 'appointments-panel') {
+      return location.hash === '#appointments-panel' || location.hash === '#appointment-history'
+    }
+    return hash ? location.hash === `#${hash}` : !location.hash
+  }
   const navLabel = (key: string) => {
     const value = nav[key as keyof typeof nav]
     return typeof value === 'string' ? value : key
@@ -130,7 +137,7 @@ export default function AdminLayout() {
         {/* Navigation */}
         <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
           {sidebarLinks.map(link => {
-            const isActive = location.pathname === link.to
+            const isActive = isSidebarLinkActive(link.to)
             return (
               <motion.div key={link.to} variants={itemVariants} whileHover="hover">
                 <NavLink
@@ -253,7 +260,7 @@ export default function AdminLayout() {
 
               <nav className="p-3 space-y-1">
                 {sidebarLinks.map(link => {
-                  const isActive = location.pathname === link.to
+                  const isActive = isSidebarLinkActive(link.to)
                   return (
                     <NavLink
                       key={link.to}

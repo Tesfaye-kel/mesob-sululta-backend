@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { AlertTriangle, RefreshCw, Users } from 'lucide-react'
+import { AlertTriangle, RefreshCw, Search, Users } from 'lucide-react'
 import { adminWorkflowRequest } from '@/api/adminWorkflows'
 import { employeeTypes, type EmployeeType } from '@/types/employee'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -71,6 +71,7 @@ export default function AdminEmployees() {
     suspended: copy.suspendedStatus,
   }[status] || status)
   const [employees, setEmployees] = useState<Employee[]>([])
+  const [employeeSearch, setEmployeeSearch] = useState('')
   const [selectedEmployeeType, setSelectedEmployeeType] = useState<EmployeeType>(employeeTypes[0])
   const [removalRequests, setRemovalRequests] = useState<RemovalRequest[]>([])
   const [offices, setOffices] = useState<Office[]>([])
@@ -97,7 +98,22 @@ export default function AdminEmployees() {
 
   const selectedEmployeeRecord = employees.find((employee) => employee._id === selectedEmployee)
   const categoryEmployees = employees.filter((employee) => employee.employeeType === selectedEmployeeType)
-  const pendingCategoryCount = categoryEmployees.filter((employee) => employee.status === 'pending').length
+  const normalizedEmployeeSearch = employeeSearch.trim().toLocaleLowerCase()
+  const visibleCategoryEmployees = categoryEmployees.filter((employee) => {
+    if (!normalizedEmployeeSearch) return true
+    const values = [
+      employee.name,
+      employee.email,
+      employee.phone,
+      employee.profile?.nationalIdLastFour,
+      employee.profile?.jobTitle,
+      employee.profile?.officeAssignmentLabel,
+      typeof employee.profile?.officeId === 'object' ? employee.profile.officeId?.name?.en : employee.profile?.officeId,
+      employee.status,
+    ]
+    return values.some((value) => value?.toLocaleLowerCase().includes(normalizedEmployeeSearch))
+  })
+  const pendingCategoryCount = visibleCategoryEmployees.filter((employee) => employee.status === 'pending').length
 
   const reviewRemoval = async (request: RemovalRequest, decision: 'approve' | 'reject') => {
     setBusy(true)
@@ -319,11 +335,22 @@ export default function AdminEmployees() {
           })}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
-          <h3 className="font-semibold">{employeeTypeLabels[selectedEmployeeType]} ({categoryEmployees.length})</h3>
+          <h3 className="font-semibold">{employeeTypeLabels[selectedEmployeeType]} ({visibleCategoryEmployees.length})</h3>
           <p className="text-sm text-amber-700 dark:text-amber-300">{copy.waitingApproval}: {pendingCategoryCount}</p>
         </div>
-        {!categoryEmployees.length && <p className="py-4 text-sm text-gray-500">{copy.noCategoryEmployees}</p>}
-        {!!categoryEmployees.length && <div className="overflow-x-auto">
+        <label className="relative block max-w-xl">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="search"
+            value={employeeSearch}
+            onChange={(event) => setEmployeeSearch(event.target.value)}
+            placeholder={copy.searchEmployees}
+            aria-label={copy.searchEmployees}
+            className={`${inputClass} pl-10`}
+          />
+        </label>
+        {!visibleCategoryEmployees.length && <p className="py-4 text-sm text-gray-500">{categoryEmployees.length ? copy.noEmployeeSearchResults : copy.noCategoryEmployees}</p>}
+        {!!visibleCategoryEmployees.length && <div className="overflow-x-auto">
           <table className="w-full min-w-[820px] table-fixed text-left text-sm">
             <thead className="border-b bg-gray-50 text-xs uppercase text-gray-500 dark:border-gray-700 dark:bg-gray-800">
               <tr>
@@ -336,7 +363,7 @@ export default function AdminEmployees() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {categoryEmployees.map((employee) => {
+              {visibleCategoryEmployees.map((employee) => {
                 const employeeOffice = employee.profile?.officeId
                 const officeName = typeof employeeOffice === 'string'
                   ? employeeOffice

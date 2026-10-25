@@ -26,6 +26,7 @@ const {
   reviewDelivery,
   getActiveCitizens,
   getCitizenHistory,
+  getCitizenRegistrations,
   getFeedbackInbox,
   archiveFeedbackFromAdminInbox,
   archiveAllFeedbackFromAdminInbox,
@@ -57,6 +58,7 @@ router.get('/service-deliveries/approvals', getDeliveryApprovals);
 router.post('/service-deliveries/:deliveryId/review', reviewDelivery);
 router.get('/citizens', getActiveCitizens);
 router.get('/citizens/history', getCitizenHistory);
+router.get('/citizen-registrations', getCitizenRegistrations);
 router.get('/feedback-inbox', getFeedbackInbox);
 router.post('/feedback-inbox/archive-all', archiveAllFeedbackFromAdminInbox);
 router.patch('/feedback-inbox/:feedbackId', respondToFeedback);

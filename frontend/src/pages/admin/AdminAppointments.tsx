@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, Check, Download, Loader2, RefreshCw, ShieldCheck } from 'lucide-react'
+import { AlertCircle, Download, Loader2, RefreshCw } from 'lucide-react'
 import { ADMIN_TOKEN_KEY } from '@/api/admin'
-import type { EmployeeType } from '@/types/employee'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
@@ -18,34 +17,24 @@ interface Appointment {
   officeId?: { name?: { en?: string } }
   windowId?: { number?: string | number; floor?: number }
   serviceId?: { name?: { en?: string } }
-  employeeId?: { name?: string }
 }
 
-interface Delivery {
+interface AppointmentHistory {
   _id: string
-  outcome: string
-  deliveryDetails: string
-  actualAttendanceAt?: string
-  appointmentId?: { appointmentReference?: string; slotDate?: string; session?: string }
-  employeeId?: { name?: string }
+  appointmentReference: string
+  slotDate: string
+  session: string
+  queueNumber: number
+  status: string
+  citizen: { reference: string; displayName: string }
+  officeId?: { name?: { en?: string } }
+  windowId?: { number?: string | number; floor?: number }
   serviceId?: { name?: { en?: string } }
 }
 
 interface Office {
   _id: string
   name: { en?: string }
-}
-
-interface Employee {
-  _id: string
-  name: string
-  email: string
-  status: string
-  employeeType: EmployeeType
-  createdBy?: string
-  profile?: {
-    officeId?: Office | string | null
-  }
 }
 
 interface WindowCapacity {
@@ -87,7 +76,11 @@ function label(value?: { en?: string } | string | null) {
   return typeof value === 'string' ? value : value?.en || '—'
 }
 
-export default function AdminAppointments() {
+interface AdminAppointmentsProps {
+  view: 'appointments' | 'history'
+}
+
+export default function AdminAppointments({ view }: AdminAppointmentsProps) {
   const { t } = useLanguage()
   const copy = t.admin.portal.appointments
   const statusLabel = (status: string) => ({
@@ -99,24 +92,20 @@ export default function AdminAppointments() {
     CANCELLED: copy.cancelled,
     NO_SHOW: copy.noShow,
   }[status] || status)
-  const [section, setSection] = useState<'appointments' | 'approvals' | 'employees'>('appointments')
   const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [deliveries, setDeliveries] = useState<Delivery[]>([])
-  const [employees, setEmployees] = useState<Employee[]>([])
+  const [historyAppointments, setHistoryAppointments] = useState<AppointmentHistory[]>([])
+  const [historyPage, setHistoryPage] = useState(1)
+  const [historyPages, setHistoryPages] = useState(1)
+  const [historyTotal, setHistoryTotal] = useState(0)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyError, setHistoryError] = useState('')
   const [capacityWindows, setCapacityWindows] = useState<WindowCapacity[]>([])
-  const [offices, setOffices] = useState<Office[]>([])
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
   const [status, setStatus] = useState('')
   const [capacityDate, setCapacityDate] = useState(todayInAddis)
-  const [selectedEmployee, setSelectedEmployee] = useState('')
-  const [officeId, setOfficeId] = useState('')
-  const [invitationLink, setInvitationLink] = useState('')
-  const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [notice, setNotice] = useState('')
-  const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({})
 
   const reportQuery = useMemo(() => {
     const params = new URLSearchParams()
@@ -132,118 +121,48 @@ export default function AdminAppointments() {
     setAppointments(result.appointments)
   }, [reportQuery])
 
-  const loadEmployees = useCallback(async () => {
-    const result = await adminRequest<{ employees: Employee[] }>('/employees')
-    setEmployees(result.employees)
-  }, [])
-
-  const loadApprovals = useCallback(async () => {
-    const result = await adminRequest<{ deliveries: Delivery[] }>('/admin/service-deliveries/approvals')
-    setDeliveries(result.deliveries)
-  }, [])
-
   const loadCapacity = useCallback(async () => {
     const result = await adminRequest<{ windows: WindowCapacity[] }>(`/admin/appointments/capacity?date=${encodeURIComponent(capacityDate)}`)
     setCapacityWindows(result.windows)
   }, [capacityDate])
 
+  const loadHistory = useCallback(async () => {
+    setHistoryLoading(true)
+    setHistoryError('')
+    try {
+      const result = await adminRequest<{
+        bookings: AppointmentHistory[]
+        pagination: { page: number; pages: number; total: number }
+      }>(`/admin/citizens/history?page=${historyPage}&limit=25`)
+      setHistoryAppointments(result.bookings)
+      setHistoryPages(Math.max(1, result.pagination.pages))
+      setHistoryTotal(result.pagination.total)
+    } catch (err) {
+      setHistoryError(err instanceof Error ? err.message : t.admin.failedToLoad)
+    } finally {
+      setHistoryLoading(false)
+    }
+  }, [historyPage, t.admin.failedToLoad])
+
   const refresh = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      await Promise.all([loadAppointments(), loadEmployees(), loadApprovals(), loadCapacity()])
+      await Promise.all([loadAppointments(), loadCapacity()])
     } catch (err) {
       setError(err instanceof Error ? err.message : t.admin.failedToLoad)
     } finally {
       setLoading(false)
     }
-  }, [loadAppointments, loadEmployees, loadApprovals, loadCapacity])
+  }, [loadAppointments, loadCapacity])
 
   useEffect(() => {
     void refresh()
   }, [refresh])
 
   useEffect(() => {
-    fetch(`${BASE}/organizations`).then(async (response) => {
-      if (!response.ok) throw new Error(`Office request failed: HTTP ${response.status}`)
-      return response.json() as Promise<Office[]>
-    }).then((officeList) => {
-      setOffices(officeList)
-    }).catch((err: unknown) => {
-      setError(err instanceof Error ? err.message : t.admin.failedToLoad)
-    })
-  }, [])
-
-  const reviewDelivery = async (deliveryId: string, decision: 'approve' | 'reject') => {
-    const notes = reviewNotes[deliveryId] || ''
-    if (decision === 'reject' && notes.trim().length < 3) {
-      setError(copy.rejectionRequired)
-      return
-    }
-    setBusy(true)
-    setError('')
-    try {
-      await adminRequest(`/admin/service-deliveries/${deliveryId}/review`, {
-        method: 'POST',
-        body: JSON.stringify({ decision, reviewNotes: notes }),
-      })
-      setNotice(`Service delivery ${decision}d.`)
-      await Promise.all([loadApprovals(), loadAppointments()])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t.admin.failedToSave)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const employeeAction = async (employeeId: string, action: 'approve' | 'suspend' | 'active') => {
-    setBusy(true)
-    setError('')
-    setNotice('')
-    try {
-      if (action === 'approve') {
-        await adminRequest(`/employees/${employeeId}/approve`, { method: 'POST', body: '{}' })
-      } else {
-        await adminRequest(`/employees/${employeeId}/status`, {
-          method: 'PATCH',
-          body: JSON.stringify({ status: action }),
-        })
-      }
-      setNotice(action === 'approve' ? 'Employee approved. Assign their office and weekly work schedule before activation.' : `Employee ${action === 'active' ? 'reactivated' : 'suspended'}.`)
-      await loadEmployees()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not update employee.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const assignEmployee = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!selectedEmployee || !officeId) {
-      setError(copy.chooseEmployeeOffice)
-      return
-    }
-    setBusy(true)
-    setError('')
-    setNotice('')
-    setInvitationLink('')
-    try {
-      const result = await adminRequest<{ message: string; invitationToken?: string }>(`/employees/${selectedEmployee}/assign`, {
-        method: 'PUT',
-        body: JSON.stringify({ officeId }),
-      })
-      setNotice(result.message)
-      if (result.invitationToken) {
-        setInvitationLink(`${window.location.origin}/employe/activate?token=${encodeURIComponent(result.invitationToken)}`)
-      }
-      await loadEmployees()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t.admin.failedToSave)
-    } finally {
-      setBusy(false)
-    }
-  }
+    if (view === 'history') void loadHistory()
+  }, [view, loadHistory])
 
   const downloadReport = async (format: 'xlsx' | 'pdf') => {
     setError('')
@@ -271,29 +190,16 @@ export default function AdminAppointments() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{copy.title}</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{copy.description}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{view === 'history' ? copy.appointmentHistory : copy.appointments}</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{view === 'history' ? copy.historyRetentionNotice : copy.description}</p>
         </div>
-        <button onClick={() => void refresh()} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700" disabled={loading}>
+        <button onClick={() => { if (view === 'history') void loadHistory(); else void refresh() }} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700" disabled={view === 'history' ? historyLoading : loading}>
           <RefreshCw className="h-4 w-4" /> {copy.refresh}
         </button>
       </div>
 
-      {error && <div role="alert" className="flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>}
-      {notice && <div role="status" className="rounded-xl bg-green-50 p-3 text-sm text-green-700 dark:bg-green-950/40 dark:text-green-300">{notice}</div>}
-      {invitationLink && <div className={panelClass}><p className="mb-2 text-sm font-semibold">{copy.activationLink}</p><p className="mb-2 text-xs text-gray-500">{copy.activationHint}</p><input readOnly value={invitationLink} onFocus={(event) => event.currentTarget.select()} className={`${inputClass} w-full`} /></div>}
-
-      <div className="flex flex-wrap gap-2">
-        {([
-          ['appointments', copy.appointments],
-          ['approvals', `${copy.attendanceApprovals}${deliveries.length ? ` (${deliveries.length})` : ''}`],
-          ['employees', copy.employees],
-        ] as const).map(([key, text]) => (
-          <button key={key} onClick={() => setSection(key)} className={`rounded-lg px-4 py-2 text-sm font-medium ${section === key ? 'bg-brand-green text-white' : 'bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-300'}`}>{text}</button>
-        ))}
-      </div>
-
-      {section === 'appointments' && (
+      {view === 'appointments' && error && <div role="alert" className="flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300"><AlertCircle className="h-4 w-4 shrink-0" />{error}</div>}
+      {view === 'appointments' && (
         <div className="space-y-5">
         <section className={panelClass}>
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -324,13 +230,12 @@ export default function AdminAppointments() {
           {loading ? <Loader2 className="mx-auto my-10 h-7 w-7 animate-spin" /> : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[850px] text-left text-sm">
-                <thead className="border-b text-xs uppercase text-gray-500"><tr>{[copy.referenceDate, copy.officeWindow, copy.service, copy.queue, copy.employee, copy.status].map((heading) => <th key={heading} className="px-3 py-3">{heading}</th>)}</tr></thead>
+                <thead className="border-b text-xs uppercase text-gray-500"><tr>{[copy.referenceDate, copy.officeWindow, copy.service, copy.queue, copy.status].map((heading) => <th key={heading} className="px-3 py-3">{heading}</th>)}</tr></thead>
                 <tbody>{appointments.map((item) => <tr key={item._id} className="border-b border-gray-100 dark:border-gray-800">
                   <td className="px-3 py-3"><div className="font-medium">{item.appointmentReference}</div><div className="text-xs text-gray-500">{item.slotDate?.slice(0, 10)} · {item.session}</div></td>
                   <td className="px-3 py-3">{label(item.officeId?.name)} · {item.windowId?.number ?? '—'} ({t.admin.portal.offices.floor} {item.windowId?.floor ?? '—'})</td>
                   <td className="px-3 py-3">{label(item.serviceId?.name)}</td>
                   <td className="px-3 py-3">{item.queueNumber}</td>
-                  <td className="px-3 py-3">{item.employeeId?.name || '—'}</td>
                   <td className="px-3 py-3">{statusLabel(item.status)}</td>
                 </tr>)}</tbody>
               </table>
@@ -341,39 +246,37 @@ export default function AdminAppointments() {
         </div>
       )}
 
-      {section === 'approvals' && (
-        <section className="space-y-3">
-          {deliveries.map((item) => <article key={item._id} className={panelClass}>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0 flex-1"><h2 className="font-semibold">{label(item.serviceId?.name)} · {item.appointmentId?.appointmentReference || copy.appointment}</h2><p className="mt-1 text-xs text-gray-500">{item.employeeId?.name || copy.employee} · {item.appointmentId?.slotDate?.slice(0, 10)} · {item.appointmentId?.session}</p><p className="mt-1 text-xs text-gray-500">{copy.actualAttendance}: {item.actualAttendanceAt ? new Date(item.actualAttendanceAt).toLocaleString() : copy.notRecorded}</p><p className="mt-3 text-sm">{item.outcome}</p>{item.deliveryDetails && <p className="mt-2 text-sm text-gray-500">{item.deliveryDetails}</p>}
-                <label className="mt-3 block text-xs text-gray-500">{copy.reviewNotes}<textarea className={`${inputClass} mt-1 w-full`} rows={2} maxLength={2000} value={reviewNotes[item._id] || ''} onChange={(event) => setReviewNotes((current) => ({ ...current, [item._id]: event.target.value }))} /></label>
-              </div>
-              <div className="flex gap-2"><button disabled={busy} onClick={() => void reviewDelivery(item._id, 'approve')} className="inline-flex items-center gap-2 rounded-lg bg-brand-green px-3 py-2 text-sm text-white disabled:opacity-50"><Check className="h-4 w-4" />{copy.approve}</button><button disabled={busy} onClick={() => void reviewDelivery(item._id, 'reject')} className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-700 disabled:opacity-50 dark:border-red-900 dark:text-red-300">{copy.reject}</button></div>
+      {view === 'history' && (
+        <section className={`${panelClass} space-y-4`}>
+          <div>
+            <h2 className="font-semibold">{copy.appointmentHistory}</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{copy.historyRetentionNotice}</p>
+          </div>
+          {historyError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">{historyError}</p>}
+          {historyLoading ? <Loader2 className="mx-auto my-10 h-7 w-7 animate-spin" /> : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[850px] text-left text-sm">
+                <thead className="border-b text-xs uppercase text-gray-500"><tr>{[copy.referenceDate, copy.citizen, copy.officeWindow, copy.service, copy.queue, copy.status].map((heading) => <th key={heading} className="px-3 py-3">{heading}</th>)}</tr></thead>
+                <tbody>{historyAppointments.map((item) => <tr key={item._id} className="border-b border-gray-100 dark:border-gray-800">
+                  <td className="px-3 py-3"><div className="font-medium">{item.appointmentReference}</div><div className="text-xs text-gray-500">{item.slotDate?.slice(0, 10)} · {item.session}</div></td>
+                  <td className="px-3 py-3">{item.citizen.displayName || item.citizen.reference}<span className="block text-xs text-gray-500">{item.citizen.reference}</span></td>
+                  <td className="px-3 py-3">{label(item.officeId?.name)} · {item.windowId?.number ?? '—'} ({t.admin.portal.offices.floor} {item.windowId?.floor ?? '—'})</td>
+                  <td className="px-3 py-3">{label(item.serviceId?.name)}</td>
+                  <td className="px-3 py-3">{item.queueNumber}</td>
+                  <td className="px-3 py-3">{statusLabel(item.status)}</td>
+                </tr>)}</tbody>
+              </table>
+              {!historyAppointments.length && <p className="py-8 text-center text-sm text-gray-500">{copy.noAppointmentHistory}</p>}
             </div>
-          </article>)}
-          {!deliveries.length && <div className={panelClass}><p className="text-center text-sm text-gray-500">{copy.noAttendanceApprovals}</p></div>}
+          )}
+          <footer className="flex items-center justify-between gap-4 text-sm text-gray-500">
+            <span>{historyTotal} · {copy.pageOf.replace('{page}', String(historyPage)).replace('{pages}', String(historyPages))}</span>
+            <div className="flex gap-2">
+              <button type="button" disabled={historyPage <= 1 || historyLoading} onClick={() => setHistoryPage((page) => page - 1)} className="rounded-lg border border-gray-300 px-3 py-2 disabled:opacity-50 dark:border-gray-700">{copy.previousPage}</button>
+              <button type="button" disabled={historyPage >= historyPages || historyLoading} onClick={() => setHistoryPage((page) => page + 1)} className="rounded-lg border border-gray-300 px-3 py-2 disabled:opacity-50 dark:border-gray-700">{copy.nextPage}</button>
+            </div>
+          </footer>
         </section>
-      )}
-
-      {section === 'employees' && (
-        <div className="grid gap-5 xl:grid-cols-2">
-          <form onSubmit={assignEmployee} className={`${panelClass} space-y-3`}>
-            <h2 className="flex items-center gap-2 font-semibold"><ShieldCheck className="h-5 w-5" />{copy.assignEmployee}</h2>
-            <select required value={selectedEmployee} onChange={(event) => setSelectedEmployee(event.target.value)} className={`${inputClass} w-full`}><option value="">{copy.selectApprovedEmployee}</option>{employees.filter((item) => ['approved', 'active'].includes(item.status)).map((item) => <option key={item._id} value={item._id}>{item.name} · {item.email} · {item.status}</option>)}</select>
-            <select required value={officeId} onChange={(event) => setOfficeId(event.target.value)} className={`${inputClass} w-full`}><option value="">{copy.selectOffice}</option>{offices.map((office) => <option key={office._id} value={office._id}>{label(office.name)}</option>)}</select>
-            <p className="text-sm text-gray-500">{copy.assignmentHint}</p>
-            <button disabled={busy || !officeId} className="rounded-lg bg-brand-green px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{copy.saveAssignment}</button>
-          </form>
-
-          <section className={`${panelClass} xl:col-span-2`}>
-            <h2 className="mb-4 font-semibold">{copy.employeeRecords}</h2>
-            <div className="space-y-3">{employees.map((employee) => <article key={employee._id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800">
-              <div><p className="font-medium">{employee.name} <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-800">{employee.status}</span></p><p className="text-xs text-gray-500">{employee.email} · {label(typeof employee.profile?.officeId === 'string' ? employee.profile.officeId : employee.profile?.officeId?.name)}</p></div>
-              <div className="flex gap-2">{employee.status === 'pending' && <button disabled={busy} onClick={() => void employeeAction(employee._id, 'approve')} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-700">{copy.approve}</button>}{employee.status === 'active' && <button disabled={busy} onClick={() => void employeeAction(employee._id, 'suspend')} className="rounded-lg border border-red-300 px-3 py-1.5 text-sm text-red-700 dark:border-red-900 dark:text-red-300">{t.admin.workforce.employeeManagement.suspend}</button>}{employee.status === 'suspended' && <button disabled={busy} onClick={() => void employeeAction(employee._id, 'active')} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-700">{t.admin.workforce.employeeManagement.reactivate}</button>}</div>
-            </article>)}</div>
-            {!employees.length && <p className="py-5 text-center text-sm text-gray-500">{copy.noEmployees}</p>}
-          </section>
-        </div>
       )}
     </div>
   )

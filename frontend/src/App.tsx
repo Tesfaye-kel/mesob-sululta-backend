@@ -31,7 +31,6 @@ import AdminContactMessages from '@/pages/admin/AdminContactMessages'
 import AdminUsers from '@/pages/admin/AdminUsers'
 import AdminProfile from '@/pages/admin/AdminProfile'
 import AdminSettings from '@/pages/admin/AdminSettings'
-import AdminAppointments from '@/pages/admin/AdminAppointments'
 import AdminRegistrars from '@/pages/admin/AdminRegistrars'
 import AdminEmployees from '@/pages/admin/AdminEmployees'
 import AdminCitizens from '@/pages/admin/AdminCitizens'
@@ -90,7 +89,7 @@ export default function App() {
                     <Route path="contact" element={<AdminContact />} />
                     <Route path="contact-messages" element={<AdminContactMessages />} />
                     <Route path="users" element={<AdminUsers />} />
-                    <Route path="appointments" element={<AdminAppointments />} />
+                    <Route path="appointments" element={<Navigate to="/Admin/citizens#appointments-panel" replace />} />
                     <Route path="registrars" element={<AdminRegistrars />} />
                     <Route path="employees" element={<AdminEmployees />} />
                     <Route path="citizens" element={<AdminCitizens />} />

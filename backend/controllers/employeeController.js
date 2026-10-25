@@ -1015,13 +1015,16 @@ const updateEmployeeWorkSchedule = async (req, res, next) => {
 const getEmployeeProfile = async (req, res, next) => {
   try {
     const employee = await User.findOne({ _id: req.user.id, role: 'employee', status: 'active' })
-      .select('name email status employeeType profile.officeId profile.nationalIdLastFour profile.jobTitle profile.schedule');
+      .select('name email status employeeType profile.officeId profile.officeAssignmentLabel profile.nationalIdLastFour profile.jobTitle profile.schedule')
+      .populate('profile.officeId', 'name');
     if (!employee) return res.status(404).json({ message: 'Active employee account was not found.' });
     res.json({
       profile: {
         name: employee.name,
         email: employee.email,
         jobTitle: employee.profile?.jobTitle || employee.employeeType.replace('_', ' '),
+        office: employee.profile?.officeId?.name || null,
+        officeAssignmentLabel: employee.profile?.officeAssignmentLabel || '',
         maskedNationalId: `********${employee.profile?.nationalIdLastFour || ''}`,
         schedule: employee.profile?.schedule || [],
         officeAssigned: Boolean(employee.profile?.officeId),

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const CitizenIdentity = require('../models/CitizenIdentity');
 
 // Verifies the Authorization header (****** and attaches req.user
 const authenticateJWT = async (req, res, next) => {
@@ -13,6 +14,14 @@ const authenticateJWT = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role === 'citizen') {
+      const identity = await CitizenIdentity.findById(decoded.id).select('status archivedAt isActive');
+      if (!identity || identity.archivedAt || identity.status !== 'active' || !identity.isActive) {
+        return res.status(403).json({ message: 'Citizen account is not active.' });
+      }
+      req.user = decoded;
+      return next();
+    }
     const user = await User.findById(decoded.id).select('status archivedAt role');
 
     if (!user || user.archivedAt || user.status === 'suspended' || user.status === 'rejected') {

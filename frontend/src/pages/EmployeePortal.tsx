@@ -60,6 +60,8 @@ interface EmployeeProfile {
   name: string
   email: string
   jobTitle: string
+  office?: { en?: string; am?: string; or?: string } | null
+  officeAssignmentLabel?: string
   maskedNationalId: string
   schedule: WorkShift[]
   officeAssigned: boolean
@@ -889,6 +891,7 @@ export default function EmployeePortal() {
                   <dt className="text-slate-500">{portalCopy.fullName}</dt><dd className="font-medium">{profile?.name || user.name}</dd>
                   <dt className="text-slate-500">{portalCopy.email}</dt><dd className="break-all font-medium">{profile?.email || user.email}</dd>
                   <dt className="text-slate-500">{portalCopy.jobTitle}</dt><dd className="font-medium">{profile?.jobTitle || user.jobTitle || employeeTypeLabel[user.employeeType || ''] || portalCopy.employee}</dd>
+                  <dt className="text-slate-500">{portalCopy.profileOfficeAssignment}</dt><dd className="font-medium">{profile?.office?.[language] || profile?.office?.en || profile?.officeAssignmentLabel || portalCopy.officeNotAssigned}</dd>
                   <dt className="text-slate-500">{portalCopy.nationalId}</dt><dd className="font-mono">{profile?.maskedNationalId || user.maskedNationalId || '********'}</dd>
                   <dt className="text-slate-500">{portalCopy.accountStatus}</dt><dd className="font-medium">{profile?.status ? ({ active: portalCopy.activeStatus, pending: portalCopy.pendingStatus, approved: portalCopy.approvedStatus, rejected: portalCopy.rejectedStatus, suspended: portalCopy.suspendedStatus }[profile.status.toLowerCase()] || profile.status) : '—'}</dd>
                 </dl>
